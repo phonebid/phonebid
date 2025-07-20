@@ -1,0 +1,226 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# 코드 가이드라인
+
+## 1. 프로젝트 개요
+이 프로젝트는 React 18 + TypeScript 기반 프런트엔드와 Java 17 + Spring Boot 3 기반 백엔드를 Monorepo(pnpm, Gradle) 구조로 구성한 휴대폰 역경매 웹 플랫폼입니다.  
+- 인프라: AWS(EC2, RDS(PostgreSQL), S3), Redis 캐시, ELK/Grafana 모니터링  
+- 인증: OAuth2(Kakao, Naver) → JWT 발급/검증  
+- 아키텍처: RESTful API, 도메인 중심 구조(Controller → Service → Domain → Repository → DTO)
+
+## 2. 핵심 원칙
+1. **단일 책임 원칙(Single Responsibility)**: 파일 및 클래스는 한 가지 역할만 담당해야 한다.  
+2. **일관된 네이밍**: CamelCase(component, 변수), PascalCase(타입, 클래스), kebab-case(파일명) 사용.  
+3. **타입 안전성 확보**: 모든 API 응답 및 컴포넌트 Props/State에 명시적 타입 선언.  
+4. **명시적 오류 처리**: 에러는 반드시 로깅 및 사용자에게 피드백 후 재시도 로직 구현.  
+5. **재사용 가능한 모듈화**: 반복 로직은 유틸 함수 또는 공통 서비스로 분리.
+
+## 3. 언어별 가이드라인
+
+### 3.1 프런트엔드 (React + TypeScript + TailwindCSS)
+#### 디렉터리 구조
+```
+/frontend
+└── src
+    ├── assets          # 이미지, 폰트, 아이콘
+    ├── components      # 공통 UI 컴포넌트
+    ├── pages           # 라우팅 기반 페이지
+    ├── services        # API 호출 로직(axio​s wrapper)
+    ├── hooks           # 커스텀 훅
+    ├── store           # 전역 상태관리(Recoil/Context)
+    ├── utils           # 헬퍼 함수
+    └── styles          # Tailwind 설정, 글로벌 CSS
+```
+#### Import/의존성 관리
+- 절대 경로로 `/src` 기준 import: `import Button from 'components/Button';`  
+- 패키지 추가 시 `pnpm add --workspace-root [패키지명]` 사용  
+- 공통 버전은 `pnpm-workspace.yaml`에 고정
+
+#### 오류 처리 패턴
+- API 호출 시 try/catch → `toast.error()`, console.error 로깅  
+- 에러 타입 정의:
+  ```typescript
+  interface ApiError {
+    code: number;
+    message: string;
+  }
+  ```
+- 공통 에러 헨들러:
+  ```typescript
+  // services/api.ts
+  export async function fetcher<T>(url: string): Promise<T> {
+    try {
+      const res = await axios.get<T>(url);
+      return res.data;
+    } catch (error: any) {
+      const err: ApiError = {
+        code: error.response?.status || 500,
+        message: error.response?.data?.message || '알 수 없는 오류',
+      };
+      throw err;
+    }
+  }
+  ```
+
+### 3.2 백엔드 (Java 17 + Spring Boot + JPA)
+#### 패키지 구조
+```
+/backend/src/main/java/com/phonebid/app
+├── admin
+├── auction
+├── auth
+├── common         # 예외, 응답, util
+├── notification
+├── order
+├── payment
+└── user
+```
+#### 의존성 관리
+- Gradle 멀티모듈 설정: `settings.gradle`에 모듈 등록  
+- `build.gradle`에서 Spring Boot BOM 활용:
+  ```groovy
+  dependencies {
+    implementation platform("org.springframework.boot:spring-boot-dependencies:3.0.0")
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    ...
+  }
+  ```
+#### 오류 처리 패턴
+- 글로벌 예외 핸들러:
+  ```java
+  @RestControllerAdvice
+  public class GlobalExceptionHandler {
+    @ExceptionHandler(CustomException.class)
+    public ResponseEntity<ErrorResponse> handleCustom(CustomException ex) {
+      ErrorResponse err = new ErrorResponse(ex.getCode(), ex.getMessage());
+      return new ResponseEntity<>(err, HttpStatus.valueOf(ex.getStatus()));
+    }
+  }
+  ```
+- 예외 계층 정의: `CustomException → BusinessException, AuthException 등`
+
+## 4. 코드 스타일 규칙
+
+### MUST Follow
+1. **명확한 파일명·디렉터리**  
+   - rationale: 파일 역할 즉시 파악 가능  
+   - ex) `AuctionList.tsx`, `UserService.java`
+
+2. **타입 선언 강제(TypeScript·Java)**  
+   - rationale: 안정성 및 문서화  
+   - ex) `function fetchAuctions(): Promise<Auction[]>`
+
+3. **Tailwind 클래스 일관 사용**  
+   - rationale: 디자인 통일성  
+   - ex) `<button className="px-4 py-2 bg-blue-600 text-white rounded">`
+
+4. **DTO/VO 분리**  
+   - rationale: 계층 간 의존성 최소화  
+   - ex) `auction.dto`, `auction.entity`
+
+5. **커스텀 Hook/Recoil Atom 재사용**  
+   - rationale: 중복 제거, 유지보수성 향상  
+   - ex) `useAuctionTimer.ts`
+
+### MUST NOT Do
+1. **거대한 컴포넌트**  
+   - 한 파일에 300+ 라인 컴포넌트 금지  
+2. **any 타입 무분별 사용**  
+   - `any` 대신 제네릭/유니온 타입 활용  
+3. **DB 트랜잭션 밖에서 비즈니스 로직**  
+   - Service 계층 이탈 로직 금지  
+4. **하드코딩된 문자열·숫자**  
+   - 상수화(`constants.ts`/`Constants.java`)  
+5. **전역 상태 직접 조작**  
+   - Recoil/Context 외 `window` 등 사용 금지
+
+## 5. 아키텍처 패턴
+
+### 5.1 컴포넌트·모듈 구조
+- **프런트엔드**: `Presentation`(UI) / `Container`(로직) 분리  
+- **백엔드**: Controller(Service 주입) → Service → Repository 순으로 레이어 분리
+
+### 5.2 데이터 흐름
+1. 클라이언트 → Axios → REST API  
+2. API 응답 → Zustand/Recoil → 컴포넌트 렌더링  
+3. 변경 시 옵저버 패턴으로 UI 업데이트
+
+### 5.3 상태 관리
+- **로컬 상태**: useState  
+- **전역 상태**: Recoil Atom/Selector  
+- **비동기 상태**: React Query(SWR) 적용 고려
+
+### 5.4 API 설계 기준
+- 엔드포인트: 리소스명 복수형(`/api/auctions`)  
+- HTTP 메서드 준수: GET/POST/PUT/DELETE  
+- 응답 Envelope:
+  ```json
+  {
+    "code": 200,
+    "message": "성공",
+    "data": { ... }
+  }
+  ```
+
+## 예제 코드 스니펫
+
+```typescript
+// MUST: API 서비스 분리 + 명시적 타입
+// services/auctionService.ts
+export interface Auction {
+  id: number;
+  product: string;
+  endTime: string;
+}
+export const getAuctions = async (): Promise<Auction[]> => {
+  return await fetcher<Auction[]>('/api/auctions');
+};
+```
+
+```typescript
+// MUST NOT: any 사용 금지, 비동기 로직 직접 컴포넌트에 작성
+// 잘못된 예시
+export const AuctionPage = () => {
+  const [list, setList]: any = useState([]);
+  useEffect(() => {
+    axios.get('/api/auctions').then(res => setList(res.data));
+  }, []);
+  return <div>{list.map((a: any) => <div>{a.product}</div>)}</div>;
+};
+```
+
+```java
+// MUST: 계층 분리 + DTO 변환
+// controller/AuctionController.java
+@RestController
+@RequestMapping("/api/auctions")
+public class AuctionController {
+  private final AuctionService auctionService;
+  @GetMapping
+  public ResponseEntity<ResponseDto<List<AuctionDto>>> list() {
+    List<AuctionDto> dtos = auctionService.getAll()
+      .stream().map(AuctionDto::from).toList();
+    return ResponseEntity.ok(ResponseDto.of(dtos));
+  }
+}
+```
+
+```java
+// MUST NOT: Repository 호출을 Controller에서 직접 수행
+@RestController
+public class BadController {
+  @Autowired
+  private AuctionRepository repo;
+  @GetMapping("/bad")
+  public List<Auction> bad() {
+    return repo.findAll(); // 비즈니스 로직 혼재
+  }
+}
+```
+
+---
+
+이 가이드라인은 프로젝트 전반에서 일관된 코드 품질과 유지보수성을 보장하기 위한 기준입니다. 개발자는 반드시 본 문서를 준수해야 하며, PR 시 자동 검수 도구와 코드 리뷰에서 위반 여부를 확인합니다.
