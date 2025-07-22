@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:latest
+    container_name: phonebid_db
+    environment:
+      POSTGRES_USER: phonebid
+      POSTGRES_PASSWORD: phonebid
+      POSTGRES_DB: phonebid
+    ports:
+      - "5433:5432"
+    volumes:
+      - phonebid_db_data:/var/lib/postgresql/data
+    networks:
+      - phonebid_network
+
+volumes:
+  phonebid_db_data:
+
+networks:
+  phonebid_network:
+    driver: bridge
