@@ -1,1 +1,17 @@
-spring.application.name=phonebid
+spring:
+  application:
+    name: phonebid
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/phonebid
+    username: phonebid
+    password: phonebid
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
