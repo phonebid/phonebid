@@ -1,0 +1,111 @@
+package com.phonebid.app.user.domain;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@DisplayName("User 엔티티 테스트")
+class UserTest {
+
+    @Test
+    @DisplayName("User 객체를 생성할 수 있다")
+    void createUser() {
+        // given
+        String email = "test@example.com";
+        String name = "테스트 사용자";
+        Role role = Role.CONSUMER;
+        Provider provider = Provider.KAKAO;
+        String providerId = "kakao123";
+
+        // when
+        User user = User.builder()
+                .email(email)
+                .name(name)
+                .role(role)
+                .provider(provider)
+                .providerId(providerId)
+                .build();
+
+        // then
+        assertThat(user.getEmail()).isEqualTo(email);
+        assertThat(user.getName()).isEqualTo(name);
+        assertThat(user.getRole()).isEqualTo(role);
+        assertThat(user.getProvider()).isEqualTo(provider);
+        assertThat(user.getProviderId()).isEqualTo(providerId);
+    }
+
+    @Test
+    @DisplayName("Consumer 역할인지 확인할 수 있다")
+    void isConsumer() {
+        // given
+        User consumerUser = createTestUser(Role.CONSUMER);
+        User sellerUser = createTestUser(Role.SELLER);
+
+        // when & then
+        assertThat(consumerUser.isConsumer()).isTrue();
+        assertThat(sellerUser.isConsumer()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Seller 역할인지 확인할 수 있다")
+    void isSeller() {
+        // given
+        User consumerUser = createTestUser(Role.CONSUMER);
+        User sellerUser = createTestUser(Role.SELLER);
+
+        // when & then
+        assertThat(consumerUser.isSeller()).isFalse();
+        assertThat(sellerUser.isSeller()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Admin 역할인지 확인할 수 있다")
+    void isAdmin() {
+        // given
+        User consumerUser = createTestUser(Role.CONSUMER);
+        User adminUser = createTestUser(Role.ADMIN);
+
+        // when & then
+        assertThat(consumerUser.isAdmin()).isFalse();
+        assertThat(adminUser.isAdmin()).isTrue();
+    }
+
+    @Test
+    @DisplayName("사용자 이름을 업데이트할 수 있다")
+    void updateName() {
+        // given
+        User user = createTestUser(Role.CONSUMER);
+        String newName = "새로운 이름";
+
+        // when
+        user.updateName(newName);
+
+        // then
+        assertThat(user.getName()).isEqualTo(newName);
+    }
+
+    @Test
+    @DisplayName("사용자 역할을 업데이트할 수 있다")
+    void updateRole() {
+        // given
+        User user = createTestUser(Role.CONSUMER);
+        Role newRole = Role.SELLER;
+
+        // when
+        user.updateRole(newRole);
+
+        // then
+        assertThat(user.getRole()).isEqualTo(newRole);
+    }
+
+    private User createTestUser(Role role) {
+        return User.builder()
+                .email("test@example.com")
+                .name("테스트 사용자")
+                .role(role)
+                .provider(Provider.KAKAO)
+                .providerId("kakao123")
+                .build();
+    }
+} 

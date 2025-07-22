@@ -33,7 +33,7 @@ class ApiClient {
 
     // Response interceptor for error handling
     this.client.interceptors.response.use(
-      (response: AxiosResponse<ApiResponse<any>>) => response,
+      (response: AxiosResponse<ApiResponse<unknown>>) => response,
       (error) => {
         const errorMessage =
           error.response?.data?.message || "알 수 없는 오류가 발생했습니다.";
@@ -52,12 +52,12 @@ class ApiClient {
     return response.data.data;
   }
 
-  async post<T>(url: string, data?: any): Promise<T> {
+  async post<T>(url: string, data?: unknown): Promise<T> {
     const response = await this.client.post<ApiResponse<T>>(url, data);
     return response.data.data;
   }
 
-  async put<T>(url: string, data?: any): Promise<T> {
+  async put<T>(url: string, data?: unknown): Promise<T> {
     const response = await this.client.put<ApiResponse<T>>(url, data);
     return response.data.data;
   }
