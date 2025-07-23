@@ -1,8 +1,10 @@
-package com.phonebid.app.seller.domain;
+package com.phonebid.app.member;
 
-import com.phonebid.app.user.domain.Provider;
-import com.phonebid.app.user.domain.Role;
-import com.phonebid.app.user.domain.User;
+import com.phonebid.app.member.domain.ApprovalStatus;
+import com.phonebid.app.member.domain.Provider;
+import com.phonebid.app.member.domain.Role;
+import com.phonebid.app.member.domain.Seller;
+import com.phonebid.app.member.domain.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -33,7 +35,6 @@ class SellerTest {
         assertThat(seller.getBusinessNumber()).isEqualTo(businessNumber);
         assertThat(seller.getStoreName()).isEqualTo(storeName);
         assertThat(seller.getApprovalStatus()).isEqualTo(ApprovalStatus.PENDING);
-        assertThat(seller.getCreatedAt()).isNotNull();
     }
 
     @Test

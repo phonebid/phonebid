@@ -1,18 +1,19 @@
-package com.phonebid.app.user.domain;
+package com.phonebid.app.member.domain;
 
+import com.phonebid.app.common.domain.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import java.time.LocalDateTime;
+
 import java.util.UUID;
 
 @Entity
 @Table(name = "users")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class User {
+public class User extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -35,7 +36,6 @@ public class User {
 
     @Column(name = "provider_id", nullable = false)
     private String providerId;
-
 
     @Builder
     public User(String email, String name, Role role, Provider provider, String providerId) {
@@ -66,4 +66,4 @@ public class User {
     public void updateRole(Role role) {
         this.role = role;
     }
-} 
+}

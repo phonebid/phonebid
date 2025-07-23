@@ -1,7 +1,11 @@
-package com.phonebid.app.user.domain;
+package com.phonebid.app.member;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import com.phonebid.app.member.domain.Provider;
+import com.phonebid.app.member.domain.Role;
+import com.phonebid.app.member.domain.User;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

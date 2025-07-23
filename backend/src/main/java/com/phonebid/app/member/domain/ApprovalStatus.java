@@ -1,4 +1,4 @@
-package com.phonebid.app.seller.domain;
+package com.phonebid.app.member.domain;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

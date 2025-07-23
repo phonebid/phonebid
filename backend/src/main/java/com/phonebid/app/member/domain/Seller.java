@@ -1,20 +1,20 @@
-package com.phonebid.app.seller.domain;
+package com.phonebid.app.member.domain;
 
-import com.phonebid.app.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
+
+import com.phonebid.app.common.domain.BaseEntity;
 
 @Entity
 @Table(name = "sellers")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Seller {
+public class Seller extends BaseEntity {
 
     @Id
     @Column(name = "user_id")
@@ -35,9 +35,6 @@ public class Seller {
     @Column(name = "approval_status", nullable = false)
     private ApprovalStatus approvalStatus;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
     @Builder
     public Seller(User user, String businessNumber, String storeName) {
         this.user = user;
@@ -45,7 +42,6 @@ public class Seller {
         this.businessNumber = businessNumber;
         this.storeName = storeName;
         this.approvalStatus = ApprovalStatus.PENDING; // 기본값: 승인 대기
-        this.createdAt = LocalDateTime.now();
     }
 
     // 비즈니스 메서드
