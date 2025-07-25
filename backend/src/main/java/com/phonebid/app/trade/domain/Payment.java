@@ -1,0 +1,114 @@
+package com.phonebid.app.trade.domain;
+
+import com.phonebid.app.common.domain.BaseEntity;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = "payments", indexes = {
+    @Index(name = "idx_payments_contract_id", columnList = "contract_id"),
+    @Index(name = "idx_payments_pg_tid", columnList = "pg_tid"),
+    @Index(name = "idx_payments_status", columnList = "status")
+})
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Payment extends BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", updatable = false, nullable = false)
+    private UUID id;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "contract_id", nullable = false, unique = true)
+    private Contract contract;
+
+    @Column(name = "amount", nullable = false)
+    private Integer amount;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "method", nullable = false)
+    private PaymentMethod method;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private PaymentStatus status;
+
+    @Column(name = "pg_tid", nullable = false, unique = true)
+    private String pgTid;
+
+    @Column(name = "paid_at")
+    private LocalDateTime paidAt;
+
+
+
+    @Builder
+    public Payment(Contract contract, Integer amount, PaymentMethod method, String pgTid) {
+        validatePaymentCreation(contract, amount);
+        
+        this.contract = contract;
+        this.amount = amount;
+        this.method = method;
+        this.pgTid = pgTid;
+        this.status = PaymentStatus.REQUESTED; // 기본값: 결제 요청
+    }
+
+    // 비즈니스 메서드
+    public void approve() {
+        if (!status.isRequested()) {
+            throw new IllegalStateException("결제 요청 상태가 아닌 결제는 승인할 수 없습니다.");
+        }
+        this.status = PaymentStatus.PENDING_APPROVAL;
+    }
+
+    public void complete() {
+        if (!status.canComplete()) {
+            throw new IllegalStateException("완료할 수 없는 결제 상태입니다: " + status.getDisplayName());
+        }
+        
+        this.status = PaymentStatus.PAID;
+        this.paidAt = LocalDateTime.now();
+    }
+
+    public void fail() {
+        if (!status.canFail()) {
+            throw new IllegalStateException("실패 처리할 수 없는 결제 상태입니다: " + status.getDisplayName());
+        }
+        
+        this.status = PaymentStatus.FAILED;
+    }
+
+    public boolean isSuccessful() {
+        return status.isPaid();
+    }
+
+    public boolean needsManualConfirmation() {
+        return method.requiresManualConfirmation();
+    }
+
+    public String getPaymentSummary() {
+        return String.format("%s %,d원 (%s)", 
+            method.getDisplayName(), amount, status.getDisplayName());
+    }
+
+    // 검증 메서드
+    private void validatePaymentCreation(Contract contract, Integer amount) {
+        if (!contract.isCompleted()) {
+            throw new IllegalStateException("체결되지 않은 계약은 결제할 수 없습니다.");
+        }
+        
+        if (amount == null || amount <= 0) {
+            throw new IllegalArgumentException("결제 금액은 0보다 커야 합니다.");
+        }
+        
+        if (!amount.equals(contract.getContractAmount())) {
+            throw new IllegalArgumentException("결제 금액이 계약 금액과 일치하지 않습니다.");
+        }
+    }
+}
