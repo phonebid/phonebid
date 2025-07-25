@@ -13,8 +13,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "bids", indexes = {
     @Index(name = "idx_bids_quote_id", columnList = "quote_id"),
-    @Index(name = "idx_bids_seller_id", columnList = "seller_id"),
-    @Index(name = "idx_bids_status", columnList = "status")
+    @Index(name = "idx_bids_seller_id", columnList = "seller_id")
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -42,10 +41,6 @@ public class Bid extends BaseEntity {
     @Column(name = "rating_snapshot")
     private Double ratingSnapshot;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private BidStatus status;
-
     @Builder
     public Bid(Quote quote, Seller seller, Integer price, Integer deliveryDays, Double ratingSnapshot) {
         this.quote = quote;
@@ -53,12 +48,11 @@ public class Bid extends BaseEntity {
         this.price = price;
         this.deliveryDays = deliveryDays;
         this.ratingSnapshot = ratingSnapshot;
-        this.status = BidStatus.ACTIVE; // 기본값: 활성
     }
 
     // 비즈니스 메서드
     public boolean canModify() {
-        return status.canModify() && quote.canReceiveBids();
+        return quote.canReceiveBids();
     }
 
     public void updateBid(Integer newPrice, Integer newDeliveryDays) {
@@ -67,24 +61,6 @@ public class Bid extends BaseEntity {
         }
         this.price = newPrice;
         this.deliveryDays = newDeliveryDays;
-    }
-
-    public void select() {
-        if (!status.isActive()) {
-            throw new IllegalStateException("활성 상태가 아닌 입찰은 선택할 수 없습니다.");
-        }
-        this.status = BidStatus.SELECTED;
-    }
-
-    public void cancel() {
-        if (!status.isActive()) {
-            throw new IllegalStateException("활성 상태가 아닌 입찰은 취소할 수 없습니다.");
-        }
-        this.status = BidStatus.CANCELLED;
-    }
-
-    public boolean isWinningBid() {
-        return status.isSelected();
     }
 
     public String getBidSummary() {
