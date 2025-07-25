@@ -1,4 +1,4 @@
-package com.phonebid.app.member;
+package com.phonebid.app.member.domain;
 
 import com.phonebid.app.member.domain.ApprovalStatus;
 import com.phonebid.app.member.domain.Provider;

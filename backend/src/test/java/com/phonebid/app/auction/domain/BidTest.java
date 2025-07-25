@@ -62,15 +62,18 @@ class BidTest {
     }
 
     @Test
-    @DisplayName("입찰 생성 시 기본 상태는 ACTIVE이다")
-    void createBid_ShouldHaveActiveStatus() {
+    @DisplayName("입찰을 정상적으로 생성할 수 있다")
+    void createBid_ShouldBeCreatedSuccessfully() {
         // Then
-        assertThat(bid.getStatus()).isEqualTo(BidStatus.ACTIVE);
-        assertThat(bid.isWinningBid()).isFalse();
+        assertThat(bid.getQuote()).isEqualTo(quote);
+        assertThat(bid.getSeller()).isEqualTo(seller);
+        assertThat(bid.getPrice()).isEqualTo(1200000);
+        assertThat(bid.getDeliveryDays()).isEqualTo(3);
+        assertThat(bid.getRatingSnapshot()).isEqualTo(4.5);
     }
 
     @Test
-    @DisplayName("활성 상태의 입찰은 수정 가능하다")
+    @DisplayName("견적이 입찰 가능한 상태일 때 입찰을 수정할 수 있다")
     void activeBid_CanBeModified() {
         // When & Then
         assertThat(bid.canModify()).isTrue();
@@ -85,46 +88,14 @@ class BidTest {
     }
 
     @Test
-    @DisplayName("입찰을 선택하면 상태가 SELECTED로 변경된다")
-    void selectBid_ShouldChangeStatusToSelected() {
-        // When
-        bid.select();
+    @DisplayName("견적이 마감된 경우 입찰을 수정할 수 없다")
+    void expiredQuote_BidCannotBeModified() {
+        // Given
+        quote.close();
 
-        // Then
-        assertThat(bid.getStatus()).isEqualTo(BidStatus.SELECTED);
-        assertThat(bid.isWinningBid()).isTrue();
-    }
-
-    @Test
-    @DisplayName("입찰을 취소하면 상태가 CANCELLED로 변경된다")
-    void cancelBid_ShouldChangeStatusToCancelled() {
-        // When
-        bid.cancel();
-
-        // Then
-        assertThat(bid.getStatus()).isEqualTo(BidStatus.CANCELLED);
+        // When & Then
         assertThat(bid.canModify()).isFalse();
-    }
-
-    @Test
-    @DisplayName("선택된 입찰은 다시 선택할 수 없다")
-    void selectedBid_CannotBeSelectedAgain() {
-        // Given
-        bid.select();
-
-        // When & Then
-        assertThatThrownBy(() -> bid.select())
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("활성 상태가 아닌 입찰은 선택할 수 없습니다.");
-    }
-
-    @Test
-    @DisplayName("취소된 입찰은 수정할 수 없다")
-    void cancelledBid_CannotBeModified() {
-        // Given
-        bid.cancel();
-
-        // When & Then
+        
         assertThatThrownBy(() -> bid.updateBid(1000000, 1))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("수정할 수 없는 입찰입니다.");
@@ -138,5 +109,20 @@ class BidTest {
 
         // Then
         assertThat(summary).isEqualTo("입찰가: 1,200,000원, 배송예정: 3일");
+    }
+
+    @Test
+    @DisplayName("입찰 수정 시 가격과 배송일이 모두 변경된다")
+    void updateBid_ShouldUpdateBothPriceAndDeliveryDays() {
+        // Given
+        Integer newPrice = 1100000;
+        Integer newDeliveryDays = 2;
+
+        // When
+        bid.updateBid(newPrice, newDeliveryDays);
+
+        // Then
+        assertThat(bid.getPrice()).isEqualTo(newPrice);
+        assertThat(bid.getDeliveryDays()).isEqualTo(newDeliveryDays);
     }
 } 
