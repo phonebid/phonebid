@@ -33,6 +33,9 @@ class QuoteTest {
                 .carrier(carrier)
                 .color(color)
                 .expiredAt(expiredAt)
+                .purchaseMethod(PurchaseMethod.ANY)
+                .currentCarrier(null)
+                .activationMethod(ActivationMethod.ANY)
                 .build();
 
         // then
@@ -43,6 +46,9 @@ class QuoteTest {
         assertThat(quote.getColor()).isEqualTo(color);
         assertThat(quote.getStatus()).isEqualTo(QuoteStatus.OPEN);
         assertThat(quote.getExpiredAt()).isEqualTo(expiredAt);
+        assertThat(quote.getPurchaseMethod()).isEqualTo(PurchaseMethod.ANY);
+        assertThat(quote.getCurrentCarrier()).isNull();
+        assertThat(quote.getActivationMethod()).isEqualTo(ActivationMethod.ANY);
     }
 
     @Test
@@ -191,6 +197,84 @@ class QuoteTest {
         assertThat(specification).isEqualTo("iPhone 16 128GB SK텔레콤 블랙");
     }
 
+    @Test
+    @DisplayName("번호이동 구매방법으로 견적을 생성할 수 있다")
+    void createQuoteWithNumberTransfer() {
+        // given
+        User user = createTestUser();
+
+        // when
+        Quote quote = Quote.builder()
+                .user(user)
+                .model("Galaxy S24")
+                .storage("256GB")
+                .carrier(Carrier.KT) // 이동할 통신사
+                .color("화이트")
+                .expiredAt(LocalDateTime.now().plusHours(24))
+                .purchaseMethod(PurchaseMethod.NUMBER_TRANSFER)
+                .currentCarrier(Carrier.SKT) // 기존 통신사
+                .activationMethod(ActivationMethod.SELECTIVE_SUBSIDY)
+                .build();
+
+        // then
+        assertThat(quote.getPurchaseMethod()).isEqualTo(PurchaseMethod.NUMBER_TRANSFER);
+        assertThat(quote.getCurrentCarrier()).isEqualTo(Carrier.SKT);
+        assertThat(quote.getCarrier()).isEqualTo(Carrier.KT);
+        assertThat(quote.getActivationMethod()).isEqualTo(ActivationMethod.SELECTIVE_SUBSIDY);
+    }
+
+    @Test
+    @DisplayName("기기변경 구매방법으로 견적을 생성할 수 있다")
+    void createQuoteWithDeviceChange() {
+        // given
+        User user = createTestUser();
+
+        // when
+        Quote quote = Quote.builder()
+                .user(user)
+                .model("iPhone 16 Pro")
+                .storage("512GB")
+                .carrier(Carrier.LGU) // 동일 통신사
+                .color("골드")
+                .expiredAt(LocalDateTime.now().plusHours(24))
+                .purchaseMethod(PurchaseMethod.DEVICE_CHANGE)
+                .currentCarrier(Carrier.LGU) // 기존 통신사 (동일)
+                .activationMethod(ActivationMethod.COMMON_SUBSIDY)
+                .build();
+
+        // then
+        assertThat(quote.getPurchaseMethod()).isEqualTo(PurchaseMethod.DEVICE_CHANGE);
+        assertThat(quote.getCurrentCarrier()).isEqualTo(Carrier.LGU);
+        assertThat(quote.getCarrier()).isEqualTo(Carrier.LGU);
+        assertThat(quote.getActivationMethod()).isEqualTo(ActivationMethod.COMMON_SUBSIDY);
+    }
+
+    @Test
+    @DisplayName("신규가입 구매방법으로 견적을 생성할 수 있다")
+    void createQuoteWithNewSubscription() {
+        // given
+        User user = createTestUser();
+
+        // when
+        Quote quote = Quote.builder()
+                .user(user)
+                .model("iPhone 16 Plus")
+                .storage("128GB")
+                .carrier(Carrier.SKT) // 신규 가입할 통신사
+                .color("블루")
+                .expiredAt(LocalDateTime.now().plusHours(24))
+                .purchaseMethod(PurchaseMethod.NEW_SUBSCRIPTION)
+                .currentCarrier(null) // 신규는 기존 통신사 없음
+                .activationMethod(ActivationMethod.ANY)
+                .build();
+
+        // then
+        assertThat(quote.getPurchaseMethod()).isEqualTo(PurchaseMethod.NEW_SUBSCRIPTION);
+        assertThat(quote.getCurrentCarrier()).isNull();
+        assertThat(quote.getCarrier()).isEqualTo(Carrier.SKT);
+        assertThat(quote.getActivationMethod()).isEqualTo(ActivationMethod.ANY);
+    }
+
     private User createTestUser() {
         return User.builder()
                 .email("consumer@example.com")
@@ -209,6 +293,9 @@ class QuoteTest {
                 .carrier(Carrier.SKT)
                 .color("블랙")
                 .expiredAt(LocalDateTime.now().plusHours(24))
+                .purchaseMethod(PurchaseMethod.ANY)
+                .currentCarrier(null)
+                .activationMethod(ActivationMethod.ANY)
                 .build();
     }
 }

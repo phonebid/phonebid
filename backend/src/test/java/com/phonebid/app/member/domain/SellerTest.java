@@ -1,5 +1,6 @@
 package com.phonebid.app.member.domain;
 
+import com.phonebid.app.common.domain.Address;
 import com.phonebid.app.member.domain.ApprovalStatus;
 import com.phonebid.app.member.domain.Provider;
 import com.phonebid.app.member.domain.Role;
@@ -27,6 +28,7 @@ class SellerTest {
                 .user(user)
                 .businessNumber(businessNumber)
                 .storeName(storeName)
+                .storeAddress(createTestAddress())
                 .build();
 
         // then
@@ -34,6 +36,7 @@ class SellerTest {
         assertThat(seller.getUserId()).isEqualTo(user.getId());
         assertThat(seller.getBusinessNumber()).isEqualTo(businessNumber);
         assertThat(seller.getStoreName()).isEqualTo(storeName);
+        assertThat(seller.getStoreAddress()).isNotNull();
         assertThat(seller.getApprovalStatus()).isEqualTo(ApprovalStatus.PENDING);
     }
 
@@ -142,6 +145,60 @@ class SellerTest {
         assertThat(seller.getBusinessNumber()).isEqualTo(newBusinessNumber);
     }
 
+    @Test
+    @DisplayName("판매점 주소를 업데이트할 수 있다")
+    void updateStoreAddress() {
+        // given
+        User user = createTestUser();
+        Seller seller = createTestSeller(user);
+        Address newAddress = Address.builder()
+                .postalCode("54321")
+                .address("부산시 해운대구 해운대로 456")
+                .detailAddress("XYZ타워 10층")
+                .build();
+
+        // when
+        seller.updateStoreAddress(newAddress);
+
+        // then
+        assertThat(seller.getStoreAddress()).isEqualTo(newAddress);
+        assertThat(seller.hasStoreAddress()).isTrue();
+    }
+
+    @Test
+    @DisplayName("판매점 주소 요약 정보를 올바르게 생성한다")
+    void getStoreAddressSummary() {
+        // given
+        User user = createTestUser();
+        Seller seller = createTestSeller(user);
+
+        // when
+        String summary = seller.getStoreAddressSummary();
+
+        // then
+        assertThat(summary).isEqualTo("(12345) 서울시 강남구 테헤란로 123 ABC빌딩 2층");
+    }
+
+    @Test
+    @DisplayName("주소가 없는 경우 주소 요약은 '주소 정보 없음'을 반환한다")
+    void getStoreAddressSummary_WhenNoAddress() {
+        // given
+        User user = createTestUser();
+        Seller seller = Seller.builder()
+                .user(user)
+                .businessNumber("123-45-67890")
+                .storeName("테스트 스토어")
+                .storeAddress(null)
+                .build();
+
+        // when
+        String summary = seller.getStoreAddressSummary();
+
+        // then
+        assertThat(summary).isEqualTo("주소 정보 없음");
+        assertThat(seller.hasStoreAddress()).isFalse();
+    }
+
     private User createTestUser() {
         return User.builder()
                 .email("seller@example.com")
@@ -157,6 +214,15 @@ class SellerTest {
                 .user(user)
                 .businessNumber("123-45-67890")
                 .storeName("테스트 스토어")
+                .storeAddress(createTestAddress())
+                .build();
+    }
+
+    private Address createTestAddress() {
+        return Address.builder()
+                .postalCode("12345")
+                .address("서울시 강남구 테헤란로 123")
+                .detailAddress("ABC빌딩 2층")
                 .build();
     }
 } 
