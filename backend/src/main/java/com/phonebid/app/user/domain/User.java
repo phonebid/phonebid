@@ -22,11 +22,13 @@ public class User {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @Size(min = 4, max = 10)  // 길이를 4~10자로 제한
+    @Size(min = 4, max = 10, message = "유저ID는 4자 이상 10자 이하여야 합니다")  // 길이를 4~10자로 제한
     @Pattern(regexp = "^[a-z0-9]+$")  // 알파벳 소문자와 숫자로만 구성
     @Column(name = "username", nullable = false, unique = true)
     private String username;
 
+    @Size(min = 8, max = 20, message = "비밀번호는 8자 이상 20자 이하여야 합니다")
+    //@Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]+$", message = "비밀번호는 대문자, 소문자, 숫자, 특수문자를 포함해야 합니다")
     @Column(name = "password", nullable = false)
     private String password;
 
@@ -37,6 +39,8 @@ public class User {
     @Column(name = "name", nullable = false)
     private String name;
 
+    @Size(min = 2, max = 10, message = "닉네임은 2자 이상 10자 이하여야 합니다")
+    @Pattern(regexp = "^[가-힣a-zA-Z0-9_-]+$", message = "닉네임은 한글, 영문, 숫자, _, -만 사용 가능합니다")
     @Column(name = "nickname", nullable = false)
     private String nickname;
 
