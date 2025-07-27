@@ -23,6 +23,19 @@ export const OAUTH_PROVIDERS = {
   NAVER: "NAVER",
 } as const;
 
+// OAuth 설정
+export const OAUTH_CONFIG = {
+  KAKAO_CLIENT_ID: import.meta.env.VITE_KAKAO_CLIENT_ID,
+  NAVER_CLIENT_ID: import.meta.env.VITE_NAVER_CLIENT_ID,
+  REDIRECT_URI: import.meta.env.VITE_REDIRECT_URI,
+} as const;
+
+// OAuth URL 설정
+export const OAUTH_URLS = {
+  KAKAO_AUTH: "https://kauth.kakao.com/oauth/authorize",
+  NAVER_AUTH: "https://nid.naver.com/oauth2.0/authorize",
+} as const;
+
 // 휴대폰 브랜드
 export const PHONE_BRANDS = {
   APPLE: "Apple",
