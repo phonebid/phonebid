@@ -1,9 +1,9 @@
 package com.phonebid.app.security;
 
 import com.phonebid.app.jwt.JwtUtil;
-import com.phonebid.app.user.domain.Provider;
-import com.phonebid.app.user.domain.Role;
-import com.phonebid.app.user.domain.User;
+import com.phonebid.app.member.domain.Provider;
+import com.phonebid.app.member.domain.Role;
+import com.phonebid.app.member.domain.User;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

@@ -1,7 +1,7 @@
 package com.phonebid.app.security;
 
-import com.phonebid.app.user.domain.Role;
-import com.phonebid.app.user.domain.User;
+import com.phonebid.app.member.domain.Role;
+import com.phonebid.app.member.domain.User;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

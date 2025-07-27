@@ -5,8 +5,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import com.phonebid.app.user.domain.User;
-import com.phonebid.app.user.repository.UserRepository;
+import com.phonebid.app.member.repository.UserRepository;
+import com.phonebid.app.member.domain.User;
 
 import lombok.RequiredArgsConstructor;
 

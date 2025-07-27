@@ -2,9 +2,10 @@ package com.phonebid.app.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.phonebid.app.jwt.JwtUtil;
-import com.phonebid.app.user.domain.Role;
-import com.phonebid.app.user.domain.User;
-import com.phonebid.app.user.dto.RequestDto.LoginRequestDto;
+import com.phonebid.app.member.dto.RequestDto.LoginRequestDto;
+import com.phonebid.app.member.domain.Role;
+import com.phonebid.app.member.domain.User;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

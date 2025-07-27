@@ -1,4 +1,4 @@
-package com.phonebid.app.user.dto.RequestDto;
+package com.phonebid.app.member.dto.RequestDto;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
