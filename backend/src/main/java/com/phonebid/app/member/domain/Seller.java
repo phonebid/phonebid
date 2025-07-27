@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
+import com.phonebid.app.common.domain.Address;
 import com.phonebid.app.common.domain.BaseEntity;
 
 @Entity
@@ -35,12 +36,16 @@ public class Seller extends BaseEntity {
     @Column(name = "approval_status", nullable = false)
     private ApprovalStatus approvalStatus;
 
+    @Embedded
+    private Address storeAddress;
+
     @Builder
-    public Seller(User user, String businessNumber, String storeName) {
+    public Seller(User user, String businessNumber, String storeName, Address storeAddress) {
         this.user = user;
         this.userId = user.getId();
         this.businessNumber = businessNumber;
         this.storeName = storeName;
+        this.storeAddress = storeAddress;
         this.approvalStatus = ApprovalStatus.PENDING; // 기본값: 승인 대기
     }
 
@@ -73,5 +78,20 @@ public class Seller extends BaseEntity {
 
     public void updateBusinessNumber(String businessNumber) {
         this.businessNumber = businessNumber;
+    }
+
+    public void updateStoreAddress(Address storeAddress) {
+        this.storeAddress = storeAddress;
+    }
+
+    public boolean hasStoreAddress() {
+        return storeAddress != null && !storeAddress.isEmpty();
+    }
+
+    public String getStoreAddressSummary() {
+        if (!hasStoreAddress()) {
+            return "주소 정보 없음";
+        }
+        return storeAddress.getFullAddress();
     }
 } 
