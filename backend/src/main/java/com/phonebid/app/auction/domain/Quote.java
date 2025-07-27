@@ -48,13 +48,30 @@ public class Quote extends BaseEntity {
     @Column(name = "expired_at", nullable = false)
     private LocalDateTime expiredAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "purchase_method")
+    private PurchaseMethod purchaseMethod;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "current_carrier")
+    private Carrier currentCarrier;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "activation_method")
+    private ActivationMethod activationMethod;
+
     @Builder
-    public Quote(User user, String model, String storage, Carrier carrier, String color, LocalDateTime expiredAt) {
+    public Quote(User user, String model, String storage, Carrier carrier, String color, 
+                 LocalDateTime expiredAt, PurchaseMethod purchaseMethod, Carrier currentCarrier, 
+                 ActivationMethod activationMethod) {
         this.user = user;
         this.model = model;
         this.storage = storage;
         this.carrier = carrier;
         this.color = color;
+        this.purchaseMethod = purchaseMethod;
+        this.currentCarrier = currentCarrier;
+        this.activationMethod = activationMethod;
         this.status = QuoteStatus.OPEN; // 기본값: 진행중
         this.expiredAt = expiredAt != null ? expiredAt : LocalDateTime.now().plusHours(24); // 기본 24시간
     }
