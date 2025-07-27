@@ -15,3 +15,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
     show-sql: true
+
+service:
+  jwt:
+    secret-key: ${JWT_SECRET_KEY}
