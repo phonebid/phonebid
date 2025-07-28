@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
-import type { AuthState, User, LoginResponse } from "types/UserTypes";
+import type { AuthState, User } from "types/UserTypes";
 import { authService } from "services/authService";
 import { toast } from "react-toastify";
 
@@ -15,8 +15,13 @@ interface AuthStore extends AuthState {
   setAccessToken: (token: string) => void;
 
   // OAuth Actions
-  loginWithKakao: () => Promise<void>;
-  loginWithNaver: () => Promise<void>;
+  loginWithKakao: () => void;
+  loginWithNaver: () => void;
+  handleOAuthCallback: (
+    provider: string,
+    code: string,
+    state: string
+  ) => Promise<void>;
   performLogout: () => Promise<void>;
 
   // Utility Actions
@@ -90,31 +95,43 @@ export const useAuthStore = create<AuthStore>()(
           );
         },
 
-        // OAuth Actions
-        loginWithKakao: async () => {
-          const { setLoading, login } = get();
-
+        // OAuth Actions - URL 리다이렉트 방식
+        loginWithKakao: () => {
           try {
-            setLoading(true);
-            const response: LoginResponse = await authService.loginWithKakao();
-            login(response.user, response.accessToken);
+            authService.loginWithKakao();
           } catch (error) {
             console.error("카카오 로그인 실패:", error);
             toast.error("카카오 로그인에 실패했습니다.");
-            setLoading(false);
           }
         },
 
-        loginWithNaver: async () => {
+        loginWithNaver: () => {
+          try {
+            authService.loginWithNaver();
+          } catch (error) {
+            console.error("네이버 로그인 실패:", error);
+            toast.error("네이버 로그인에 실패했습니다.");
+          }
+        },
+
+        handleOAuthCallback: async (
+          provider: string,
+          code: string,
+          state: string
+        ) => {
           const { setLoading, login } = get();
 
           try {
             setLoading(true);
-            const response: LoginResponse = await authService.loginWithNaver();
+            const response = await authService.handleOAuthCallback(
+              provider,
+              code,
+              state
+            );
             login(response.user, response.accessToken);
           } catch (error) {
-            console.error("네이버 로그인 실패:", error);
-            toast.error("네이버 로그인에 실패했습니다.");
+            console.error(`${provider} 콜백 처리 실패:`, error);
+            toast.error(`${provider} 로그인 처리 중 오류가 발생했습니다.`);
             setLoading(false);
           }
         },

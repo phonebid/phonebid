@@ -1,25 +1,12 @@
 import { apiClient } from "./apiClient";
 import { toast } from "react-toastify";
-import { OAUTH_CONFIG, OAUTH_PROVIDERS } from "utils/constants";
+import { createKakaoAuthURL, createNaverAuthURL } from "utils/constants";
 import type { LoginRequest, LoginResponse, User } from "types/UserTypes";
-
-// 전역 타입 선언 (window 객체 확장)
-declare global {
-  interface Window {
-    Kakao: any;
-    naver_id_login: any;
-    naverLogin: any;
-  }
-}
 
 export class AuthService {
   private static instance: AuthService;
-  private isKakaoInitialized = false;
-  private isNaverInitialized = false;
 
-  private constructor() {
-    this.initializeSDKs();
-  }
+  private constructor() {}
 
   public static getInstance(): AuthService {
     if (!AuthService.instance) {
@@ -29,142 +16,75 @@ export class AuthService {
   }
 
   /**
-   * OAuth SDK 초기화
+   * 카카오 로그인 - URL 리다이렉트 방식
    */
-  private async initializeSDKs(): Promise<void> {
-    await this.initializeKakaoSDK();
-    await this.initializeNaverSDK();
-  }
-
-  /**
-   * 카카오 SDK 초기화
-   */
-  private async initializeKakaoSDK(): Promise<void> {
+  public loginWithKakao(): void {
+    console.log("카카오 로그인 리다이렉트 시작");
     try {
-      if (typeof window === "undefined" || !window.Kakao) {
-        console.warn("Kakao SDK가 로드되지 않았습니다.");
-        return;
-      }
-
-      if (!OAUTH_CONFIG.KAKAO_CLIENT_ID) {
-        console.warn("KAKAO_CLIENT_ID가 설정되지 않았습니다.");
-        return;
-      }
-
-      if (!window.Kakao.isInitialized()) {
-        window.Kakao.init(OAUTH_CONFIG.KAKAO_CLIENT_ID);
-        console.log("Kakao SDK 초기화 완료");
-      }
-
-      this.isKakaoInitialized = true;
+      const authURL = createKakaoAuthURL();
+      console.log("카카오 OAuth URL:", authURL);
+      window.location.href = authURL;
     } catch (error) {
-      console.error("Kakao SDK 초기화 실패:", error);
-      toast.error("카카오 로그인 초기화에 실패했습니다.");
+      console.error("카카오 로그인 URL 생성 실패:", error);
+      toast.error("카카오 로그인 URL 생성에 실패했습니다.");
+      throw error;
     }
   }
 
   /**
-   * 네이버 SDK 초기화
+   * 네이버 로그인 - URL 리다이렉트 방식
    */
-  private async initializeNaverSDK(): Promise<void> {
+  public loginWithNaver(): void {
+    console.log("네이버 로그인 리다이렉트 시작");
     try {
-      if (typeof window === "undefined" || !window.naver_id_login) {
-        console.warn("Naver SDK가 로드되지 않았습니다.");
-        return;
-      }
-
-      if (!OAUTH_CONFIG.NAVER_CLIENT_ID) {
-        console.warn("NAVER_CLIENT_ID가 설정되지 않았습니다.");
-        return;
-      }
-
-      const naverLogin = new window.naver_id_login(
-        OAUTH_CONFIG.NAVER_CLIENT_ID,
-        OAUTH_CONFIG.REDIRECT_URI
-      );
-
-      // 네이버 로그인 객체를 전역에 저장
-      (window as any).naverLogin = naverLogin;
-      this.isNaverInitialized = true;
-      console.log("Naver SDK 초기화 완료");
+      const authURL = createNaverAuthURL();
+      console.log("네이버 OAuth URL:", authURL);
+      window.location.href = authURL;
     } catch (error) {
-      console.error("Naver SDK 초기화 실패:", error);
-      toast.error("네이버 로그인 초기화에 실패했습니다.");
+      console.error("네이버 로그인 URL 생성 실패:", error);
+      toast.error("네이버 로그인 URL 생성에 실패했습니다.");
+      throw error;
     }
   }
 
   /**
-   * 카카오 로그인
+   * OAuth 콜백 처리 - authorization code로 토큰 교환
    */
-  public async loginWithKakao(): Promise<LoginResponse> {
-    if (!this.isKakaoInitialized) {
-      throw new Error("카카오 SDK가 초기화되지 않았습니다.");
+  public async handleOAuthCallback(
+    provider: string,
+    code: string,
+    state: string
+  ): Promise<LoginResponse> {
+    console.log(`${provider} OAuth 콜백 처리:`, { code, state });
+
+    // State 검증 (CSRF 방지)
+    const savedState = sessionStorage.getItem("oauth_state");
+    if (savedState !== state) {
+      console.error("State 파라미터 불일치:", {
+        savedState,
+        receivedState: state,
+      });
+      toast.error("보안 검증에 실패했습니다.");
+      throw new Error("Invalid state parameter");
     }
 
-    return new Promise((resolve, reject) => {
-      window.Kakao.Auth.login({
-        success: async (authObj: any) => {
-          try {
-            console.log("카카오 로그인 성공:", authObj);
+    // 세션에서 state 제거
+    sessionStorage.removeItem("oauth_state");
 
-            // 백엔드 API 호출
-            const loginRequest: LoginRequest = {
-              provider: OAUTH_PROVIDERS.KAKAO,
-              accessToken: authObj.access_token,
-            };
+    try {
+      // 백엔드 API 호출 - authorization code 전송
+      const loginRequest: LoginRequest = {
+        provider: provider as any,
+        authorizationCode: code, // access_token 대신 authorization_code 사용
+      };
 
-            const response = await this.authenticateWithBackend(loginRequest);
-            resolve(response);
-          } catch (error) {
-            console.error("카카오 로그인 처리 중 오류:", error);
-            reject(error);
-          }
-        },
-        fail: (error: any) => {
-          console.error("카카오 로그인 실패:", error);
-          reject(new Error("카카오 로그인에 실패했습니다."));
-        },
-      });
-    });
-  }
-
-  /**
-   * 네이버 로그인
-   */
-  public async loginWithNaver(): Promise<LoginResponse> {
-    if (!this.isNaverInitialized) {
-      throw new Error("네이버 SDK가 초기화되지 않았습니다.");
+      const response = await this.authenticateWithBackend(loginRequest);
+      return response;
+    } catch (error) {
+      console.error(`${provider} 콜백 처리 중 오류:`, error);
+      toast.error(`${provider} 로그인 처리 중 오류가 발생했습니다.`);
+      throw error;
     }
-
-    return new Promise((resolve, reject) => {
-      const naverLogin = (window as any).naverLogin;
-
-      naverLogin.getLoginStatus(async (status: boolean) => {
-        if (status) {
-          try {
-            const accessToken = naverLogin.getAccessToken();
-            console.log("네이버 로그인 성공, 토큰:", accessToken);
-
-            // 백엔드 API 호출
-            const loginRequest: LoginRequest = {
-              provider: OAUTH_PROVIDERS.NAVER,
-              accessToken: accessToken,
-            };
-
-            const response = await this.authenticateWithBackend(loginRequest);
-            resolve(response);
-          } catch (error) {
-            console.error("네이버 로그인 처리 중 오류:", error);
-            reject(error);
-          }
-        } else {
-          // 로그인 창 열기
-          naverLogin.init();
-          naverLogin.authorize();
-          reject(new Error("네이버 로그인이 취소되었습니다."));
-        }
-      });
-    });
   }
 
   /**
@@ -181,7 +101,6 @@ export class AuthService {
 
       // 토큰을 로컬 스토리지에 저장
       localStorage.setItem("accessToken", response.accessToken);
-      localStorage.setItem("refreshToken", response.refreshToken);
 
       toast.success(
         `${
@@ -202,22 +121,6 @@ export class AuthService {
    */
   public async logout(): Promise<void> {
     try {
-      // 카카오 로그아웃
-      if (this.isKakaoInitialized && window.Kakao.Auth.getAccessToken()) {
-        await new Promise<void>((resolve) => {
-          window.Kakao.Auth.logout(() => {
-            console.log("카카오 로그아웃 완료");
-            resolve();
-          });
-        });
-      }
-
-      // 네이버 로그아웃
-      if (this.isNaverInitialized && (window as any).naverLogin) {
-        (window as any).naverLogin.logout();
-        console.log("네이버 로그아웃 완료");
-      }
-
       // 로컬 스토리지 정리
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
@@ -246,32 +149,6 @@ export class AuthService {
     return userData ? JSON.parse(userData) : null;
   }
 
-  /**
-   * 토큰 갱신
-   */
-  public async refreshToken(): Promise<string | null> {
-    try {
-      const refreshToken = localStorage.getItem("refreshToken");
-      if (!refreshToken) {
-        throw new Error("리프레시 토큰이 없습니다.");
-      }
-
-      const response = await apiClient.post<{ accessToken: string }>(
-        "/auth/refresh",
-        {
-          refreshToken,
-        }
-      );
-
-      localStorage.setItem("accessToken", response.accessToken);
-      return response.accessToken;
-    } catch (error) {
-      console.error("토큰 갱신 실패:", error);
-      // 토큰 갱신 실패 시 로그아웃 처리
-      await this.logout();
-      return null;
-    }
-  }
 }
 
 // 싱글톤 인스턴스 내보내기

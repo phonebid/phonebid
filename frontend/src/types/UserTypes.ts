@@ -11,12 +11,12 @@ export interface User {
 
 export interface LoginRequest {
   provider: "KAKAO" | "NAVER";
-  accessToken: string;
+  accessToken?: string; // 기존 방식 (선택적)
+  authorizationCode?: string; // 새로운 방식 (선택적)
 }
 
 export interface LoginResponse {
   accessToken: string;
-  refreshToken: string;
   user: User;
 }
 
