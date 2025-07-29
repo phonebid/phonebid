@@ -30,7 +30,7 @@ function App() {
           element={
             <Layout>
               <Routes>
-                <Route path="/" element={<HomePage />} />
+                <Route path="/" element={<LoginPage />} />
                 {/* 추후 추가될 라우트들 */}
                 {/* <Route path="/auctions" element={<AuctionListPage />} /> */}
                 {/* <Route path="/auction/:id" element={<AuctionDetailPage />} /> */}
