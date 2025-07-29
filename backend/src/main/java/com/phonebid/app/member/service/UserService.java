@@ -2,7 +2,7 @@ package com.phonebid.app.member.service;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
 import com.phonebid.app.common.exception.CommonErrorCode;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.member.dto.RequestDto.SignupRequestDto;
@@ -23,6 +23,7 @@ public class UserService {
     /**
      * 회원 가입
      */
+    @Transactional
     public void signup(SignupRequestDto requestDto) {
 
         String username = requestDto.getUsername();
