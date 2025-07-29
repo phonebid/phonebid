@@ -27,8 +27,6 @@ public class User extends BaseEntity {
     @Column(name = "username", nullable = false, unique = true)
     private String username;
 
-    @Size(min = 8, max = 20, message = "비밀번호는 8자 이상 20자 이하여야 합니다")
-    //@Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]+$", message = "비밀번호는 대문자, 소문자, 숫자, 특수문자를 포함해야 합니다")
     @Column(name = "password", nullable = false)
     private String password;
 
@@ -49,10 +47,10 @@ public class User extends BaseEntity {
     private Role role;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "provider", nullable = false)
+    @Column(name = "provider", nullable = true)
     private Provider provider;
 
-    @Column(name = "provider_id", nullable = false)
+    @Column(name = "provider_id", nullable = true)
     private String providerId;
 
     @Builder

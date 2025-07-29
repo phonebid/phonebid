@@ -40,3 +40,16 @@ out/
 .env
 .env.local
 .env.production
+.env.development
+.env.test
+
+# Security files
+*.key
+*.pem
+*.p12
+*.jks
+secrets/
+config/secrets/
+
+# Application configuration files with secrets
+application-dev.yml

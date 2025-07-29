@@ -42,7 +42,12 @@ public enum CommonErrorCode implements ErrorCode {
     RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 리소스를 찾을 수 없습니다."),
 
     // 서비스 불가 에러
-    SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "현재 서비스 이용이 불가합니다.");
+    SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "현재 서비스 이용이 불가합니다."),
+
+    // 회원가입 관련 에러
+    DUPLICATE_USERNAME(HttpStatus.CONFLICT, "중복된 사용자가 존재합니다."),
+    DUPLICATE_EMAIL(HttpStatus.CONFLICT, "중복된 Email 입니다."),
+    DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "중복된 닉네임 입니다.");
 
     private final HttpStatus status;
     private final String message;
