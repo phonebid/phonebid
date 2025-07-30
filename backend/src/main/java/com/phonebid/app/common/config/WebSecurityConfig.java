@@ -13,7 +13,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.phonebid.app.jwt.JwtUtil;
-import com.phonebid.app.security.JwtAuthenticationFilter;
 import com.phonebid.app.security.JwtAuthorizationFilter;
 import com.phonebid.app.security.UserDetailsServiceImpl;
 
@@ -51,13 +50,6 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter() throws Exception {
-        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtUtil); 
-        filter.setAuthenticationManager(authenticationManager(authenticationConfiguration)); 
-        return filter; 
-    }
-
-    @Bean
     public JwtAuthorizationFilter jwtAuthorizationFilter() {
         return new JwtAuthorizationFilter(jwtUtil, userDetailsService);
     }
@@ -79,6 +71,7 @@ public class WebSecurityConfig {
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll() // resources 접근 허용 설정
                         .requestMatchers("/").permitAll() // 메인 페이지 요청 허가
                         .requestMatchers("/api/v1/users/signup").permitAll() // 회원가입 엔드포인트 접근 허가
+                        .requestMatchers("/api/v1/users/login").permitAll() // 로그인 엔드포인트 접근 허가
                         //.requestMatchers(HttpMethod.GET, "/api/boards/**").permitAll()
                         .anyRequest().authenticated() // 그 외 모든 요청 인증처리
         );
@@ -88,9 +81,8 @@ public class WebSecurityConfig {
         //                 .loginPage("/api/user/login-page").permitAll()
         // );
 
-        // 필터 관리 (인가 필터 -> 인증 필터 순으로 처리)
-        http.addFilterBefore(jwtAuthorizationFilter(), JwtAuthenticationFilter.class);
-        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+        // 필터 관리 (인가 필터만 처리)
+        http.addFilterBefore(jwtAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         // 관리자 페이지 접근 불가 설정
         // http.exceptionHandling((exceptionHandling) ->

@@ -47,7 +47,10 @@ public enum CommonErrorCode implements ErrorCode {
     // 회원가입 관련 에러
     DUPLICATE_USERNAME(HttpStatus.CONFLICT, "중복된 사용자가 존재합니다."),
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "중복된 Email 입니다."),
-    DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "중복된 닉네임 입니다.");
+    DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "중복된 닉네임 입니다."),
+
+    // 로그인 관련 에러
+    INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 올바르지 않습니다.");
 
     private final HttpStatus status;
     private final String message;

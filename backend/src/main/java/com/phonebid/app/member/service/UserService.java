@@ -6,9 +6,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.phonebid.app.common.exception.CommonErrorCode;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.member.dto.RequestDto.SignupRequestDto;
+import com.phonebid.app.member.dto.RequestDto.LoginRequestDto;
+import com.phonebid.app.member.dto.ResponseDto.LoginResponseDto;
 import com.phonebid.app.member.domain.User;
 import com.phonebid.app.member.domain.Role;
 import com.phonebid.app.member.repository.UserRepository;
+import com.phonebid.app.jwt.JwtUtil;
 
 import lombok.RequiredArgsConstructor;
 import java.util.Optional;
@@ -19,6 +22,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
     /**
      * 회원 가입
@@ -65,5 +69,32 @@ public class UserService {
         userRepository.save(user);
     }
 
+    /**
+     * 로그인
+     */
+    @Transactional(readOnly = true)
+    public LoginResponseDto login(LoginRequestDto requestDto) {
+        String username = requestDto.getUsername();
+        String password = requestDto.getPassword();
 
+        // 사용자 존재 확인
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new CustomException(CommonErrorCode.INVALID_CREDENTIALS));
+
+        // 비밀번호 확인
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new CustomException(CommonErrorCode.INVALID_CREDENTIALS);
+        }
+
+        // JWT 토큰 생성
+        String token = jwtUtil.createToken(user.getUsername(), user.getRole());
+        
+        // LoginResponseDto 생성 및 반환
+        return LoginResponseDto.of(
+            token, 
+            user.getUsername(), 
+            user.getNickname(), 
+            user.getRole().name()
+        );
+    }
 }   
