@@ -1,16 +1,14 @@
-import Header from "./Header";
-import Footer from "./Footer";
-
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
+    // 높이 100vh 설정
+    <div className="min-h-screen h-screen flex flex-col">
+      {/* <Header /> */}
       <main className="flex-1">{children}</main>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 };

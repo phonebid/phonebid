@@ -2,11 +2,14 @@ import { Link } from "react-router-dom";
 import { useAuthStore } from "store/authStore";
 
 const Header: React.FC = () => {
-  const { isAuthenticated, user, logout } = useAuthStore();
+  const { isAuthenticated, user, performLogout, isLoading } = useAuthStore();
 
-  const handleLogout = () => {
-    logout();
-    // 추후 로그아웃 API 호출 추가
+  const handleLogout = async () => {
+    try {
+      await performLogout();
+    } catch (error) {
+      console.error("로그아웃 실패:", error);
+    }
   };
 
   return (
@@ -16,8 +19,8 @@ const Header: React.FC = () => {
           {/* 로고 */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">PB</span>
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">📱</span>
               </div>
               <span className="text-xl font-bold text-gray-900">PhoneBid</span>
             </Link>
@@ -27,19 +30,19 @@ const Header: React.FC = () => {
           <nav className="hidden md:flex space-x-8">
             <Link
               to="/auctions"
-              className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
             >
               경매 목록
             </Link>
             <Link
               to="/auctions/create"
-              className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
             >
               견적 등록
             </Link>
             <Link
               to="/how-it-works"
-              className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
             >
               이용방법
             </Link>
@@ -54,28 +57,29 @@ const Header: React.FC = () => {
                 </span>
                 <Link
                   to="/dashboard"
-                  className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                 >
                   대시보드
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="text-gray-500 hover:text-gray-700 text-sm font-medium"
+                  disabled={isLoading}
+                  className="text-gray-500 hover:text-gray-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  로그아웃
+                  {isLoading ? "로그아웃 중..." : "로그아웃"}
                 </button>
               </div>
             ) : (
               <div className="flex items-center space-x-3">
                 <Link
                   to="/login"
-                  className="text-gray-700 hover:text-primary-600 text-sm font-medium"
+                  className="text-gray-700 hover:text-blue-600 text-sm font-medium"
                 >
                   로그인
                 </Link>
                 <Link
                   to="/register"
-                  className="bg-primary-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary-700 transition-colors"
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
                 >
                   회원가입
                 </Link>
@@ -87,7 +91,7 @@ const Header: React.FC = () => {
           <div className="md:hidden">
             <button
               type="button"
-              className="text-gray-700 hover:text-primary-600 focus:outline-none focus:text-primary-600"
+              className="text-gray-700 hover:text-blue-600 focus:outline-none focus:text-blue-600"
             >
               <svg
                 className="h-6 w-6"
