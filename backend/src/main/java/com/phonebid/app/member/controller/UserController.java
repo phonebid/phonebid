@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.phonebid.app.common.dto.ApiResponse;
 import com.phonebid.app.member.dto.RequestDto.SignupRequestDto;
+import com.phonebid.app.member.dto.RequestDto.LoginRequestDto;
+import com.phonebid.app.member.dto.ResponseDto.LoginResponseDto;
 import com.phonebid.app.member.service.UserService;
 
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,5 +28,13 @@ public class UserController {
         userService.signup(requestDto);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(HttpStatus.CREATED, "회원가입이 성공적으로 완료되었습니다.", null));
+    }
+
+    @PostMapping(value = "/login", consumes = {"application/json", "text/plain"})
+    public ResponseEntity<ApiResponse<LoginResponseDto>> login(@Valid @RequestBody LoginRequestDto requestDto) {
+        LoginResponseDto responseDto = userService.login(requestDto);
+        
+        return ResponseEntity.ok()
+                .body(ApiResponse.success(HttpStatus.OK, "로그인이 성공적으로 완료되었습니다.", responseDto));
     }
 }
