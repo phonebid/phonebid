@@ -24,7 +24,11 @@ import org.springframework.security.config.annotation.authentication.configurati
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -55,12 +59,31 @@ public class WebSecurityConfig {
     }
 
     /**
+     * CORS 설정
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowCredentials(true);
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+    /**
      * 등록 후 security Filter에 끼워 넣기
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         // CSRF 설정
         http.csrf((csrf) -> csrf.disable());
+
+        // CORS 설정
+        http.cors((cors) -> cors.configurationSource(corsConfigurationSource()));
 
         http.sessionManagement((sessionManagement) ->
                 sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)  
@@ -72,6 +95,8 @@ public class WebSecurityConfig {
                         .requestMatchers("/").permitAll() // 메인 페이지 요청 허가
                         .requestMatchers("/api/v1/users/signup").permitAll() // 회원가입 엔드포인트 접근 허가
                         .requestMatchers("/api/v1/users/login").permitAll() // 로그인 엔드포인트 접근 허가
+                        .requestMatchers("/api/v1/auth/kakao/**").permitAll() // 카카오 OAuth 엔드포인트 접근 허가
+                        .requestMatchers("/api/v1/auth/naver/**").permitAll() // 네이버 OAuth 엔드포인트 접근 허가
                         //.requestMatchers(HttpMethod.GET, "/api/boards/**").permitAll()
                         .anyRequest().authenticated() // 그 외 모든 요청 인증처리
         );
