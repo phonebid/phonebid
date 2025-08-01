@@ -22,7 +22,7 @@ public class User extends BaseEntity {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @Size(min = 4, max = 10, message = "유저ID는 4자 이상 10자 이하여야 합니다")  // 길이를 4~10자로 제한
+    @Size(min = 4, max = 255, message = "유저ID는 4자 이상 255자 이하여야 합니다")  // 길이를 4~255자로 확장
     @Pattern(regexp = "^[a-z0-9]+$")  // 알파벳 소문자와 숫자로만 구성
     @Column(name = "username", nullable = false, unique = true)
     private String username;
@@ -92,5 +92,13 @@ public class User extends BaseEntity {
 
     public void updateRole(Role role) {
         this.role = role;
+    }
+
+    public void updateProvider(Provider provider) {
+        this.provider = provider;
+    }
+
+    public void updateProviderId(String providerId) {
+        this.providerId = providerId;
     }
 }
