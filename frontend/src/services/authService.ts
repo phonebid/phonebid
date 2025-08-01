@@ -1,7 +1,6 @@
-import { apiClient } from "./apiClient";
 import { toast } from "react-toastify";
 import { createKakaoAuthURL, createNaverAuthURL } from "utils/constants";
-import type { LoginRequest, LoginResponse, User } from "types/UserTypes";
+import type { User } from "types/UserTypes";
 
 export class AuthService {
   private static instance: AuthService;
@@ -48,75 +47,6 @@ export class AuthService {
   }
 
   /**
-   * OAuth 콜백 처리 - authorization code로 토큰 교환
-   */
-  public async handleOAuthCallback(
-    provider: string,
-    code: string,
-    state: string
-  ): Promise<LoginResponse> {
-    console.log(`${provider} OAuth 콜백 처리:`, { code, state });
-
-    // State 검증 (CSRF 방지)
-    const savedState = sessionStorage.getItem("oauth_state");
-    if (savedState !== state) {
-      console.error("State 파라미터 불일치:", {
-        savedState,
-        receivedState: state,
-      });
-      toast.error("보안 검증에 실패했습니다.");
-      throw new Error("Invalid state parameter");
-    }
-
-    // 세션에서 state 제거
-    sessionStorage.removeItem("oauth_state");
-
-    try {
-      // 백엔드 API 호출 - authorization code 전송
-      const loginRequest: LoginRequest = {
-        provider: provider as any,
-        authorizationCode: code, // access_token 대신 authorization_code 사용
-      };
-
-      const response = await this.authenticateWithBackend(loginRequest);
-      return response;
-    } catch (error) {
-      console.error(`${provider} 콜백 처리 중 오류:`, error);
-      toast.error(`${provider} 로그인 처리 중 오류가 발생했습니다.`);
-      throw error;
-    }
-  }
-
-  /**
-   * 백엔드 인증 API 호출
-   */
-  private async authenticateWithBackend(
-    loginRequest: LoginRequest
-  ): Promise<LoginResponse> {
-    try {
-      const response = await apiClient.post<LoginResponse>(
-        "/auth/oauth/login",
-        loginRequest
-      );
-
-      // 토큰을 로컬 스토리지에 저장
-      localStorage.setItem("accessToken", response.accessToken);
-
-      toast.success(
-        `${
-          loginRequest.provider === "KAKAO" ? "카카오" : "네이버"
-        } 로그인 성공!`
-      );
-
-      return response;
-    } catch (error) {
-      console.error("백엔드 인증 실패:", error);
-      toast.error("로그인 처리 중 오류가 발생했습니다.");
-      throw error;
-    }
-  }
-
-  /**
    * 로그아웃
    */
   public async logout(): Promise<void> {
@@ -148,7 +78,6 @@ export class AuthService {
     const userData = localStorage.getItem("userData");
     return userData ? JSON.parse(userData) : null;
   }
-
 }
 
 // 싱글톤 인스턴스 내보내기
