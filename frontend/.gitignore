@@ -23,7 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 
+# Environment variables
 .env
+.env.local
+.env.production
 
 # TypeScript 빌드 캐시
 *.tsbuildinfo
