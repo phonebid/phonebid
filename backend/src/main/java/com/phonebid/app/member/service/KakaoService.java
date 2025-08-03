@@ -23,7 +23,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
-
+import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 /**
@@ -52,6 +52,7 @@ public class KakaoService {
      * @return 로그인 응답 DTO
      * @throws CustomException OAuth2 처리 중 오류 발생 시
      */
+    @Transactional
     public LoginResponseDto kakaoLogin(String code) throws CustomException {
         try {
             // 1. 인가 코드로 액세스 토큰 요청
@@ -74,7 +75,7 @@ public class KakaoService {
     }
     
     /**
-     * 카카오 사용자 회원가입 처리
+     * 카카오 사용자 정보로 사용자 등록 또는 연동
      * @param kakaoUserInfo 카카오 사용자 정보
      * @return 등록된 사용자 엔티티
      */
@@ -95,12 +96,12 @@ public class KakaoService {
                 kakaoUser.updateProviderId(providerId);
                 log.info("기존 사용자에 카카오 연동: username={}", kakaoUser.getUsername());
             } else {
-                // 신규 회원가입
+                // 신규 회원가입 - 카카오 이메일을 그대로 username으로 사용
                 String password = UUID.randomUUID().toString();
                 String encodedPassword = passwordEncoder.encode(password);
                 
-                // username은 email 기반으로 생성 (중복 방지)
-                String username = generateUsername(kakaoUserInfo.getEmail());
+                // username은 카카오 이메일 그대로 사용
+                String username = kakaoUserInfo.getEmail();
                 
                 kakaoUser = User.builder()
                         .username(username)
@@ -120,24 +121,6 @@ public class KakaoService {
         }
         
         return kakaoUser;
-    }
-    
-    /**
-     * 이메일 기반으로 고유한 username 생성
-     * @param email 이메일
-     * @return 고유한 username
-     */
-    private String generateUsername(String email) {
-        String baseUsername = email.split("@")[0];
-        String username = baseUsername;
-        int suffix = 1;
-        
-        while (userRepository.findByUsername(username).isPresent()) {
-            username = baseUsername + suffix;
-            suffix++;
-        }
-        
-        return username;
     }
     
     /**
@@ -227,13 +210,33 @@ public class KakaoService {
                 throw new CustomException(KakaoErrorCode.KAKAO_USER_INFO_REQUEST_FAILED);
             }
             
+            // 필수 필드 검증
+            if (!jsonNode.has("id")) {
+                log.error("카카오 사용자 정보 응답에 id 필드가 없습니다");
+                throw new CustomException(KakaoErrorCode.KAKAO_API_RESPONSE_PARSE_FAILED);
+            }
+            
+            JsonNode properties = jsonNode.get("properties");
+            if (properties == null || !properties.has("nickname")) {
+                log.error("카카오 사용자 정보 응답에 properties.nickname 필드가 없습니다");
+                throw new CustomException(KakaoErrorCode.KAKAO_API_RESPONSE_PARSE_FAILED);
+            }
+            
+            JsonNode kakaoAccount = jsonNode.get("kakao_account");
+            if (kakaoAccount == null || !kakaoAccount.has("email")) {
+                log.error("카카오 사용자 정보 응답에 kakao_account.email 필드가 없습니다");
+                throw new CustomException(KakaoErrorCode.KAKAO_API_RESPONSE_PARSE_FAILED);
+            }
+            
+            // 안전한 필드 추출
             Long id = jsonNode.get("id").asLong();
-            String nickname = jsonNode.get("properties")
-                    .get("nickname").asText();
-            String email = jsonNode.get("kakao_account")
-                    .get("email").asText();
-            String name = jsonNode.get("kakao_account")
-                    .get("name") != null ? jsonNode.get("kakao_account").get("name").asText() : nickname;
+            String nickname = properties.get("nickname").asText();
+            String email = kakaoAccount.get("email").asText();
+            
+            // 선택적 필드 처리 (name은 선택사항)
+            String name = kakaoAccount.has("name") && !kakaoAccount.get("name").isNull() 
+                ? kakaoAccount.get("name").asText() 
+                : nickname;
             
             log.info("카카오 사용자 정보: id={}, nickname={}, email={}", id, nickname, email);
             return KakaoUserInfoDto.of(id, nickname, email, name);

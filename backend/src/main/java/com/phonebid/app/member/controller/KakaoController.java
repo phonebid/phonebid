@@ -9,11 +9,14 @@ import com.phonebid.app.member.service.KakaoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import java.time.Duration;
+import java.util.Arrays;
 
 /**
  * 카카오 OAuth2 인증 컨트롤러
@@ -26,12 +29,16 @@ import jakarta.servlet.http.HttpServletResponse;
 public class KakaoController {
     
     private final KakaoService kakaoService;
+    private final Environment environment;
     
     @Value("${oauth.kakao.client-id}")
     private String kakaoClientId;
     
     @Value("${oauth.kakao.redirect-uri}")
     private String kakaoRedirectUri;
+    
+    @Value("${frontend.url}")
+    private String frontendUrl;
     
     /**
      * 카카오 로그인 콜백 처리 (카카오에서 직접 호출)
@@ -50,23 +57,30 @@ public class KakaoController {
             
             log.info("카카오 로그인 성공: username={}", loginResponse.getUsername());
             
-            // JWT 토큰을 쿠키에 저장 (Bearer 접두사 제거)
-            Cookie cookie = new Cookie(JwtUtil.AUTHORIZATION_HEADER, token.substring(7));
-            cookie.setPath("/");
-            cookie.setHttpOnly(true); // XSS 공격 방지
-            cookie.setSecure(false); // 개발 환경에서는 false, 프로덕션에서는 true
-            cookie.setMaxAge(3600); // 1시간 유효
-            response.addCookie(cookie);
+            // JWT 토큰을 보안 강화된 쿠키에 저장 (Bearer 접두사 제거)
+            boolean isProduction = Arrays.asList(environment.getActiveProfiles()).contains("prod");
+            
+            ResponseCookie cookie = ResponseCookie.from(JwtUtil.AUTHORIZATION_HEADER, token.substring(7))
+                    .path("/")
+                    .httpOnly(true) // XSS 공격 방지
+                    .secure(isProduction) // 프로덕션에서만 HTTPS 필수
+                    .sameSite("Strict") // CSRF 공격 방지
+                    .maxAge(Duration.ofHours(1)) // 1시간 유효
+                    .build();
+            
+            response.addHeader("Set-Cookie", cookie.toString());
             
             // 프론트엔드 메인 페이지로 리다이렉트
-            response.sendRedirect("http://localhost:5173/");
+            response.sendRedirect(frontendUrl + "/");
 
         } catch (CustomException e) {
             log.error("카카오 OAuth2 처리 중 오류 발생: {}", e.getMessage(), e);
-            response.sendRedirect("http://localhost:5173/login?error=" + e.getErrorCode().getClass().getSimpleName());
+            // 보안: 내부 에러 코드 노출 방지, 일반적인 에러 메시지 사용
+            response.sendRedirect(frontendUrl + "/login?error=social_login_failed");
         } catch (Exception e) {
             log.error("카카오 로그인 처리 중 예상치 못한 오류 발생", e);
-            response.sendRedirect("http://localhost:5173/login?error=UNKNOWN_ERROR");
+            // 보안: 내부 에러 코드 노출 방지, 일반적인 에러 메시지 사용
+            response.sendRedirect(frontendUrl + "/login?error=social_login_failed");
         }
     }
     

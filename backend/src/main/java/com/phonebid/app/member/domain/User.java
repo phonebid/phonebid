@@ -23,7 +23,7 @@ public class User extends BaseEntity {
     private UUID id;
 
     @Size(min = 4, max = 255, message = "유저ID는 4자 이상 255자 이하여야 합니다")  // 길이를 4~255자로 확장
-    @Pattern(regexp = "^[a-z0-9]+$")  // 알파벳 소문자와 숫자로만 구성
+    @Pattern(regexp = "^[a-z0-9@._-]+$", message = "유저ID는 소문자, 숫자, @, ., _, -만 사용 가능합니다")  // 이메일 형식 허용
     @Column(name = "username", nullable = false, unique = true)
     private String username;
 
