@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "store/authStore";
+import SocialLoginButton from "components/auth/SocialLoginButton";
 import Input from "components/common/Input";
 import Button from "components/common/Button";
 import Checkbox from "components/common/Checkbox";
+import { loginWithKakao, loginWithNaver } from "services/authService";
+import { apiClient } from "services/apiClient";
+import { toast } from "react-toastify";
 
 const SignupPage = () => {
   const navigate = useNavigate();
@@ -37,6 +41,8 @@ const SignupPage = () => {
     marketingConsent: false,
   });
 
+  const [isLoading, setIsLoading] = useState(false);
+
   // 이미 로그인된 사용자는 홈으로 리다이렉트
   useEffect(() => {
     if (isAuthenticated) {
@@ -56,7 +62,7 @@ const SignupPage = () => {
     const usernameRegex = /^[a-z0-9]+$/;
     if (!username.trim()) return "아이디를 입력해주세요.";
     if (username.length < 4 || username.length > 10) {
-      return "아이디는 4자 이상이어야 합니다.";
+      return "아이디는 4자 이상 10자 이하여야 합니다.";
     }
     if (!usernameRegex.test(username)) {
       return "아이디는 알파벳 소문자와 숫자로만 구성되어야 합니다.";
@@ -188,7 +194,7 @@ const SignupPage = () => {
   };
 
   // 회원가입 처리
-  const handleSignup = () => {
+  const handleSignup = async () => {
     // 에러 상태 초기화
     const newErrors = {
       name: "",
@@ -255,15 +261,44 @@ const SignupPage = () => {
 
     // 모든 검증 통과 시 회원가입 처리
     setErrors(newErrors); // 모든 에러 초기화
-    console.log("회원가입 시도:", {
-      username: formData.username,
-      password: formData.password,
-      email: formData.email,
-      name: formData.name,
-      nickname: formData.nickname,
-      agreements,
-    });
-    // TODO: API 연결 후 실제 회원가입 처리
+    setIsLoading(true);
+
+    try {
+      const signupData = {
+        username: formData.username,
+        password: formData.password,
+        email: formData.email,
+        name: formData.name,
+        nickname: formData.nickname,
+      };
+
+      await apiClient.post("/api/v1/users/signup", signupData);
+      toast.success("회원가입이 완료되었습니다.");
+      navigate("/login", { replace: true });
+    } catch (error: any) {
+      console.error("회원가입 실패:", error);
+      const errorMessage =
+        error.response?.data?.message || "회원가입에 실패했습니다.";
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKakaoSignup = () => {
+    try {
+      loginWithKakao(); // OAuth 플로우는 로그인과 동일
+    } catch (error) {
+      console.error("카카오 회원가입 실패:", error);
+    }
+  };
+
+  const handleNaverSignup = () => {
+    try {
+      loginWithNaver(); // OAuth 플로우는 로그인과 동일
+    } catch (error) {
+      console.error("네이버 회원가입 실패:", error);
+    }
   };
 
   return (
@@ -391,10 +426,29 @@ const SignupPage = () => {
 
             <Button
               onClick={handleSignup}
-              className="bg-indigo-100 text-indigo-700 w-full px-6 py-3 rounded-lg font-medium text-sm border border-indigo-200 hover:bg-indigo-200 hover:border-indigo-300 transition-all duration-200"
+              disabled={isLoading}
+              className="bg-indigo-100 text-indigo-700 w-full px-6 py-3 rounded-lg font-medium text-sm border border-indigo-200 hover:bg-indigo-200 hover:border-indigo-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              회원가입
+              {isLoading ? "회원가입 중..." : "회원가입"}
             </Button>
+          </div>
+
+          {/* 소셜 회원가입 버튼들 */}
+          <div className="space-y-4 w-full">
+            <SocialLoginButton provider="kakao" onClick={handleKakaoSignup} />
+
+            <SocialLoginButton provider="naver" onClick={handleNaverSignup} />
+          </div>
+
+          {/* 로그인 링크 */}
+          <div className="text-muted-foreground flex justify-center gap-1 text-sm mt-4">
+            <p>이미 회원이신가요?</p>
+            <div
+              onClick={() => navigate("/login")}
+              className="font-medium hover:underline text-indigo-700 cursor-pointer"
+            >
+              로그인
+            </div>
           </div>
         </div>
       </div>
