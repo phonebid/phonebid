@@ -4,10 +4,13 @@ import { useAuthStore } from "store/authStore";
 import SocialLoginButton from "components/auth/SocialLoginButton";
 import Input from "components/common/Input";
 import Button from "components/common/Button";
+import { loginWithKakao, loginWithNaver } from "services/authService";
+import { apiClient } from "services/apiClient";
+import { toast } from "react-toastify";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, loginWithKakao, loginWithNaver } = useAuthStore();
+  const { isAuthenticated, login } = useAuthStore();
 
   // 일반 로그인 상태
   const [credentials, setCredentials] = useState({
@@ -18,6 +21,7 @@ const LoginPage = () => {
     username: "",
     password: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   // 이미 로그인된 사용자는 홈으로 리다이렉트
   useEffect(() => {
@@ -27,7 +31,7 @@ const LoginPage = () => {
   }, [isAuthenticated, navigate]);
 
   // 일반 로그인 처리
-  const handleLogin = () => {
+  const handleLogin = async () => {
     // 기본 검증
     const newErrors = {
       username: "",
@@ -43,10 +47,29 @@ const LoginPage = () => {
 
     setErrors(newErrors);
 
-    // 검증 통과 시 로그인 처리 (추후 API 연결)
+    // 검증 통과 시 로그인 처리
     if (!newErrors.username && !newErrors.password) {
-      console.log("로그인 시도:", credentials);
-      // TODO: API 연결 후 실제 로그인 처리
+      setIsLoading(true);
+      try {
+        const response = await apiClient.post("/users/login", credentials);
+        const responseData = response as {
+          data: { accessToken: string; user: any };
+        };
+        const { accessToken, user } = responseData.data;
+
+        // 상태 업데이트 및 토큰 저장
+        login(user, accessToken);
+
+        toast.success("로그인이 완료되었습니다.");
+        navigate("/", { replace: true });
+      } catch (error: any) {
+        console.error("로그인 실패:", error);
+        const errorMessage =
+          error.response?.data?.message || "로그인에 실패했습니다.";
+        toast.error(errorMessage);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -105,20 +128,11 @@ const LoginPage = () => {
 
             <Button
               onClick={handleLogin}
-              className="bg-indigo-100 text-indigo-700 w-full px-6 py-3 rounded-lg font-medium text-sm border border-indigo-200 hover:bg-indigo-200 hover:border-indigo-300 transition-all duration-200"
+              disabled={isLoading}
+              className="bg-indigo-100 text-indigo-700 w-full px-6 py-3 rounded-lg font-medium text-sm border border-indigo-200 hover:bg-indigo-200 hover:border-indigo-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              로그인
+              {isLoading ? "로그인 중..." : "로그인"}
             </Button>
-          </div>
-
-          {/* 구분선 */}
-          <div className="relative mb-8">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">또는</span>
-            </div>
           </div>
 
           {/* 소셜 로그인 버튼들 */}
@@ -127,11 +141,12 @@ const LoginPage = () => {
 
             <SocialLoginButton provider="naver" onClick={handleNaverLogin} />
           </div>
+
           <div className="text-muted-foreground flex justify-center gap-1 text-sm mt-4">
             <p>아직 회원이 아니신가요?</p>
             <div
               onClick={() => navigate("/signup")}
-              className="font-medium hover:underline text-indigo-700"
+              className="font-medium hover:underline text-indigo-700 cursor-pointer"
             >
               회원가입
             </div>
