@@ -25,3 +25,13 @@ dist-ssr
 
 .env
 
+# TypeScript 빌드 캐시
+*.tsbuildinfo
+
+# 테스트 커버리지
+coverage/
+.nyc_output/
+
+# 임시 파일
+*.tmp
+*.temp
