@@ -29,7 +29,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleCustomException(CustomException e) {
         log.error("CustomException 발생: {}", e.getMessage());
         return ResponseEntity.status(e.getErrorCode().getStatus())
-                .body(ApiResponse.success(e.getErrorCode().getStatus(), e.getMessage(), null));
+                .body(ApiResponse.error(e.getErrorCode().getStatus(), e.getMessage(), null));
     }
 
     /**
@@ -39,7 +39,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException e) {
         log.error("IllegalArgumentException 발생: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiResponse.success(HttpStatus.CONFLICT, e.getMessage(), null));
+                .body(ApiResponse.error(HttpStatus.CONFLICT, e.getMessage(), null));
     }
 
     /**
@@ -55,7 +55,7 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.success(HttpStatus.BAD_REQUEST, "입력 값이 유효하지 않습니다.", validationErrors));
+                .body(ApiResponse.error(HttpStatus.BAD_REQUEST, "입력 값이 유효하지 않습니다.", validationErrors));
     }
 
     /**
@@ -71,7 +71,7 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.success(HttpStatus.BAD_REQUEST, "입력 값이 유효하지 않습니다.", validationErrors));
+                .body(ApiResponse.error(HttpStatus.BAD_REQUEST, "입력 값이 유효하지 않습니다.", validationErrors));
     }
 
     /**
@@ -84,6 +84,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
         log.error("예상치 못한 예외 발생: {}", e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.success(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부에서 문제가 발생했습니다.", null));
+                .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부에서 문제가 발생했습니다.", null));
     }
 } 
