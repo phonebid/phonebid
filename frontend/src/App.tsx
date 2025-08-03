@@ -6,6 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Layout from "components/layout/Layout";
 import HomePage from "pages/HomePage";
 import LoginPage from "pages/LoginPage";
+import SignupPage from "pages/SignupPage";
 import AuthCallbackPage from "pages/AuthCallbackPage";
 import ConfettiTestPage from "@/pages/ConfettiPage";
 import { useAuthStore } from "store/authStore";
@@ -23,6 +24,7 @@ function App() {
       <Routes>
         {/* 전체화면 페이지들 (Layout 없음) */}
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
         {/* Layout이 포함된 일반 페이지들 */}

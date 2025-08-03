@@ -1,12 +1,13 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
-import type { AuthState, User } from "types/UserTypes";
+import type { AuthState, User, SignupRequest } from "types/UserTypes";
 import { authService } from "services/authService";
 import { toast } from "react-toastify";
 
 interface AuthStore extends AuthState {
   // Loading states
   isLoading: boolean;
+  isSignupLoading: boolean;
 
   // Actions
   login: (user: User, accessToken: string) => void;
@@ -18,10 +19,14 @@ interface AuthStore extends AuthState {
   loginWithKakao: () => void;
   loginWithNaver: () => void;
 
+  // Signup Actions
+  signup: (signupData: SignupRequest) => Promise<void>;
+
   performLogout: () => Promise<void>;
 
   // Utility Actions
   setLoading: (loading: boolean) => void;
+  setSignupLoading: (loading: boolean) => void;
   initializeAuth: () => void;
 }
 
@@ -34,6 +39,7 @@ export const useAuthStore = create<AuthStore>()(
         user: null,
         accessToken: null,
         isLoading: false,
+        isSignupLoading: false,
 
         // Basic Actions
         login: (user: User, accessToken: string) => {
@@ -129,6 +135,10 @@ export const useAuthStore = create<AuthStore>()(
           set({ isLoading: loading }, false, "auth/setLoading");
         },
 
+        setSignupLoading: (loading: boolean) => {
+          set({ isSignupLoading: loading }, false, "auth/setSignupLoading");
+        },
+
         initializeAuth: () => {
           // 페이지 새로고침 시 로컬 스토리지에서 인증 상태 복원
           const accessToken = localStorage.getItem("accessToken");
@@ -152,6 +162,16 @@ export const useAuthStore = create<AuthStore>()(
               localStorage.removeItem("accessToken");
               localStorage.removeItem("userData");
             }
+          }
+        },
+
+        signup: async (signupData: SignupRequest) => {
+          try {
+            const response = await authService.signup(signupData);
+            return response;
+          } catch (error) {
+            console.error("회원가입 실패:", error);
+            throw error;
           }
         },
       }),

@@ -1,6 +1,7 @@
 import { toast } from "react-toastify";
 import { createKakaoAuthURL, createNaverAuthURL } from "utils/constants";
-import type { User } from "types/UserTypes";
+import type { User, SignupRequest } from "types/UserTypes";
+import { apiClient } from "./apiClient";
 
 export class AuthService {
   private static instance: AuthService;
@@ -12,6 +13,22 @@ export class AuthService {
       AuthService.instance = new AuthService();
     }
     return AuthService.instance;
+  }
+
+  /**
+   * 회원가입
+   */
+  public async signup(signupData: SignupRequest): Promise<void> {
+    try {
+      await apiClient.post("/api/v1/users/signup", signupData);
+      toast.success("회원가입이 완료되었습니다.");
+    } catch (error: any) {
+      console.error("회원가입 실패:", error);
+      const errorMessage =
+        error.response?.data?.message || "회원가입에 실패했습니다.";
+      toast.error(errorMessage);
+      throw error;
+    }
   }
 
   /**
