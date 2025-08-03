@@ -1,0 +1,31 @@
+# Production 환경 설정
+# 이 파일은 프로덕션용으로만 사용됩니다.
+# 실제 운영 환경에서는 환경변수 사용해야 합니다.
+
+# 프로덕션 환경 특화 설정만 오버라이드
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:phonebid}
+    username: ${DB_USERNAME:phonebid}
+    password: ${DB_PASSWORD:phonebid}
+
+# 프론트엔드 URL 설정 - 프로덕션 환경
+frontend:
+  url: https://phonebid.com
+
+# CORS 설정 - 프로덕션 환경 (제한적 origin, 문자열 형식)
+cors:
+  allowed-origins: https://phonebid.com,https://www.phonebid.com,https://app.phonebid.com
+
+# 프로덕션 환경 OAuth 설정 (환경변수 사용)
+oauth:
+  kakao:
+    client-id: ${KAKAO_CLIENT_ID}
+    redirect-uri: https://phonebid.com/api/v1/auth/kakao/callback
+  naver:
+    client-id: ${NAVER_CLIENT_ID}
+    redirect-uri: https://phonebid.com/api/v1/auth/naver/callback

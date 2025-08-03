@@ -13,8 +13,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 글로벌 예외 핸들러
- * 애플리케이션 전반에서 발생하는 예외를 중앙에서 처리합니다.
+ * 전역 예외 처리기
+ * 애플리케이션 전체에서 발생하는 예외를 처리하는 클래스
  */
 @Slf4j
 @RestControllerAdvice
@@ -22,12 +22,14 @@ public class GlobalExceptionHandler {
 
     /**
      * CustomException 처리
+     * @param e CustomException
+     * @return 에러 응답
      */
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<ApiResponse<Void>> handleCustomException(CustomException e) {
         log.error("CustomException 발생: {}", e.getMessage());
         return ResponseEntity.status(e.getErrorCode().getStatus())
-                .body(ApiResponse.success(e.getErrorCode().getStatus(), e.getMessage(), null));
+                .body(ApiResponse.error(e.getErrorCode().getStatus(), e.getMessage(), null));
     }
 
     /**
@@ -37,7 +39,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException e) {
         log.error("IllegalArgumentException 발생: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiResponse.success(HttpStatus.CONFLICT, e.getMessage(), null));
+                .body(ApiResponse.error(HttpStatus.CONFLICT, e.getMessage(), null));
     }
 
     /**
@@ -46,14 +48,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationException(MethodArgumentNotValidException e) {
         log.error("ValidationException 발생: {}", e.getMessage());
-        
+
         Map<String, String> validationErrors = new HashMap<>();
         e.getBindingResult().getFieldErrors().forEach(error -> 
             validationErrors.put(error.getField(), error.getDefaultMessage())
         );
-        
+
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.success(HttpStatus.BAD_REQUEST, "입력 값이 유효하지 않습니다.", validationErrors));
+                .body(ApiResponse.error(HttpStatus.BAD_REQUEST, "입력 값이 유효하지 않습니다.", validationErrors));
     }
 
     /**
@@ -62,23 +64,26 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BindException.class)
     public ResponseEntity<ApiResponse<Map<String, String>>> handleBindException(BindException e) {
         log.error("BindException 발생: {}", e.getMessage());
-        
+
         Map<String, String> validationErrors = new HashMap<>();
         e.getBindingResult().getFieldErrors().forEach(error -> 
             validationErrors.put(error.getField(), error.getDefaultMessage())
         );
-        
+
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.success(HttpStatus.BAD_REQUEST, "입력 값이 유효하지 않습니다.", validationErrors));
+                .body(ApiResponse.error(HttpStatus.BAD_REQUEST, "입력 값이 유효하지 않습니다.", validationErrors));
     }
 
     /**
      * 기타 예외 처리
+     * 일반적인 예외 처리
+     * @param e Exception
+     * @return 에러 응답
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
         log.error("예상치 못한 예외 발생: {}", e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.success(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부에서 문제가 발생했습니다.", null));
+                .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부에서 문제가 발생했습니다.", null));
     }
 } 

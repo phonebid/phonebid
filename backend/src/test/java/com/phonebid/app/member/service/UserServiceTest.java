@@ -20,6 +20,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+import com.phonebid.app.common.exception.CustomException;
+import com.phonebid.app.common.exception.CommonErrorCode;
+
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserService 테스트")
 class UserServiceTest {
@@ -93,8 +96,8 @@ class UserServiceTest {
 
         // when & then
         assertThatThrownBy(() -> userService.signup(validSignupRequest))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("중복된 사용자가 존재합니다.");
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", CommonErrorCode.DUPLICATE_USERNAME);
 
         verify(userRepository).findByUsername("testuser");
         verify(userRepository, never()).findByEmail(anyString());
@@ -118,8 +121,8 @@ class UserServiceTest {
 
         // when & then
         assertThatThrownBy(() -> userService.signup(validSignupRequest))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("중복된 Email 입니다.");
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", CommonErrorCode.DUPLICATE_EMAIL);
 
         verify(userRepository).findByUsername("testuser");
         verify(userRepository).findByEmail("test@example.com");
@@ -144,8 +147,8 @@ class UserServiceTest {
 
         // when & then
         assertThatThrownBy(() -> userService.signup(validSignupRequest))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("중복된 닉네임 입니다.");
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", CommonErrorCode.DUPLICATE_NICKNAME);
 
         verify(userRepository).findByUsername("testuser");
         verify(userRepository).findByEmail("test@example.com");

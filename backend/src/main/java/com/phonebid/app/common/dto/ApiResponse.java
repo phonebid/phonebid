@@ -28,7 +28,25 @@ public class ApiResponse<T> {
     private String message;
     private T data;
 
+    /**
+     * 성공 응답 생성용 팩토리 메서드
+     * @param status HTTP 상태 코드
+     * @param message 응답 메시지
+     * @param data 응답 데이터
+     * @return ApiResponse 객체
+     */
     public static <T> ApiResponse<T> success(HttpStatus status, String message, T data) {
+        return new ApiResponse<>(status, message, data);
+    }
+    
+    /**
+     * 에러 응답 생성용 팩토리 메서드
+     * @param status HTTP 상태 코드
+     * @param message 에러 메시지
+     * @param data 에러 관련 데이터 (선택사항)
+     * @return ApiResponse 객체
+     */
+    public static <T> ApiResponse<T> error(HttpStatus status, String message, T data) {
         return new ApiResponse<>(status, message, data);
     }
 }
