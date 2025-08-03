@@ -272,7 +272,7 @@ const SignupPage = () => {
         nickname: formData.nickname,
       };
 
-      await apiClient.post("/api/v1/users/signup", signupData);
+      await apiClient.post("/users/signup", signupData);
       toast.success("회원가입이 완료되었습니다.");
       navigate("/login", { replace: true });
     } catch (error: any) {
