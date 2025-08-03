@@ -27,7 +27,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.beans.factory.annotation.Value;
 
+import java.util.List;
 import java.util.Arrays;
 
 @Configuration
@@ -39,6 +41,16 @@ public class WebSecurityConfig {
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
     private final AuthenticationConfiguration authenticationConfiguration;
+
+    @Value("${cors.allowed-origins:http://localhost:5173,http://localhost:3000}")
+    private String allowedOriginsString;
+
+    private List<String> getAllowedOrigins() {
+        if (allowedOriginsString == null || allowedOriginsString.isEmpty()) {
+            return Arrays.asList("http://localhost:5173", "http://localhost:3000");
+        }
+        return Arrays.asList(allowedOriginsString.split(","));
+    }
 
     /**
      * Bean으로 직접 수동 등록해서 필터 만들기
@@ -59,15 +71,30 @@ public class WebSecurityConfig {
     }
 
     /**
-     * CORS 설정
+     * CORS 설정 - 환경별 origin 분리
+     * 보안 강화를 위해 특정 origin만 허용
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+        
+        // 환경별로 설정된 허용 origin 사용
+        configuration.setAllowedOrigins(getAllowedOrigins());
+        
+        // HTTP 메서드 허용
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        
+        // 헤더 허용
         configuration.setAllowedHeaders(Arrays.asList("*"));
+        
+        // 인증 정보 포함 허용 (쿠키, 인증 헤더)
         configuration.setAllowCredentials(true);
+        
+        // 노출 헤더 설정
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        
+        // 캐시 시간 설정 (1시간)
+        configuration.setMaxAge(3600L);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

@@ -1,8 +1,11 @@
 package com.phonebid.app.common.exception;
 
+import com.phonebid.app.common.dto.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -16,38 +19,71 @@ import java.util.Map;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    
+
     /**
      * CustomException 처리
      * @param e CustomException
      * @return 에러 응답
      */
     @ExceptionHandler(CustomException.class)
-    public ResponseEntity<Map<String, Object>> handleCustomException(CustomException e) {
-        log.error("CustomException 발생: {} - {}", e.getErrorCode().getMessage(), e.getMessage(), e);
-        
-        Map<String, Object> errorResponse = new HashMap<>();
-        errorResponse.put("error", e.getErrorCode().getClass().getSimpleName());
-        errorResponse.put("message", e.getMessage());
-        errorResponse.put("status", e.getErrorCode().getStatus().value());
-        
-        return ResponseEntity.status(e.getErrorCode().getStatus()).body(errorResponse);
+    public ResponseEntity<ApiResponse<Void>> handleCustomException(CustomException e) {
+        log.error("CustomException 발생: {}", e.getMessage());
+        return ResponseEntity.status(e.getErrorCode().getStatus())
+                .body(ApiResponse.success(e.getErrorCode().getStatus(), e.getMessage(), null));
     }
-    
+
     /**
+     * IllegalArgumentException 처리 (중복 검증 등)
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException e) {
+        log.error("IllegalArgumentException 발생: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.success(HttpStatus.CONFLICT, e.getMessage(), null));
+    }
+
+    /**
+     * @Valid 검증 실패 처리
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationException(MethodArgumentNotValidException e) {
+        log.error("ValidationException 발생: {}", e.getMessage());
+
+        Map<String, String> validationErrors = new HashMap<>();
+        e.getBindingResult().getFieldErrors().forEach(error -> 
+            validationErrors.put(error.getField(), error.getDefaultMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.success(HttpStatus.BAD_REQUEST, "입력 값이 유효하지 않습니다.", validationErrors));
+    }
+
+    /**
+     * BindException 처리
+     */
+    @ExceptionHandler(BindException.class)
+    public ResponseEntity<ApiResponse<Map<String, String>>> handleBindException(BindException e) {
+        log.error("BindException 발생: {}", e.getMessage());
+
+        Map<String, String> validationErrors = new HashMap<>();
+        e.getBindingResult().getFieldErrors().forEach(error -> 
+            validationErrors.put(error.getField(), error.getDefaultMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.success(HttpStatus.BAD_REQUEST, "입력 값이 유효하지 않습니다.", validationErrors));
+    }
+
+    /**
+     * 기타 예외 처리
      * 일반적인 예외 처리
      * @param e Exception
      * @return 에러 응답
      */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGenericException(Exception e) {
+    public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
         log.error("예상치 못한 예외 발생: {}", e.getMessage(), e);
-        
-        Map<String, Object> errorResponse = new HashMap<>();
-        errorResponse.put("error", "INTERNAL_SERVER_ERROR");
-        errorResponse.put("message", "서버 내부 오류가 발생했습니다");
-        errorResponse.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        
-        return ResponseEntity.internalServerError().body(errorResponse);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.success(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부에서 문제가 발생했습니다.", null));
     }
 } 
