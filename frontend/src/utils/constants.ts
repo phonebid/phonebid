@@ -27,7 +27,8 @@ export const OAUTH_PROVIDERS = {
 export const OAUTH_CONFIG = {
   KAKAO_CLIENT_ID: import.meta.env.VITE_KAKAO_CLIENT_ID,
   NAVER_CLIENT_ID: import.meta.env.VITE_NAVER_CLIENT_ID,
-  REDIRECT_URI: import.meta.env.VITE_REDIRECT_URI || "http://localhost:5174/auth/callback",
+  KAKAO_REDIRECT_URI: import.meta.env.VITE_KAKAO_REDIRECT_URI,
+  NAVER_REDIRECT_URI: import.meta.env.VITE_NAVER_REDIRECT_URI,
 } as const;
 
 // OAuth URL 설정
@@ -41,7 +42,7 @@ export const createKakaoAuthURL = (): string => {
   const state = generateRandomState("KAKAO");
   const params = new URLSearchParams({
     client_id: OAUTH_CONFIG.KAKAO_CLIENT_ID || "",
-    redirect_uri: OAUTH_CONFIG.REDIRECT_URI || "",
+    redirect_uri: OAUTH_CONFIG.KAKAO_REDIRECT_URI || "",
     response_type: "code",
     state: state,
   });
@@ -53,7 +54,7 @@ export const createNaverAuthURL = (): string => {
   const state = generateRandomState("NAVER");
   const params = new URLSearchParams({
     client_id: OAUTH_CONFIG.NAVER_CLIENT_ID || "",
-    redirect_uri: OAUTH_CONFIG.REDIRECT_URI || "",
+    redirect_uri: OAUTH_CONFIG.NAVER_REDIRECT_URI || "",
     response_type: "code",
     state: state,
   });
