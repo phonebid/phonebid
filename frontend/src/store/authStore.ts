@@ -17,11 +17,7 @@ interface AuthStore extends AuthState {
   // OAuth Actions
   loginWithKakao: () => void;
   loginWithNaver: () => void;
-  handleOAuthCallback: (
-    provider: string,
-    code: string,
-    state: string
-  ) => Promise<void>;
+
   performLogout: () => Promise<void>;
 
   // Utility Actions
@@ -111,28 +107,6 @@ export const useAuthStore = create<AuthStore>()(
           } catch (error) {
             console.error("네이버 로그인 실패:", error);
             toast.error("네이버 로그인에 실패했습니다.");
-          }
-        },
-
-        handleOAuthCallback: async (
-          provider: string,
-          code: string,
-          state: string
-        ) => {
-          const { setLoading, login } = get();
-
-          try {
-            setLoading(true);
-            const response = await authService.handleOAuthCallback(
-              provider,
-              code,
-              state
-            );
-            login(response.user, response.accessToken);
-          } catch (error) {
-            console.error(`${provider} 콜백 처리 실패:`, error);
-            toast.error(`${provider} 로그인 처리 중 오류가 발생했습니다.`);
-            setLoading(false);
           }
         },
 
