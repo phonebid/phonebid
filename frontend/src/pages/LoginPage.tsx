@@ -127,6 +127,15 @@ const LoginPage = () => {
 
             <SocialLoginButton provider="naver" onClick={handleNaverLogin} />
           </div>
+          <div className="text-muted-foreground flex justify-center gap-1 text-sm mt-4">
+            <p>아직 회원이 아니신가요?</p>
+            <div
+              onClick={() => navigate("/signup")}
+              className="font-medium hover:underline text-indigo-700"
+            >
+              회원가입
+            </div>
+          </div>
         </div>
       </div>
     </div>
