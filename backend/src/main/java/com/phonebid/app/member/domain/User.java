@@ -42,6 +42,10 @@ public class User extends BaseEntity {
     @Column(name = "nickname", nullable = false)
     private String nickname;
 
+    @Pattern(regexp = "^[0-9-]+$", message = "휴대전화번호는 숫자와 하이픈만 사용 가능합니다")
+    @Column(name = "phone", nullable = true)
+    private String phone;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     private Role role;
@@ -54,12 +58,13 @@ public class User extends BaseEntity {
     private String providerId;
 
     @Builder
-    public User(String username, String password, String email, String name, String nickname, Role role, Provider provider, String providerId) {
+    public User(String username, String password, String email, String name, String nickname, String phone, Role role, Provider provider, String providerId) {
         this.username = username;
         this.password = password;
         this.email = email;
         this.name = name;
         this.nickname = nickname;
+        this.phone = phone;
         this.role = role;
         this.provider = provider;
         this.providerId = providerId;
@@ -84,6 +89,10 @@ public class User extends BaseEntity {
 
     public void updateNickname(String nickname) {
         this.nickname = nickname;
+    }
+
+    public void updatePhone(String phone) {
+        this.phone = phone;
     }
 
     public void updatePassword(String password) {
