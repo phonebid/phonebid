@@ -18,14 +18,14 @@ const SocialLoginButton = ({
       name: "카카오",
       bgColor: "bg-yellow-300 hover:bg-yellow-400",
       textColor: "text-gray-900",
-      icon: "💬",
+      icon: "/kakao.png",
       borderColor: "border-yellow-300",
     },
     naver: {
       name: "네이버",
       bgColor: "bg-green-500 hover:bg-green-600",
       textColor: "text-white",
-      icon: "N",
+      icon: "/naver.png",
       borderColor: "border-green-500",
     },
   };
@@ -58,14 +58,12 @@ const SocialLoginButton = ({
         </>
       ) : (
         <>
-          <span className="text-lg font-bold">
-            {provider === "naver" ? (
-              <div className="w-5 h-5 bg-white text-green-500 rounded text-sm font-black flex items-center justify-center">
-                N
-              </div>
-            ) : (
-              config.icon
-            )}
+          <span className="flex items-center">
+            <img
+              src={config.icon}
+              alt={`${config.name} logo`}
+              className="w-4 h-4"
+            />
           </span>
           <span>{config.name} 로그인</span>
         </>

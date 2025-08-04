@@ -2,11 +2,11 @@ import { Link } from "react-router-dom";
 import { useAuthStore } from "store/authStore";
 
 const Header: React.FC = () => {
-  const { isAuthenticated, user, performLogout, isLoading } = useAuthStore();
+  const { isAuthenticated, user, logout } = useAuthStore();
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     try {
-      await performLogout();
+      logout();
     } catch (error) {
       console.error("로그아웃 실패:", error);
     }
@@ -63,10 +63,9 @@ const Header: React.FC = () => {
                 </Link>
                 <button
                   onClick={handleLogout}
-                  disabled={isLoading}
-                  className="text-gray-500 hover:text-gray-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="text-gray-500 hover:text-gray-700 text-sm font-medium"
                 >
-                  {isLoading ? "로그아웃 중..." : "로그아웃"}
+                  로그아웃
                 </button>
               </div>
             ) : (

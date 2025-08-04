@@ -25,3 +25,11 @@ export interface AuthState {
   user: User | null;
   accessToken: string | null;
 }
+
+export interface SignupRequest {
+  username: string;
+  password: string;
+  email: string;
+  name: string;
+  nickname: string;
+}

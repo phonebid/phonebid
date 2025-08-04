@@ -41,6 +41,33 @@ src/
 - Node.js 18+
 - pnpm 8+
 
+### 환경변수 설정
+
+프로젝트는 환경별로 다른 API URL을 사용합니다:
+
+#### 개발 환경
+
+```bash
+# .env.local (기본값)
+VITE_API_BASE_URL=http://localhost:8080
+VITE_API_TIMEOUT=10000
+```
+
+#### 프로덕션 환경
+
+```bash
+# .env.production (배포 시 수정 필요)
+VITE_API_BASE_URL=https://api.phonebid.com
+VITE_API_TIMEOUT=10000
+```
+
+#### 로컬 개발 시
+
+환경변수 파일이 없으면 자동으로 개발 환경 설정이 적용됩니다:
+
+- 개발 환경: `http://localhost:8080`
+- 프로덕션 환경: `https://api.phonebid.com`
+
 ### 설치 및 실행
 
 ```bash

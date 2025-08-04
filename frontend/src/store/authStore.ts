@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 import type { AuthState, User } from "types/UserTypes";
-import { authService } from "services/authService";
+import { apiClient } from "services/apiClient";
 import { toast } from "react-toastify";
 
 interface AuthStore extends AuthState {
@@ -15,14 +15,11 @@ interface AuthStore extends AuthState {
   setAccessToken: (token: string) => void;
 
   // OAuth Actions
-  loginWithKakao: () => void;
-  loginWithNaver: () => void;
   handleOAuthCallback: (
     provider: string,
     code: string,
     state: string
   ) => Promise<void>;
-  performLogout: () => Promise<void>;
 
   // Utility Actions
   setLoading: (loading: boolean) => void;
@@ -43,6 +40,7 @@ export const useAuthStore = create<AuthStore>()(
         login: (user: User, accessToken: string) => {
           // 사용자 데이터를 로컬 스토리지에도 저장
           localStorage.setItem("userData", JSON.stringify(user));
+          localStorage.setItem("accessToken", accessToken);
 
           set(
             {
@@ -57,6 +55,10 @@ export const useAuthStore = create<AuthStore>()(
         },
 
         logout: () => {
+          // 로컬 스토리지 정리
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("userData");
+
           set(
             {
               isAuthenticated: false,
@@ -86,6 +88,7 @@ export const useAuthStore = create<AuthStore>()(
         },
 
         setAccessToken: (token: string) => {
+          localStorage.setItem("accessToken", token);
           set(
             {
               accessToken: token,
@@ -95,58 +98,42 @@ export const useAuthStore = create<AuthStore>()(
           );
         },
 
-        // OAuth Actions - URL 리다이렉트 방식
-        loginWithKakao: () => {
-          try {
-            authService.loginWithKakao();
-          } catch (error) {
-            console.error("카카오 로그인 실패:", error);
-            toast.error("카카오 로그인에 실패했습니다.");
-          }
-        },
-
-        loginWithNaver: () => {
-          try {
-            authService.loginWithNaver();
-          } catch (error) {
-            console.error("네이버 로그인 실패:", error);
-            toast.error("네이버 로그인에 실패했습니다.");
-          }
-        },
-
+        // OAuth Actions
         handleOAuthCallback: async (
           provider: string,
           code: string,
           state: string
         ) => {
-          const { setLoading, login } = get();
-
           try {
-            setLoading(true);
-            const response = await authService.handleOAuthCallback(
-              provider,
-              code,
-              state
+            set({ isLoading: true });
+
+            // OAuth 토큰 교환 및 사용자 정보 조회
+            const response = await apiClient.post(
+              "/api/v1/auth/oauth/callback",
+              {
+                provider,
+                code,
+                state,
+              }
             );
-            login(response.user, response.accessToken);
-          } catch (error) {
-            console.error(`${provider} 콜백 처리 실패:`, error);
-            toast.error(`${provider} 로그인 처리 중 오류가 발생했습니다.`);
-            setLoading(false);
-          }
-        },
 
-        performLogout: async () => {
-          const { logout, setLoading } = get();
+            const responseData = response as {
+              data: { accessToken: string; user: User };
+            };
+            const { accessToken, user } = responseData.data;
 
-          try {
-            setLoading(true);
-            await authService.logout();
-            logout();
-          } catch (error) {
-            console.error("로그아웃 실패:", error);
-            // 로그아웃은 실패해도 상태는 초기화
-            logout();
+            // 로그인 상태 업데이트
+            get().login(user, accessToken);
+
+            toast.success(`${provider} 로그인이 완료되었습니다.`);
+          } catch (error: any) {
+            console.error("OAuth 콜백 처리 실패:", error);
+            const errorMessage =
+              error.response?.data?.message || "OAuth 로그인에 실패했습니다.";
+            toast.error(errorMessage);
+            throw error;
+          } finally {
+            set({ isLoading: false });
           }
         },
 
