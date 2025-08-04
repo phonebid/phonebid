@@ -79,6 +79,7 @@ public class KakaoService {
      * @param kakaoUserInfo 카카오 사용자 정보
      * @return 등록된 사용자 엔티티
      */
+    @Transactional
     private User registerKakaoUserIfNeeded(KakaoUserInfoDto kakaoUserInfo) {
         // DB에 중복된 Kakao providerId가 있는지 확인
         String providerId = String.valueOf(kakaoUserInfo.getId());
