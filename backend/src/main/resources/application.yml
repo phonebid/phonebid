@@ -32,8 +32,9 @@ jwt:
 # 기본 OAuth 설정 (환경변수 기반)
 oauth:
   kakao:
-    client-id: ${KAKAO_CLIENT_ID:d5a0b288522bd3c7103156f48be8806c}
+    client-id: ${KAKAO_CLIENT_ID}
     redirect-uri: ${KAKAO_REDIRECT_URI:https://localhost:8080/api/v1/auth/kakao/callback}
   naver:
-    client-id: ${NAVER_CLIENT_ID:7T8kCcHJ6XM0vlOyDjDE}
+    client-id: ${NAVER_CLIENT_ID}
+    client-secret: ${NAVER_CLIENT_SECRET}
     redirect-uri: ${NAVER_REDIRECT_URI:https://localhost:8080/api/v1/auth/naver/callback}
