@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.common.exception.NaverErrorCode;
+import com.phonebid.app.common.exception.CommonErrorCode;
 import com.phonebid.app.jwt.JwtUtil;
 import com.phonebid.app.member.domain.Provider;
 import com.phonebid.app.member.domain.Role;
@@ -25,6 +26,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
+import java.util.Optional;
 
 /**
  * 네이버 OAuth2 인증 서비스
@@ -106,6 +108,13 @@ public class NaverService {
                 
                 // username은 네이버 이메일 그대로 사용
                 String username = naverUserInfo.getEmail();
+                
+                // username 중복 체크
+                Optional<User> existingUser = userRepository.findByUsername(username);
+                if (existingUser.isPresent()) {
+                    log.error("네이버 로그인 중 username 중복 발생: username={}", username);
+                    throw new CustomException(CommonErrorCode.DUPLICATE_USERNAME);
+                }
                 
                 naverUser = User.builder()
                         .username(username)
