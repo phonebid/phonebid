@@ -37,23 +37,42 @@
 @Table(name = "users")
 public class User extends BaseEntity {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "username", nullable = false, unique = true)
+    @Pattern(regexp = "^[a-z0-9@._-]+$")
+    @Size(min = 4, max = 255)
+    private String username;
+
+    @Column(name = "password", nullable = false)
+    private String password;
+
+    @Email
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
+    @Column(name = "name", nullable = false)
     private String name;
 
+    @Column(name = "nickname", nullable = false)
+    @Pattern(regexp = "^[가-힣a-zA-Z0-9_-]+$")
+    @Size(min = 2, max = 10)
+    private String nickname;
+
+    @Column(name = "phone", nullable = true)
+    @Pattern(regexp = "^[0-9]+$")
+    private String phone;
+
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "role", nullable = false)
     private Role role; // CONSUMER, SELLER, ADMIN
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "provider", nullable = true)
     private Provider provider; // KAKAO, NAVER
 
-    @Column(name = "provider_id", nullable = false)
+    @Column(name = "provider_id", nullable = true)
     private String providerId;
 }
 ```
@@ -63,6 +82,7 @@ public class User extends BaseEntity {
 - 소셜 로그인 기반 사용자 관리
 - 역할별 권한 제어 (Consumer/Seller/Admin)
 - 이메일 중복 검증
+- 전화번호 형식 검증 (숫자만 허용)
 
 **인덱스:**
 
@@ -99,16 +119,13 @@ public class Seller extends BaseEntity {
 }
 ```
 
-**새로운 기능:**
-
-- **판매점 주소**: 우편번호, 주소, 상세주소를 포함한 완전한 주소 정보
-- **주소 관리 메서드**: `updateStoreAddress()`, `hasStoreAddress()`, `getStoreAddressSummary()`
-
 **비즈니스 로직:**
 
 - 사업자등록번호 기반 판매자 검증
 - 승인 프로세스 관리 (대기 → 승인/거부)
 - 판매점 주소 정보 관리
+- `canSell()`: 승인된 판매자만 입찰 가능
+- `approve()`, `reject()`: 승인 상태 변경
 
 ### 3. Address (주소 - 임베디드 타입)
 
@@ -131,14 +148,49 @@ public class Address {
 - `getFullAddress()`: 전체 주소 문자열 생성
 - `isComplete()`: 주소 완성도 검증
 - `isEmpty()`: 빈 주소 여부 확인
+- `hasDetailAddress()`: 상세주소 존재 여부
 
-### 4. Quote (견적 요청)
+### 4. SellerDocument (판매자 제출 문서)
+
+```java
+@Entity
+@Table(name = "seller_documents")
+public class SellerDocument extends BaseEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seller_id", nullable = false)
+    private Seller seller;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false)
+    private DocumentType type; // BUSINESS_LICENSE, CONSENT_FORM
+
+    @Column(name = "file_url", nullable = false)
+    private String fileUrl;
+
+    @Column(name = "uploaded_at", nullable = false)
+    private LocalDateTime uploadedAt;
+}
+```
+
+**비즈니스 로직:**
+
+- 사업자등록증, 사전승낙서 등 문서 관리
+- S3 파일 URL 관리
+- `getFileName()`: URL에서 파일명 추출
+- `isS3Url()`: S3 저장 여부 확인
+
+### 5. Quote (견적 요청)
 
 ```java
 @Entity
 @Table(name = "quotes")
 public class Quote extends BaseEntity {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -146,28 +198,28 @@ public class Quote extends BaseEntity {
     private User user;
 
     // 기본 제품 정보
-    @Column(nullable = false)
+    @Column(name = "model", nullable = false)
     private String model;
 
-    @Column(nullable = false)
+    @Column(name = "storage", nullable = false)
     private String storage;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "carrier", nullable = false)
     private Carrier carrier; // 희망 통신사
 
-    @Column(nullable = false)
+    @Column(name = "color", nullable = false)
     private String color;
 
     // 경매 관리
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "status", nullable = false)
     private QuoteStatus status;
 
     @Column(name = "expired_at", nullable = false)
     private LocalDateTime expiredAt;
 
-    // 새로운 구매 조건 필드들
+    // 구매 조건 필드들
     @Enumerated(EnumType.STRING)
     @Column(name = "purchase_method")
     private PurchaseMethod purchaseMethod; // 구매방법
@@ -182,25 +234,21 @@ public class Quote extends BaseEntity {
 }
 ```
 
-**새로운 기능:**
-
-- **구매방법**: 번호이동, 기기변경, 신규가입, 상관없음
-- **기존 통신사**: 번호이동/기기변경 시 현재 사용 중인 통신사
-- **개통방법**: 선택약정, 공시지원금, 상관없음
-
 **비즈니스 로직:**
 
 - 경매 시간 관리 (기본 24시간)
 - 상태 전환 (OPEN → CLOSED → CONTRACTED)
-- 입찰 가능 여부 검증
+- 입찰 가능 여부 검증 (`canReceiveBids()`)
+- 마감 시간 연장 (`extendExpiration()`)
 
-### 5. Bid (입찰)
+### 6. Bid (입찰)
 
 ```java
 @Entity
 @Table(name = "bids")
 public class Bid extends BaseEntity {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -212,7 +260,7 @@ public class Bid extends BaseEntity {
     private Seller seller;
 
     // 기본 입찰 정보
-    @Column(nullable = false)
+    @Column(name = "price", nullable = false)
     private Integer price;
 
     @Column(name = "delivery_days", nullable = false)
@@ -257,23 +305,15 @@ public class Bid extends BaseEntity {
 }
 ```
 
-**새로운 기능:**
-
-- **구매방법별 처리**: 번호이동, 기기변경, 신규가입에 따른 차별화된 조건
-- **통신사 정보**: 기존 통신사 → 이동할 통신사 관계 명시
-- **개통방법**: 선택약정 vs 공시지원금
-- **추가 비용**: 지원금, 할부원금 등 세부 비용 구조
-- **요금제 정보**: 이름과 가격을 분리하여 저장
-- **약정기간**: 년수에서 개월로 변경하여 더 정확한 관리
-
 **비즈니스 로직:**
 
 - `getTotalCost()`: 입찰가 + 추가지원금 + (요금제 × 약정개월)
 - `getMonthlyAverageCost()`: 총 비용 ÷ 약정개월
 - `getBidSummary()`: 확장된 입찰 요약 (요금제, 약정 정보 포함)
 - **검증 로직**: 구매방법에 따른 필수 필드 검증
+- `canModify()`: 입찰 수정 가능 여부
 
-### 6. PricePlan (요금제 - 임베디드 타입)
+### 7. PricePlan (요금제 - 임베디드 타입)
 
 ```java
 @Embeddable
@@ -291,40 +331,89 @@ public class PricePlan {
 - `getPlanSummary()`: "요금제명 (가격원)" 형태 요약
 - `isAffordable()`: 예산 내 이용 가능 여부
 - `isUnlimited()`: 무제한 요금제 감지
+- `isComplete()`: 완전한 요금제 정보 여부
 - **검증**: 빈 문자열, 음수 가격, 길이 제한
 
-### 7. Contract (계약)
+### 8. BidHistory (입찰 수정 이력)
 
 ```java
 @Entity
-@Table(name = "contracts")
-public class Contract extends BaseEntity {
+@Table(name = "bid_history")
+public class BidHistory extends BaseEntity {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "quote_id", nullable = false)
-    private Quote quote;
+    @JoinColumn(name = "bid_id", nullable = false)
+    private Bid bid;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "bid_id", nullable = false, unique = true)
-    private Bid selectedBid;
+    @Column(name = "version", nullable = false)
+    private Integer version;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ContractStatus status;
+    @Column(name = "price", nullable = false)
+    private Integer price;
 
-    @Column(name = "signed_at")
-    private LocalDateTime signedAt;
+    @Column(name = "delivery_days", nullable = false)
+    private Integer deliveryDays;
 }
 ```
 
-**설계 변경:**
+**비즈니스 로직:**
 
-- **1:1 관계**: Bid와 Contract의 관계를 명확히 함
-- **간소화**: consumer, seller 필드 제거 (Bid를 통해 접근)
+- 입찰 수정 이력 추적
+- 버전 관리로 변경 사항 추적
+- 감사 로그 목적
 
-## 🔄 새로운 Enum 타입들
+## 🔄 Enum 타입들
+
+### Role (사용자 역할)
+
+```java
+public enum Role {
+    CONSUMER("소비자"),
+    SELLER("판매자"),
+    ADMIN("관리자");
+}
+```
+
+### Provider (소셜 로그인 제공자)
+
+```java
+public enum Provider {
+    KAKAO("카카오"),
+    NAVER("네이버");
+}
+```
+
+### ApprovalStatus (승인 상태)
+
+```java
+public enum ApprovalStatus {
+    PENDING("승인 대기"),
+    APPROVED("승인됨"),
+    REJECTED("거부됨");
+}
+```
+
+### DocumentType (문서 종류)
+
+```java
+public enum DocumentType {
+    BUSINESS_LICENSE("사업자등록증"),
+    CONSENT_FORM("사전승낙서");
+}
+```
+
+### QuoteStatus (견적 상태)
+
+```java
+public enum QuoteStatus {
+    OPEN("진행중"),
+    CLOSED("마감됨"),
+    CONTRACTED("계약됨");
+}
+```
 
 ### PurchaseMethod (구매방법)
 
@@ -337,11 +426,6 @@ public enum PurchaseMethod {
 }
 ```
 
-**비즈니스 로직:**
-
-- `requiresCurrentCarrier()`: 기존 통신사 정보 필요 여부
-- `isValidForBid()`: 입찰에서 사용 가능 여부 (ANY 제외)
-
 ### ActivationMethod (개통방법)
 
 ```java
@@ -352,11 +436,25 @@ public enum ActivationMethod {
 }
 ```
 
-**비즈니스 로직:**
+### Carrier (통신사)
 
-- `requiresContract()`: 약정 필요 여부
-- `hasDiscount()`: 할인 혜택 여부
-- `isValidForBid()`: 입찰에서 사용 가능 여부 (ANY 제외)
+```java
+public enum Carrier {
+    SKT("SKT"),
+    KT("KT"),
+    LGU("LG U+");
+}
+```
+
+### BidStatus (입찰 상태)
+
+```java
+public enum BidStatus {
+    ACTIVE("활성"),
+    WITHDRAWN("철회됨"),
+    SELECTED("선택됨");
+}
+```
 
 ## 📈 성능 최적화
 
@@ -364,13 +462,17 @@ public enum ActivationMethod {
 
 ```sql
 -- 조회 성능 최적화
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_provider ON users(provider, provider_id);
+CREATE INDEX idx_sellers_approval_status ON sellers(approval_status);
+CREATE INDEX idx_quotes_user_id ON quotes(user_id);
 CREATE INDEX idx_quotes_status ON quotes(status);
 CREATE INDEX idx_quotes_expired_at ON quotes(expired_at);
 CREATE INDEX idx_bids_quote_id ON bids(quote_id);
-CREATE INDEX idx_notifications_user_id_is_read ON notifications(user_id, is_read);
-
--- 복합 인덱스
-CREATE INDEX idx_users_provider ON users(provider, provider_id);
+CREATE INDEX idx_bids_seller_id ON bids(seller_id);
+CREATE INDEX idx_bid_history_bid_id ON bid_history(bid_id);
+CREATE INDEX idx_seller_documents_seller_id ON seller_documents(seller_id);
+CREATE INDEX idx_seller_documents_type ON seller_documents(type);
 ```
 
 ### 페치 전략

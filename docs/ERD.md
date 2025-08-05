@@ -1,11 +1,15 @@
 -- 사용자 테이블
 CREATE TABLE users (
 id UUID PRIMARY KEY, -- 사용자 고유 ID
-email VARCHAR(255) NOT NULL,
-name VARCHAR(255) NOT NULL,
+username VARCHAR(255) NOT NULL UNIQUE, -- 유저ID (이메일 형식 허용)
+password VARCHAR(255) NOT NULL, -- 비밀번호
+email VARCHAR(255) NOT NULL UNIQUE, -- 이메일
+name VARCHAR(255) NOT NULL, -- 이름
+nickname VARCHAR(10) NOT NULL, -- 닉네임 (2-10자)
+phone VARCHAR(20), -- 전화번호 (숫자만)
 role VARCHAR(255) NOT NULL, -- 사용자 역할: CONSUMER, SELLER, ADMIN
-provider VARCHAR(255) NOT NULL, -- 로그인 제공자: KAKAO, NAVER
-provider_id VARCHAR(255) NOT NULL, -- 소셜 로그인 ID
+provider VARCHAR(255), -- 로그인 제공자: KAKAO, NAVER
+provider_id VARCHAR(255), -- 소셜 로그인 ID
 created_at TIMESTAMP NOT NULL, -- 가입 시각
 updated_at TIMESTAMP NOT NULL,
 created_by VARCHAR(255),
@@ -36,7 +40,7 @@ id UUID PRIMARY KEY,
 seller_id UUID NOT NULL, -- sellers.user_id
 type VARCHAR(255) NOT NULL, -- 문서 종류: BUSINESS_LICENSE, CONSENT_FORM
 file_url VARCHAR(255) NOT NULL, -- S3 저장 위치
-uploaded_at TIMESTAMP NOT NULL,
+uploaded_at TIMESTAMP NOT NULL, -- 업로드 시각
 created_at TIMESTAMP NOT NULL,
 updated_at TIMESTAMP NOT NULL,
 created_by VARCHAR(255),
@@ -54,7 +58,7 @@ carrier VARCHAR(255) NOT NULL, -- 통신사: SKT, KT, LGU
 color VARCHAR(255) NOT NULL,
 status VARCHAR(255) NOT NULL, -- OPEN, CLOSED, CONTRACTED
 expired_at TIMESTAMP NOT NULL, -- 경매 마감 시각
--- 새로운 필드들
+-- 구매 조건 필드들
 purchase_method VARCHAR(255), -- 구매방법: NUMBER_TRANSFER, DEVICE_CHANGE, NEW_SUBSCRIPTION, ANY
 current_carrier VARCHAR(255), -- 기존 통신사 (번호이동/기기변경 시)
 activation_method VARCHAR(255), -- 개통방법: SELECTIVE_SUBSIDY, COMMON_SUBSIDY, ANY
@@ -73,7 +77,7 @@ seller_id UUID NOT NULL, -- 입찰자 (sellers.user_id)
 price INTEGER NOT NULL, -- 입찰가
 delivery_days INTEGER NOT NULL, -- 배송 예상일
 rating_snapshot DOUBLE PRECISION, -- 당시 평점 스냅샷
--- 새로운 필드들
+-- 구매 조건 필드들
 purchase_method VARCHAR(255) NOT NULL, -- 구매방법: NUMBER_TRANSFER, DEVICE_CHANGE, NEW_SUBSCRIPTION
 carrier VARCHAR(255) NOT NULL, -- 통신사 (이동할/사용할 통신사)
 current_carrier VARCHAR(255), -- 기존 통신사 (번호이동/기기변경 시)
@@ -106,73 +110,6 @@ last_modified_by VARCHAR(255),
 is_delete BOOLEAN NOT NULL DEFAULT FALSE
 );
 
--- 계약
-CREATE TABLE contracts (
-id UUID PRIMARY KEY,
-quote_id UUID NOT NULL, -- 연관 견적
-bid_id UUID NOT NULL UNIQUE, -- 선택된 입찰 (1:1 관계)
-status VARCHAR(255) NOT NULL, -- 계약 상태: SIGNING, SIGNED, CANCELLED
-signed_at TIMESTAMP,
-created_at TIMESTAMP NOT NULL,
-updated_at TIMESTAMP NOT NULL,
-created_by VARCHAR(255),
-last_modified_by VARCHAR(255),
-is_delete BOOLEAN NOT NULL DEFAULT FALSE
-);
-
--- 결제 정보
-CREATE TABLE payments (
-id UUID PRIMARY KEY,
-contract_id UUID NOT NULL UNIQUE, -- 계약 ID (1:1 관계)
-amount INTEGER NOT NULL, -- 결제 금액
-method VARCHAR(255) NOT NULL, -- CARD, BANK, MOBILE
-status VARCHAR(255) NOT NULL, -- REQUESTED, PENDING_APPROVAL, PAID, FAILED
-pg_tid VARCHAR(255) NOT NULL, -- PG 거래 ID
-paid_at TIMESTAMP,
-created_at TIMESTAMP NOT NULL,
-updated_at TIMESTAMP NOT NULL,
-created_by VARCHAR(255),
-last_modified_by VARCHAR(255),
-is_delete BOOLEAN NOT NULL DEFAULT FALSE
-);
-
--- 배송 정보
-CREATE TABLE deliveries (
-id UUID PRIMARY KEY,
-contract_id UUID NOT NULL UNIQUE, -- 계약 ID (1:1 관계)
-courier VARCHAR(255) NOT NULL, -- 택배사: CJ_LOGISTICS, HANJIN, LOTTE
-invoice_number VARCHAR(255) NOT NULL, -- 송장 번호
-status VARCHAR(255) NOT NULL, -- 배송 상태: READY, SHIPPED, DELIVERED
-shipped_at TIMESTAMP,
-delivered_at TIMESTAMP,
-delivery_memo VARCHAR(500), -- 배송 메모
-created_at TIMESTAMP NOT NULL,
-updated_at TIMESTAMP NOT NULL,
-created_by VARCHAR(255),
-last_modified_by VARCHAR(255),
-is_delete BOOLEAN NOT NULL DEFAULT FALSE
-);
-
--- 사용자 알림
-CREATE TABLE notifications (
-id UUID PRIMARY KEY,
-user_id UUID NOT NULL, -- 수신 대상
-type VARCHAR(255) NOT NULL, -- 알림 유형: QUOTE_CREATED, BID_ARRIVED 등
-channel VARCHAR(255) NOT NULL, -- KAKAO, PUSH, EMAIL
-title VARCHAR(255) NOT NULL, -- 알림 제목
-content TEXT NOT NULL, -- 알림 내용
-related_entity_type VARCHAR(255), -- 관련 엔터티 타입
-related_entity_id UUID, -- 관련 엔터티 ID
-is_read BOOLEAN NOT NULL DEFAULT FALSE, -- 읽음 여부
-read_at TIMESTAMP, -- 읽은 시각
-sent_at TIMESTAMP, -- 발송 시각
-created_at TIMESTAMP NOT NULL,
-updated_at TIMESTAMP NOT NULL,
-created_by VARCHAR(255),
-last_modified_by VARCHAR(255),
-is_delete BOOLEAN NOT NULL DEFAULT FALSE
-);
-
 -- 인덱스 생성
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_provider ON users(provider, provider_id);
@@ -183,13 +120,8 @@ CREATE INDEX idx_quotes_expired_at ON quotes(expired_at);
 CREATE INDEX idx_bids_quote_id ON bids(quote_id);
 CREATE INDEX idx_bids_seller_id ON bids(seller_id);
 CREATE INDEX idx_bid_history_bid_id ON bid_history(bid_id);
-CREATE INDEX idx_contracts_quote_id ON contracts(quote_id);
-CREATE INDEX idx_contracts_bid_id ON contracts(bid_id);
-CREATE INDEX idx_payments_contract_id ON payments(contract_id);
-CREATE INDEX idx_deliveries_contract_id ON deliveries(contract_id);
-CREATE INDEX idx_notifications_user_id ON notifications(user_id);
-CREATE INDEX idx_notifications_type ON notifications(type);
-CREATE INDEX idx_notifications_is_read ON notifications(is_read);
+CREATE INDEX idx_seller_documents_seller_id ON seller_documents(seller_id);
+CREATE INDEX idx_seller_documents_type ON seller_documents(type);
 
 -- 외래 키 설정
 ALTER TABLE sellers ADD CONSTRAINT fk_sellers_user FOREIGN KEY (user_id) REFERENCES users(id);
@@ -198,8 +130,3 @@ ALTER TABLE quotes ADD CONSTRAINT fk_quotes_user FOREIGN KEY (user_id) REFERENCE
 ALTER TABLE bids ADD CONSTRAINT fk_bids_quote FOREIGN KEY (quote_id) REFERENCES quotes(id);
 ALTER TABLE bids ADD CONSTRAINT fk_bids_seller FOREIGN KEY (seller_id) REFERENCES sellers(user_id);
 ALTER TABLE bid_history ADD CONSTRAINT fk_history_bid FOREIGN KEY (bid_id) REFERENCES bids(id);
-ALTER TABLE contracts ADD CONSTRAINT fk_contracts_quote FOREIGN KEY (quote_id) REFERENCES quotes(id);
-ALTER TABLE contracts ADD CONSTRAINT fk_contracts_bid FOREIGN KEY (bid_id) REFERENCES bids(id);
-ALTER TABLE payments ADD CONSTRAINT fk_payments_contract FOREIGN KEY (contract_id) REFERENCES contracts(id);
-ALTER TABLE deliveries ADD CONSTRAINT fk_deliveries_contract FOREIGN KEY (contract_id) REFERENCES contracts(id);
-ALTER TABLE notifications ADD CONSTRAINT fk_notifications_user FOREIGN KEY (user_id) REFERENCES users(id);
