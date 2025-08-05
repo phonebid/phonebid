@@ -251,7 +251,7 @@ public class NaverService {
             String id = responseNode.get("id").asText();
             String email = responseNode.get("email").asText();
             String name = responseNode.get("name").asText();
-            String phone = responseNode.get("mobile").asText();
+            String phone = formatPhoneNumber(responseNode.get("mobile").asText());
             String nickname = responseNode.has("nickname") ? responseNode.get("nickname").asText() : name;
             
             log.info("네이버 사용자 정보 조회 성공: id={}", id);
@@ -260,5 +260,37 @@ public class NaverService {
             log.error("네이버 사용자 정보 응답 파싱 실패", e);
             throw new CustomException(NaverErrorCode.NAVER_USER_INFO_REQUEST_FAILED);
         }
+    }
+    
+    /**
+     * 네이버 API에서 받은 전화번호를 한국 휴대폰 번호 형식으로 변환합니다.
+     * 예: "+82 10-1234-5678" -> "01012345678"
+     * @param phoneNumber 네이버 API에서 받은 전화번호
+     * @return 변환된 전화번호 (숫자만)
+     */
+    private String formatPhoneNumber(String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+            return null;
+        }
+        
+        // 국제전화번호 형식 처리
+        // "+82 10-1234-5678" -> "01012345678"
+        String cleaned = phoneNumber.replaceAll("[^0-9]", "");
+        
+        // +82로 시작하는 경우 한국 번호로 변환
+        if (cleaned.startsWith("82")) {
+            // 821012345678 -> 01012345678
+            if (cleaned.length() == 12) {
+                return "0" + cleaned.substring(2);
+            }
+        }
+        
+        // 이미 010으로 시작하는 경우 그대로 반환
+        if (cleaned.startsWith("010") && cleaned.length() == 11) {
+            return cleaned;
+        }
+        
+        // 다른 형식은 그대로 반환
+        return cleaned;
     }
 } 

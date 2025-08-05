@@ -42,7 +42,7 @@ public class User extends BaseEntity {
     @Column(name = "nickname", nullable = false)
     private String nickname;
 
-    @Pattern(regexp = "^[0-9-]+$", message = "휴대전화번호는 숫자와 하이픈만 사용 가능합니다")
+    @Pattern(regexp = "^[0-9]+$", message = "휴대전화번호는 숫자만 입력 가능합니다")
     @Column(name = "phone", nullable = true)
     private String phone;
 

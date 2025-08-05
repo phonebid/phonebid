@@ -110,6 +110,7 @@ public class KakaoService {
                         .email(kakaoUserInfo.getEmail())
                         .name(kakaoUserInfo.getName())
                         .nickname(kakaoUserInfo.getNickname())
+                        .phone(kakaoUserInfo.getPhone())
                         .role(Role.CONSUMER) // 기본값은 소비자
                         .provider(Provider.KAKAO)
                         .providerId(providerId)
@@ -229,10 +230,16 @@ public class KakaoService {
                 throw new CustomException(KakaoErrorCode.KAKAO_API_RESPONSE_PARSE_FAILED);
             }
             
+            if (!kakaoAccount.has("phone_number")) {
+                log.error("카카오 사용자 정보 응답에 kakao_account.phone_number 필드가 없습니다");
+                throw new CustomException(KakaoErrorCode.KAKAO_API_RESPONSE_PARSE_FAILED);
+            }
+            
             // 안전한 필드 추출
             Long id = jsonNode.get("id").asLong();
             String nickname = properties.get("nickname").asText();
             String email = kakaoAccount.get("email").asText();
+            String phone = formatPhoneNumber(kakaoAccount.get("phone_number").asText());
             
             // 선택적 필드 처리 (name은 선택사항)
             String name = kakaoAccount.has("name") && !kakaoAccount.get("name").isNull() 
@@ -240,10 +247,42 @@ public class KakaoService {
                 : nickname;
             
             log.info("카카오 사용자 정보 조회 성공: id={}", id);
-            return KakaoUserInfoDto.of(id, nickname, email, name);
+            return KakaoUserInfoDto.of(id, nickname, email, name, phone);
         } catch (JsonProcessingException e) {
             log.error("카카오 사용자 정보 응답 파싱 실패", e);
             throw new CustomException(KakaoErrorCode.KAKAO_USER_INFO_REQUEST_FAILED);
         }
+    }
+    
+    /**
+     * 카카오 API에서 받은 국제전화번호를 한국 휴대폰 번호 형식으로 변환합니다.
+     * 예: "+82 10-1234-5678" -> "01012345678"
+     * @param phoneNumber 카카오 API에서 받은 전화번호
+     * @return 변환된 전화번호 (숫자만)
+     */
+    private String formatPhoneNumber(String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+            return null;
+        }
+        
+        // 국제전화번호 형식 처리
+        // "+82 10-1234-5678" -> "01012345678"
+        String cleaned = phoneNumber.replaceAll("[^0-9]", "");
+        
+        // +82로 시작하는 경우 한국 번호로 변환
+        if (cleaned.startsWith("82")) {
+            // 821012345678 -> 01012345678
+            if (cleaned.length() == 12) {
+                return "0" + cleaned.substring(2);
+            }
+        }
+        
+        // 이미 010으로 시작하는 경우 그대로 반환
+        if (cleaned.startsWith("010") && cleaned.length() == 11) {
+            return cleaned;
+        }
+        
+        // 다른 형식은 그대로 반환
+        return cleaned;
     }
 }
