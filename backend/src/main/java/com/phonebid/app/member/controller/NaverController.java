@@ -1,6 +1,7 @@
 package com.phonebid.app.member.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.phonebid.app.common.dto.ApiResponse;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.common.exception.NaverErrorCode;
 import com.phonebid.app.jwt.JwtUtil;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -91,18 +93,30 @@ public class NaverController {
      * @return 로그인 응답
      */
     @PostMapping("/token")
-    public ResponseEntity<LoginResponseDto> exchangeNaverToken(@RequestParam String code) {
+    public ResponseEntity<ApiResponse<LoginResponseDto>> exchangeNaverToken(@RequestParam String code) {
         try {
             log.info("프론트엔드 네이버 토큰 교환 시작: code={}", code);
             LoginResponseDto response = naverService.naverLogin(code);
             log.info("네이버 토큰 교환 성공: username={}", response.getUsername());
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(
+                ApiResponse.success(HttpStatus.OK, "네이버 로그인 성공", response)
+            );
         } catch (CustomException e) {
             log.error("네이버 토큰 교환 중 오류 발생: {}", e.getMessage(), e);
-            return ResponseEntity.status(e.getErrorCode().getStatus()).build();
+            return ResponseEntity.status(e.getErrorCode().getStatus())
+                .body(ApiResponse.error(
+                    e.getErrorCode().getStatus(),
+                    e.getMessage(),
+                    null
+                ));
         } catch (Exception e) {
             log.error("네이버 토큰 교환 중 예상치 못한 오류 발생", e);
-            return ResponseEntity.internalServerError().build();
+            return ResponseEntity.internalServerError()
+                .body(ApiResponse.error(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "서버 오류가 발생했습니다.",
+                    null
+                ));
         }
     }
 
@@ -111,7 +125,7 @@ public class NaverController {
      * @return 네이버 로그인 URL
      */
     @GetMapping("/login")
-    public ResponseEntity<String> getNaverLoginUrl() {
+    public ResponseEntity<ApiResponse<String>> getNaverLoginUrl() {
         if (naverClientId == null || naverRedirectUri == null) {
             log.error("네이버 OAuth2 설정이 누락되었습니다");
             throw new CustomException(NaverErrorCode.NAVER_CONFIG_MISSING);
@@ -122,6 +136,8 @@ public class NaverController {
             naverClientId, naverRedirectUri
         );
         
-        return ResponseEntity.ok(loginUrl);
+        return ResponseEntity.ok(
+            ApiResponse.success(HttpStatus.OK, "네이버 로그인 URL이 생성되었습니다.", loginUrl)
+        );
     }
 } 
