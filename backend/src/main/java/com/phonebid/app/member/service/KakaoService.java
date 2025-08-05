@@ -115,7 +115,7 @@ public class KakaoService {
                         .providerId(providerId)
                         .build();
                 
-                log.info("카카오 신규 사용자 등록: username={}, email={}", username, kakaoUserInfo.getEmail());
+                log.info("카카오 신규 사용자 등록 완료: username={}", username);
             }
             
             userRepository.save(kakaoUser);
@@ -239,7 +239,7 @@ public class KakaoService {
                 ? kakaoAccount.get("name").asText() 
                 : nickname;
             
-            log.info("카카오 사용자 정보: id={}, nickname={}, email={}", id, nickname, email);
+            log.info("카카오 사용자 정보 조회 성공: id={}", id);
             return KakaoUserInfoDto.of(id, nickname, email, name);
         } catch (JsonProcessingException e) {
             log.error("카카오 사용자 정보 응답 파싱 실패", e);

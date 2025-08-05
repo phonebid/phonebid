@@ -128,7 +128,7 @@ public class NaverService {
                         .providerId(providerId)
                         .build();
                 
-                log.info("네이버 신규 사용자 등록: username={}, email={}", username, naverUserInfo.getEmail());
+                log.info("네이버 신규 사용자 등록 완료: username={}", username);
             }
             
             userRepository.save(naverUser);
@@ -254,7 +254,7 @@ public class NaverService {
             String phone = responseNode.get("mobile").asText();
             String nickname = responseNode.has("nickname") ? responseNode.get("nickname").asText() : name;
             
-            log.info("네이버 사용자 정보: id={}, name={}, email={}, phone={}", id, name, email, phone);
+            log.info("네이버 사용자 정보 조회 성공: id={}", id);
             return NaverUserInfoDto.of(id, email, name, phone, nickname);
         } catch (JsonProcessingException e) {
             log.error("네이버 사용자 정보 응답 파싱 실패", e);
