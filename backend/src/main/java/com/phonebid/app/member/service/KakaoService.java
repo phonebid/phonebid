@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.phonebid.app.common.exception.CustomException;
-import com.phonebid.app.common.exception.KakaoErrorCode;
+import com.phonebid.app.common.errorcode.KakaoErrorCode;
 import com.phonebid.app.jwt.JwtUtil;
 import com.phonebid.app.member.domain.Provider;
 import com.phonebid.app.member.domain.Role;

@@ -3,7 +3,7 @@ package com.phonebid.app.member.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.phonebid.app.common.dto.ApiResponse;
 import com.phonebid.app.common.exception.CustomException;
-import com.phonebid.app.common.exception.KakaoErrorCode;
+import com.phonebid.app.common.errorcode.KakaoErrorCode;
 import com.phonebid.app.jwt.JwtUtil;
 import com.phonebid.app.member.dto.ResponseDto.LoginResponseDto;
 import com.phonebid.app.member.service.KakaoService;

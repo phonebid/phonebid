@@ -1,4 +1,4 @@
-package com.phonebid.app.common.exception;
+package com.phonebid.app.common.errorcode;
 
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 /**
  * CommonErrorCode는 애플리케이션 전반에서 발생할 수 있는 공통적인 에러 코드를 정의한 Enum입니다.
  * 각 에러는 {@link HttpStatus}와 사용자에게 전달될 메시지를 포함하고 있습니다.
- * {@code com.pickple.common.exception.CustomException} 클래스와 함께 사용될 수 있습니다.
+ * {@code com.phonebid.app.common.exception.CustomException} 클래스와 함께 사용될 수 있습니다.
  *
  * <p>사용 예시:</p>
  * <pre>{@code
@@ -64,4 +64,4 @@ public enum CommonErrorCode implements ErrorCode {
     public HttpStatus getStatus() {
         return status;
     }
-}
+} 
