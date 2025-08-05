@@ -1,5 +1,6 @@
 package com.phonebid.app.common.exception;
 
+import com.phonebid.app.common.errorcode.ErrorCode;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.Builder;
