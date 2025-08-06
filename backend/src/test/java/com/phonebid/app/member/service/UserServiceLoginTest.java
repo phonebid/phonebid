@@ -17,8 +17,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.phonebid.app.common.exception.CommonErrorCode;
 import com.phonebid.app.common.exception.CustomException;
+import com.phonebid.app.common.errorcode.CommonErrorCode;
 import com.phonebid.app.member.domain.Role;
 import com.phonebid.app.member.domain.User;
 import com.phonebid.app.member.dto.RequestDto.LoginRequestDto;

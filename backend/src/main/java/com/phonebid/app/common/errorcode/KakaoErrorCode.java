@@ -1,4 +1,4 @@
-package com.phonebid.app.common.exception;
+package com.phonebid.app.common.errorcode;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

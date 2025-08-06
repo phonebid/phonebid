@@ -21,7 +21,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 import com.phonebid.app.common.exception.CustomException;
-import com.phonebid.app.common.exception.CommonErrorCode;
+import com.phonebid.app.common.errorcode.CommonErrorCode;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserService 테스트")

@@ -1,10 +1,10 @@
-package com.phonebid.app.common.exception;
+package com.phonebid.app.common.errorcode;
 
 import org.springframework.http.HttpStatus;
 
 /**
  * Exception 발생 시 메세지와 HttpStatus를 명시하기 위한 인터페이스 입니다.
- * {@code package com.pickple.common_module.exception.CustomException;`} 의 인자로 사용됩니다.
+ * {@code package com.phonebid.app.common.exception.CustomException} 의 인자로 사용됩니다.
  * enum 클래스에서 구현하여 다음과 같이 사용될 수 있습니다.
  * <p>사용 예시:</p>
  * <pre>{@code
@@ -28,10 +28,9 @@ import org.springframework.http.HttpStatus;
  *         return status;
  *     }
  * }
- * </pre>
-
+ * }</pre>
  */
 public interface ErrorCode {
     String getMessage();
     HttpStatus getStatus();
-}
+} 

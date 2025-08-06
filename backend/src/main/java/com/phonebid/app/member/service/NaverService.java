@@ -4,7 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.phonebid.app.common.exception.CustomException;
-import com.phonebid.app.common.exception.NaverErrorCode;
+import com.phonebid.app.common.errorcode.NaverErrorCode;
+import com.phonebid.app.common.errorcode.CommonErrorCode;
 import com.phonebid.app.jwt.JwtUtil;
 import com.phonebid.app.member.domain.Provider;
 import com.phonebid.app.member.domain.Role;
@@ -25,6 +26,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
+import java.util.Optional;
 
 /**
  * 네이버 OAuth2 인증 서비스
@@ -107,6 +109,13 @@ public class NaverService {
                 // username은 네이버 이메일 그대로 사용
                 String username = naverUserInfo.getEmail();
                 
+                // username 중복 체크
+                Optional<User> existingUser = userRepository.findByUsername(username);
+                if (existingUser.isPresent()) {
+                    log.error("네이버 로그인 중 username 중복 발생: username={}", username);
+                    throw new CustomException(CommonErrorCode.DUPLICATE_USERNAME);
+                }
+                
                 naverUser = User.builder()
                         .username(username)
                         .password(encodedPassword)
@@ -119,7 +128,7 @@ public class NaverService {
                         .providerId(providerId)
                         .build();
                 
-                log.info("네이버 신규 사용자 등록: username={}, email={}", username, naverUserInfo.getEmail());
+                log.info("네이버 신규 사용자 등록 완료: username={}", username);
             }
             
             userRepository.save(naverUser);
@@ -242,14 +251,46 @@ public class NaverService {
             String id = responseNode.get("id").asText();
             String email = responseNode.get("email").asText();
             String name = responseNode.get("name").asText();
-            String phone = responseNode.get("mobile").asText();
+            String phone = formatPhoneNumber(responseNode.get("mobile").asText());
             String nickname = responseNode.has("nickname") ? responseNode.get("nickname").asText() : name;
             
-            log.info("네이버 사용자 정보: id={}, name={}, email={}, phone={}", id, name, email, phone);
+            log.info("네이버 사용자 정보 조회 성공: id={}", id);
             return NaverUserInfoDto.of(id, email, name, phone, nickname);
         } catch (JsonProcessingException e) {
             log.error("네이버 사용자 정보 응답 파싱 실패", e);
             throw new CustomException(NaverErrorCode.NAVER_USER_INFO_REQUEST_FAILED);
         }
+    }
+    
+    /**
+     * 네이버 API에서 받은 전화번호를 한국 휴대폰 번호 형식으로 변환합니다.
+     * 예: "+82 10-1234-5678" -> "01012345678"
+     * @param phoneNumber 네이버 API에서 받은 전화번호
+     * @return 변환된 전화번호 (숫자만)
+     */
+    private String formatPhoneNumber(String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+            return null;
+        }
+        
+        // 국제전화번호 형식 처리
+        // "+82 10-1234-5678" -> "01012345678"
+        String cleaned = phoneNumber.replaceAll("[^0-9]", "");
+        
+        // +82로 시작하는 경우 한국 번호로 변환
+        if (cleaned.startsWith("82")) {
+            // 821012345678 -> 01012345678
+            if (cleaned.length() == 12) {
+                return "0" + cleaned.substring(2);
+            }
+        }
+        
+        // 이미 010으로 시작하는 경우 그대로 반환
+        if (cleaned.startsWith("010") && cleaned.length() == 11) {
+            return cleaned;
+        }
+        
+        // 다른 형식은 그대로 반환
+        return cleaned;
     }
 } 
