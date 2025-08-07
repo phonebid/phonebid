@@ -7,7 +7,10 @@ import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.common.errorcode.CommonErrorCode;
 import com.phonebid.app.member.dto.RequestDto.SignupRequestDto;
 import com.phonebid.app.member.dto.RequestDto.LoginRequestDto;
+import com.phonebid.app.member.dto.RequestDto.ProfileUpdateRequestDto;
+import com.phonebid.app.member.dto.RequestDto.PasswordChangeRequestDto;
 import com.phonebid.app.member.dto.ResponseDto.LoginResponseDto;
+import com.phonebid.app.member.dto.ResponseDto.ProfileResponseDto;
 import com.phonebid.app.member.domain.User;
 import com.phonebid.app.member.domain.Role;
 import com.phonebid.app.member.repository.UserRepository;
@@ -96,5 +99,84 @@ public class UserService {
             user.getNickname(), 
             user.getRole().name()
         );
+    }
+
+    /**
+     * 내 정보 조회
+     */
+    @Transactional(readOnly = true)
+    public ProfileResponseDto getProfile(String username) {
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new CustomException(CommonErrorCode.USER_NOT_FOUND));
+        
+        if (user.isDeleted()) {
+            throw new CustomException(CommonErrorCode.USER_NOT_FOUND);
+        }
+        
+        return ProfileResponseDto.from(user);
+    }
+
+    /**
+     * 내 정보 수정 (닉네임만 수정 가능)
+     */
+    @Transactional
+    public void updateProfile(String username, ProfileUpdateRequestDto requestDto) {
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new CustomException(CommonErrorCode.USER_NOT_FOUND));
+        
+        if (user.isDeleted()) {
+            throw new CustomException(CommonErrorCode.USER_NOT_FOUND);
+        }
+
+        String newNickname = requestDto.getNickname();
+        
+        // 닉네임 중복 확인 (자신의 기존 닉네임은 제외)
+        Optional<User> checkNickname = userRepository.findByNickname(newNickname);
+        if (checkNickname.isPresent() && !checkNickname.get().getId().equals(user.getId())) {
+            throw new CustomException(CommonErrorCode.DUPLICATE_NICKNAME);
+        }
+
+        user.updateNickname(newNickname);
+    }
+
+    /**
+     * 비밀번호 변경
+     */
+    @Transactional
+    public void changePassword(String username, PasswordChangeRequestDto requestDto) {
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new CustomException(CommonErrorCode.USER_NOT_FOUND));
+        
+        if (user.isDeleted()) {
+            throw new CustomException(CommonErrorCode.USER_NOT_FOUND);
+        }
+
+        String currentPassword = requestDto.getCurrentPassword();
+        String newPassword = requestDto.getNewPassword();
+
+        // 현재 비밀번호 확인
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new CustomException(CommonErrorCode.INVALID_PASSWORD);
+        }
+
+        // 새 비밀번호로 변경
+        String encodedNewPassword = passwordEncoder.encode(newPassword);
+        user.updatePassword(encodedNewPassword);
+    }
+
+    /**
+     * 회원 탈퇴 (소프트 삭제)
+     */
+    @Transactional
+    public void deleteProfile(String username) {
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new CustomException(CommonErrorCode.USER_NOT_FOUND));
+        
+        if (user.isDeleted()) {
+            throw new CustomException(CommonErrorCode.USER_NOT_FOUND);
+        }
+
+        // 소프트 삭제 (삭제한 사용자 정보 기록)
+        user.softDelete(username);
     }
 }   
