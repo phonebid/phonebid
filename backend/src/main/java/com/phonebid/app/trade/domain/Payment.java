@@ -1,6 +1,8 @@
 package com.phonebid.app.trade.domain;
 
 import com.phonebid.app.common.domain.BaseEntity;
+import com.phonebid.app.common.errorcode.TradeErrorCode;
+import com.phonebid.app.common.exception.CustomException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -62,14 +64,14 @@ public class Payment extends BaseEntity {
     // 비즈니스 메서드
     public void approve() {
         if (!status.isRequested()) {
-            throw new IllegalStateException("결제 요청 상태가 아닌 결제는 승인할 수 없습니다.");
+            throw new CustomException(TradeErrorCode.PAYMENT_CANNOT_APPROVE);
         }
         this.status = PaymentStatus.PENDING_APPROVAL;
     }
 
     public void complete() {
         if (!status.canComplete()) {
-            throw new IllegalStateException("완료할 수 없는 결제 상태입니다: " + status.getDisplayName());
+            throw new CustomException(TradeErrorCode.PAYMENT_CANNOT_COMPLETE);
         }
         
         this.status = PaymentStatus.PAID;
@@ -78,7 +80,7 @@ public class Payment extends BaseEntity {
 
     public void fail() {
         if (!status.canFail()) {
-            throw new IllegalStateException("실패 처리할 수 없는 결제 상태입니다: " + status.getDisplayName());
+            throw new CustomException(TradeErrorCode.PAYMENT_CANNOT_FAIL);
         }
         
         this.status = PaymentStatus.FAILED;
@@ -100,15 +102,15 @@ public class Payment extends BaseEntity {
     // 검증 메서드
     private void validatePaymentCreation(Contract contract, Integer amount) {
         if (!contract.isCompleted()) {
-            throw new IllegalStateException("체결되지 않은 계약은 결제할 수 없습니다.");
+            throw new CustomException(TradeErrorCode.INVALID_CONTRACT_STATUS);
         }
         
         if (amount == null || amount <= 0) {
-            throw new IllegalArgumentException("결제 금액은 0보다 커야 합니다.");
+            throw new CustomException(TradeErrorCode.INVALID_PAYMENT_AMOUNT);
         }
         
         if (!amount.equals(contract.getContractAmount())) {
-            throw new IllegalArgumentException("결제 금액이 계약 금액과 일치하지 않습니다.");
+            throw new CustomException(TradeErrorCode.PAYMENT_AMOUNT_MISMATCH);
         }
     }
 }

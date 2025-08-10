@@ -1,5 +1,7 @@
 package com.phonebid.app.auction.domain;
 
+import com.phonebid.app.common.errorcode.AuctionErrorCode;
+import com.phonebid.app.common.exception.CustomException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
@@ -62,15 +64,15 @@ public class PricePlan {
     // 검증 메서드
     private void validatePricePlan(String planName, Integer planPrice) {
         if (planName != null && planName.trim().isEmpty()) {
-            throw new IllegalArgumentException("요금제 이름은 빈 문자열일 수 없습니다.");
+            throw new CustomException(AuctionErrorCode.INVALID_PRICE_PLAN_NAME);
         }
         
         if (planPrice != null && planPrice < 0) {
-            throw new IllegalArgumentException("요금제 가격은 0 이상이어야 합니다.");
+            throw new CustomException(AuctionErrorCode.INVALID_PRICE_PLAN_PRICE);
         }
         
         if (planName != null && planName.length() > 100) {
-            throw new IllegalArgumentException("요금제 이름은 100자를 초과할 수 없습니다.");
+            throw new CustomException(AuctionErrorCode.INVALID_PRICE_PLAN_NAME);
         }
     }
 } 

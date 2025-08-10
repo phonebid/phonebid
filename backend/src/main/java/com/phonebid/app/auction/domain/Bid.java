@@ -1,6 +1,8 @@
 package com.phonebid.app.auction.domain;
 
 import com.phonebid.app.common.domain.BaseEntity;
+import com.phonebid.app.common.errorcode.AuctionErrorCode;
+import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.member.domain.Seller;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -102,7 +104,7 @@ public class Bid extends BaseEntity {
 
     public void updateBid(Integer newPrice, Integer newDeliveryDays) {
         if (!canModify()) {
-            throw new IllegalStateException("수정할 수 없는 입찰입니다.");
+            throw new CustomException(AuctionErrorCode.BID_MODIFICATION_NOT_ALLOWED);
         }
         this.price = newPrice;
         this.deliveryDays = newDeliveryDays;
@@ -167,25 +169,24 @@ public class Bid extends BaseEntity {
     // 검증 메서드
     private void validateBidCreation(PurchaseMethod purchaseMethod, ActivationMethod activationMethod, Carrier currentCarrier) {
         if (purchaseMethod == null) {
-            throw new IllegalArgumentException("구매방법은 필수입니다.");
+            throw new CustomException(AuctionErrorCode.INVALID_PURCHASE_METHOD);
         }
         
         if (!purchaseMethod.isValidForBid()) {
-            throw new IllegalArgumentException("입찰에서는 '상관없음' 구매방법을 사용할 수 없습니다.");
+            throw new CustomException(AuctionErrorCode.INVALID_PURCHASE_METHOD);
         }
         
         if (activationMethod == null) {
-            throw new IllegalArgumentException("개통방법은 필수입니다.");
+            throw new CustomException(AuctionErrorCode.INVALID_ACTIVATION_METHOD);
         }
         
         if (!activationMethod.isValidForBid()) {
-            throw new IllegalArgumentException("입찰에서는 '상관없음' 개통방법을 사용할 수 없습니다.");
+            throw new CustomException(AuctionErrorCode.INVALID_ACTIVATION_METHOD);
         }
         
         // 번호이동이나 기기변경 시 기존 통신사 정보 필요
         if (purchaseMethod.requiresCurrentCarrier() && currentCarrier == null) {
-            throw new IllegalArgumentException(
-                purchaseMethod.getDisplayName() + " 시에는 기존 통신사 정보가 필요합니다.");
+            throw new CustomException(AuctionErrorCode.MISSING_CURRENT_CARRIER);
         }
     }
 } 

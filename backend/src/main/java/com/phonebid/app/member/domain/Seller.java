@@ -10,6 +10,8 @@ import java.util.UUID;
 
 import com.phonebid.app.common.domain.Address;
 import com.phonebid.app.common.domain.BaseEntity;
+import com.phonebid.app.common.errorcode.MemberErrorCode;
+import com.phonebid.app.common.exception.CustomException;
 
 @Entity
 @Table(name = "sellers")
@@ -60,14 +62,14 @@ public class Seller extends BaseEntity {
 
     public void approve() {
         if (approvalStatus != ApprovalStatus.PENDING) {
-            throw new IllegalStateException("승인 대기 상태가 아닌 판매자는 승인할 수 없습니다.");
+            throw new CustomException(MemberErrorCode.SELLER_CANNOT_APPROVE);
         }
         this.approvalStatus = ApprovalStatus.APPROVED;
     }
 
     public void reject() {
         if (approvalStatus != ApprovalStatus.PENDING) {
-            throw new IllegalStateException("승인 대기 상태가 아닌 판매자는 거부할 수 없습니다.");
+            throw new CustomException(MemberErrorCode.SELLER_CANNOT_REJECT);
         }
         this.approvalStatus = ApprovalStatus.REJECTED;
     }

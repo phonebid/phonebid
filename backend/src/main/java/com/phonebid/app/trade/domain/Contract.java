@@ -3,8 +3,8 @@ package com.phonebid.app.trade.domain;
 import com.phonebid.app.auction.domain.Bid;
 import com.phonebid.app.auction.domain.Quote;
 import com.phonebid.app.common.domain.BaseEntity;
-import com.phonebid.app.member.domain.Seller;
-import com.phonebid.app.member.domain.User;
+import com.phonebid.app.common.errorcode.TradeErrorCode;
+import com.phonebid.app.common.exception.CustomException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -58,7 +58,7 @@ public class Contract extends BaseEntity {
     // 비즈니스 메서드
     public void sign() {
         if (!status.canSign()) {
-            throw new IllegalStateException("서명할 수 없는 계약 상태입니다: " + status.getDisplayName());
+            throw new CustomException(TradeErrorCode.CONTRACT_CANNOT_SIGN);
         }
         
         this.status = ContractStatus.SIGNED;
@@ -70,7 +70,7 @@ public class Contract extends BaseEntity {
 
     public void cancel() {
         if (!status.canCancel()) {
-            throw new IllegalStateException("취소할 수 없는 계약 상태입니다: " + status.getDisplayName());
+            throw new CustomException(TradeErrorCode.CONTRACT_CANNOT_CANCEL);
         }
         
         this.status = ContractStatus.CANCELLED;
@@ -96,11 +96,11 @@ public class Contract extends BaseEntity {
     // 검증 메서드
     private void validateContractCreation(Quote quote, Bid selectedBid) {
         if (!quote.canSelectBid()) {
-            throw new IllegalStateException("입찰 선택이 불가능한 견적입니다.");
+            throw new CustomException(TradeErrorCode.INVALID_BID_FOR_QUOTE);
         }
         
         if (!selectedBid.getQuote().equals(quote)) {
-            throw new IllegalArgumentException("선택된 입찰이 해당 견적에 속하지 않습니다.");
+            throw new CustomException(TradeErrorCode.INVALID_BID_FOR_QUOTE);
         }
         
 

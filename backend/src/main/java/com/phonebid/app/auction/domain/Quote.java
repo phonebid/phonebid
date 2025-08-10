@@ -2,6 +2,8 @@ package com.phonebid.app.auction.domain;
 
 
 import com.phonebid.app.common.domain.BaseEntity;
+import com.phonebid.app.common.errorcode.AuctionErrorCode;
+import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.member.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -91,24 +93,24 @@ public class Quote extends BaseEntity {
 
     public void close() {
         if (status != QuoteStatus.OPEN) {
-            throw new IllegalStateException("진행중인 견적만 마감할 수 있습니다.");
+            throw new CustomException(AuctionErrorCode.INVALID_QUOTE_STATUS);
         }
         this.status = QuoteStatus.CLOSED;
     }
 
     public void contract() {
         if (!canSelectBid()) {
-            throw new IllegalStateException("입찰 선택이 불가능한 견적입니다.");
+            throw new CustomException(AuctionErrorCode.INVALID_QUOTE_STATUS);
         }
         this.status = QuoteStatus.CONTRACTED;
     }
 
     public void extendExpiration(LocalDateTime newExpiredAt) {
         if (status != QuoteStatus.OPEN) {
-            throw new IllegalStateException("진행중인 견적만 마감 시간을 연장할 수 있습니다.");
+            throw new CustomException(AuctionErrorCode.INVALID_QUOTE_STATUS);
         }
         if (newExpiredAt.isBefore(LocalDateTime.now())) {
-            throw new IllegalArgumentException("마감 시간은 현재 시간보다 이후여야 합니다.");
+            throw new CustomException(AuctionErrorCode.INVALID_END_TIME);
         }
         this.expiredAt = newExpiredAt;
     }
