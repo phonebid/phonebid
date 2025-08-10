@@ -1,4 +1,4 @@
-package com.phonebid.app.member.dto.RequestDto;
+package com.phonebid.app.member.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

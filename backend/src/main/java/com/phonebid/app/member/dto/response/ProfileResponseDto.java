@@ -1,4 +1,4 @@
-package com.phonebid.app.member.dto.ResponseDto;
+package com.phonebid.app.member.dto.response;
 
 import com.phonebid.app.member.domain.User;
 import lombok.Getter;

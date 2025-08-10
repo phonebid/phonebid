@@ -7,12 +7,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.phonebid.app.common.dto.ApiResponse;
-import com.phonebid.app.member.dto.RequestDto.SignupRequestDto;
-import com.phonebid.app.member.dto.RequestDto.LoginRequestDto;
-import com.phonebid.app.member.dto.RequestDto.ProfileUpdateRequestDto;
-import com.phonebid.app.member.dto.RequestDto.PasswordChangeRequestDto;
-import com.phonebid.app.member.dto.ResponseDto.LoginResponseDto;
-import com.phonebid.app.member.dto.ResponseDto.ProfileResponseDto;
+import com.phonebid.app.member.dto.request.SignupRequestDto;
+import com.phonebid.app.member.dto.request.LoginRequestDto;
+import com.phonebid.app.member.dto.request.ProfileUpdateRequestDto;
+import com.phonebid.app.member.dto.request.PasswordChangeRequestDto;
+import com.phonebid.app.member.dto.response.LoginResponseDto;
+import com.phonebid.app.member.dto.response.ProfileResponseDto;
 import com.phonebid.app.member.service.UserService;
 
 import org.springframework.web.bind.annotation.RequestMapping;
