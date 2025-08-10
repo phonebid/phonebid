@@ -1,11 +1,9 @@
 package com.phonebid.app.member.domain;
 
 import com.phonebid.app.common.domain.Address;
-import com.phonebid.app.member.domain.ApprovalStatus;
-import com.phonebid.app.member.domain.Provider;
-import com.phonebid.app.member.domain.Role;
-import com.phonebid.app.member.domain.Seller;
-import com.phonebid.app.member.domain.User;
+import com.phonebid.app.common.errorcode.MemberErrorCode;
+import com.phonebid.app.common.exception.CustomException;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -97,8 +95,8 @@ class SellerTest {
 
         // when & then
         assertThatThrownBy(seller::approve)
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("승인 대기 상태가 아닌 판매자는 승인할 수 없습니다.");
+                .isInstanceOf(CustomException.class)
+                .hasMessage(MemberErrorCode.SELLER_CANNOT_APPROVE.getMessage());
     }
 
     @Test
@@ -111,8 +109,8 @@ class SellerTest {
 
         // when & then
         assertThatThrownBy(seller::reject)
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("승인 대기 상태가 아닌 판매자는 거부할 수 없습니다.");
+                .isInstanceOf(CustomException.class)
+                .hasMessage(MemberErrorCode.SELLER_CANNOT_REJECT.getMessage());
     }
 
     @Test

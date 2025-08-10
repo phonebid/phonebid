@@ -1,5 +1,7 @@
 package com.phonebid.app.trade.domain;
 
+import com.phonebid.app.common.errorcode.TradeErrorCode;
+import com.phonebid.app.common.exception.CustomException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
@@ -59,29 +61,29 @@ public class DeliveryAddress {
     private void validateDeliveryAddress(String recipientName, String recipientPhone, 
                                        String postalCode, String address) {
         if (recipientName == null || recipientName.trim().isEmpty()) {
-            throw new IllegalArgumentException("수령인 이름은 필수입니다.");
+            throw new CustomException(TradeErrorCode.MISSING_RECIPIENT_NAME);
         }
         
         if (recipientPhone == null || recipientPhone.trim().isEmpty()) {
-            throw new IllegalArgumentException("수령인 전화번호는 필수입니다.");
+            throw new CustomException(TradeErrorCode.MISSING_RECIPIENT_PHONE);
         }
         
         if (postalCode == null || postalCode.trim().isEmpty()) {
-            throw new IllegalArgumentException("우편번호는 필수입니다.");
+            throw new CustomException(TradeErrorCode.MISSING_POSTAL_CODE);
         }
         
         if (address == null || address.trim().isEmpty()) {
-            throw new IllegalArgumentException("주소는 필수입니다.");
+            throw new CustomException(TradeErrorCode.MISSING_ADDRESS);
         }
         
         // 전화번호 형식 간단 검증
         if (!recipientPhone.matches("^[0-9-+()\\s]+$")) {
-            throw new IllegalArgumentException("올바르지 않은 전화번호 형식입니다.");
+            throw new CustomException(TradeErrorCode.INVALID_PHONE_FORMAT);
         }
         
         // 우편번호 형식 검증 (5자리 숫자)
         if (!postalCode.matches("^\\d{5}$")) {
-            throw new IllegalArgumentException("우편번호는 5자리 숫자여야 합니다.");
+            throw new CustomException(TradeErrorCode.INVALID_POSTAL_CODE_FORMAT);
         }
     }
 } 

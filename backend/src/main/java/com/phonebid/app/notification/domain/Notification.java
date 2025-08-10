@@ -1,6 +1,8 @@
 package com.phonebid.app.notification.domain;
 
 import com.phonebid.app.common.domain.BaseEntity;
+import com.phonebid.app.common.errorcode.NotificationErrorCode;
+import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.member.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -120,31 +122,31 @@ public class Notification extends BaseEntity {
     private void validateNotificationCreation(User user, NotificationType type, 
                                             NotificationChannel channel, String title, String message) {
         if (user == null) {
-            throw new IllegalArgumentException("사용자 정보는 필수입니다.");
+            throw new CustomException(NotificationErrorCode.MISSING_USER_INFO);
         }
         
         if (type == null) {
-            throw new IllegalArgumentException("알림 유형은 필수입니다.");
+            throw new CustomException(NotificationErrorCode.MISSING_NOTIFICATION_TYPE);
         }
         
         if (channel == null) {
-            throw new IllegalArgumentException("알림 채널은 필수입니다.");
+            throw new CustomException(NotificationErrorCode.MISSING_NOTIFICATION_CHANNEL);
         }
         
         if (title == null || title.trim().isEmpty()) {
-            throw new IllegalArgumentException("알림 제목은 필수입니다.");
+            throw new CustomException(NotificationErrorCode.MISSING_NOTIFICATION_TITLE);
         }
         
         if (message == null || message.trim().isEmpty()) {
-            throw new IllegalArgumentException("알림 메시지는 필수입니다.");
+            throw new CustomException(NotificationErrorCode.MISSING_NOTIFICATION_MESSAGE);
         }
         
         if (title.length() > 100) {
-            throw new IllegalArgumentException("알림 제목은 100자를 초과할 수 없습니다.");
+            throw new CustomException(NotificationErrorCode.TITLE_TOO_LONG);
         }
         
         if (message.length() > 1000) {
-            throw new IllegalArgumentException("알림 메시지는 1000자를 초과할 수 없습니다.");
+            throw new CustomException(NotificationErrorCode.MESSAGE_TOO_LONG);
         }
     }
 } 

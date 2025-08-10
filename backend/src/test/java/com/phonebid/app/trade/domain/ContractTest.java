@@ -1,6 +1,8 @@
 package com.phonebid.app.trade.domain;
 
 import com.phonebid.app.auction.domain.*;
+import com.phonebid.app.common.errorcode.TradeErrorCode;
+import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.member.domain.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -119,8 +121,8 @@ class ContractTest {
 
         // When & Then
         assertThatThrownBy(() -> contract.sign())
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("서명할 수 없는 계약 상태입니다");
+                .isInstanceOf(CustomException.class)
+                .hasMessage(TradeErrorCode.CONTRACT_CANNOT_SIGN.getMessage());
     }
 
     @Test
@@ -131,8 +133,8 @@ class ContractTest {
 
         // When & Then
         assertThatThrownBy(() -> contract.cancel())
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("취소할 수 없는 계약 상태입니다");
+                .isInstanceOf(CustomException.class)
+                .hasMessage(TradeErrorCode.CONTRACT_CANNOT_CANCEL.getMessage());
     }
 
     @Test
@@ -177,8 +179,8 @@ class ContractTest {
                 .quote(anotherQuote)
                 .selectedBid(bid)
                 .build())
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("선택된 입찰이 해당 견적에 속하지 않습니다.");
+                .isInstanceOf(CustomException.class)
+                .hasMessage(TradeErrorCode.INVALID_BID_FOR_QUOTE.getMessage());
     }
 
     @Test
@@ -192,7 +194,7 @@ class ContractTest {
                 .quote(quote)
                 .selectedBid(bid)
                 .build())
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("입찰 선택이 불가능한 견적입니다.");
+                .isInstanceOf(CustomException.class)
+                .hasMessage(TradeErrorCode.INVALID_BID_FOR_QUOTE.getMessage());
     }
 } 

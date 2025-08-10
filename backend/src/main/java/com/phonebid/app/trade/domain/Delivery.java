@@ -1,6 +1,8 @@
 package com.phonebid.app.trade.domain;
 
 import com.phonebid.app.common.domain.BaseEntity;
+import com.phonebid.app.common.errorcode.TradeErrorCode;
+import com.phonebid.app.common.exception.CustomException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -65,11 +67,11 @@ public class Delivery extends BaseEntity {
     // 비즈니스 메서드
     public void ship(String invoiceNumber) {
         if (!status.canShip()) {
-            throw new IllegalStateException("배송 시작할 수 없는 상태입니다: " + status.getDisplayName());
+            throw new CustomException(TradeErrorCode.DELIVERY_CANNOT_SHIP);
         }
         
         if (invoiceNumber == null || invoiceNumber.trim().isEmpty()) {
-            throw new IllegalArgumentException("송장번호는 필수입니다.");
+            throw new CustomException(TradeErrorCode.MISSING_TRACKING_NUMBER);
         }
         
         this.invoiceNumber = invoiceNumber.trim();
@@ -79,7 +81,7 @@ public class Delivery extends BaseEntity {
 
     public void deliver() {
         if (!status.canDeliver()) {
-            throw new IllegalStateException("배송 완료 처리할 수 없는 상태입니다: " + status.getDisplayName());
+            throw new CustomException(TradeErrorCode.DELIVERY_CANNOT_DELIVER);
         }
         
         this.status = DeliveryStatus.DELIVERED;
@@ -92,7 +94,7 @@ public class Delivery extends BaseEntity {
 
     public String getTrackingUrl() {
         if (!hasInvoiceNumber()) {
-            throw new IllegalStateException("송장번호가 없어 배송 추적 URL을 생성할 수 없습니다.");
+            throw new CustomException(TradeErrorCode.MISSING_TRACKING_NUMBER);
         }
         return courier.getTrackingUrl(invoiceNumber);
     }
@@ -125,7 +127,7 @@ public class Delivery extends BaseEntity {
     // 검증 메서드
     private void validateDeliveryCreation(Contract contract) {
         if (!contract.isCompleted()) {
-            throw new IllegalStateException("체결되지 않은 계약은 배송을 시작할 수 없습니다.");
+            throw new CustomException(TradeErrorCode.INVALID_CONTRACT_STATUS);
         }
     }
 } 

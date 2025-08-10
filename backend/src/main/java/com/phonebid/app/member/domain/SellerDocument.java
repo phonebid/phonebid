@@ -1,6 +1,8 @@
 package com.phonebid.app.member.domain;
 
 import com.phonebid.app.common.domain.BaseEntity;
+import com.phonebid.app.common.errorcode.MemberErrorCode;
+import com.phonebid.app.common.exception.CustomException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -81,7 +83,7 @@ public class SellerDocument extends BaseEntity {
 
     public void updateFileUrl(String newFileUrl) {
         if (newFileUrl == null || newFileUrl.trim().isEmpty()) {
-            throw new IllegalArgumentException("파일 URL은 필수입니다.");
+            throw new CustomException(MemberErrorCode.MISSING_FILE_URL);
         }
         
         this.fileUrl = newFileUrl.trim();
@@ -91,15 +93,15 @@ public class SellerDocument extends BaseEntity {
     // 검증 메서드
     private void validateDocumentCreation(Seller seller, DocumentType type, String fileUrl) {
         if (seller == null) {
-            throw new IllegalArgumentException("판매자 정보는 필수입니다.");
+            throw new CustomException(MemberErrorCode.MISSING_SELLER_INFO);
         }
         
         if (type == null) {
-            throw new IllegalArgumentException("문서 종류는 필수입니다.");
+            throw new CustomException(MemberErrorCode.MISSING_DOCUMENT_TYPE);
         }
         
         if (fileUrl == null || fileUrl.trim().isEmpty()) {
-            throw new IllegalArgumentException("파일 URL은 필수입니다.");
+            throw new CustomException(MemberErrorCode.MISSING_FILE_URL);
         }
     }
 } 

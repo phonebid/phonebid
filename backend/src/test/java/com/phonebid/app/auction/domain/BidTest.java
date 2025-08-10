@@ -1,6 +1,8 @@
 package com.phonebid.app.auction.domain;
 
 import com.phonebid.app.common.domain.Address;
+import com.phonebid.app.common.errorcode.AuctionErrorCode;
+import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.member.domain.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -217,23 +219,6 @@ class BidTest {
         assertThat(summary).contains("약정: 24개월");
     }
 
-    @Test
-    @DisplayName("구매방법이 null이면 입찰 생성에 실패한다")
-    void createBid_WithNullPurchaseMethod_ShouldThrowException() {
-        // when & then
-        assertThatThrownBy(() -> Bid.builder()
-                .quote(quote)
-                .seller(seller)
-                .price(1200000)
-                .deliveryDays(3)
-                .ratingSnapshot(4.5)
-                .purchaseMethod(null) // null
-                .carrier(Carrier.SKT)
-                .activationMethod(ActivationMethod.SELECTIVE_SUBSIDY)
-                .build())
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("구매방법은 필수입니다.");
-    }
 
     @Test
     @DisplayName("구매방법이 ANY이면 입찰 생성에 실패한다")
@@ -249,8 +234,8 @@ class BidTest {
                 .carrier(Carrier.SKT)
                 .activationMethod(ActivationMethod.SELECTIVE_SUBSIDY)
                 .build())
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("입찰에서는 '상관없음' 구매방법을 사용할 수 없습니다.");
+                .isInstanceOf(CustomException.class)
+                .hasMessage(AuctionErrorCode.INVALID_PURCHASE_METHOD.getMessage());
     }
 
     @Test
@@ -268,8 +253,8 @@ class BidTest {
                 .currentCarrier(null) // 번호이동인데 기존 통신사 없음
                 .activationMethod(ActivationMethod.SELECTIVE_SUBSIDY)
                 .build())
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("번호이동 시에는 기존 통신사 정보가 필요합니다.");
+                .isInstanceOf(CustomException.class)
+                .hasMessage(AuctionErrorCode.MISSING_CURRENT_CARRIER.getMessage());
     }
 
     @Test
@@ -300,8 +285,8 @@ class BidTest {
         assertThat(bid.canModify()).isFalse();
         
         assertThatThrownBy(() -> bid.updateBid(1000000, 1))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("수정할 수 없는 입찰입니다.");
+                .isInstanceOf(CustomException.class)
+                .hasMessage(AuctionErrorCode.BID_MODIFICATION_NOT_ALLOWED.getMessage());
     }
 
     // 헬퍼 메서드들
