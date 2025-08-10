@@ -144,6 +144,11 @@ public class UserService {
             throw new CustomException(CommonErrorCode.INVALID_PASSWORD);
         }
 
+        // 새 비밀번호가 현재 비밀번호와 동일한지 확인
+        if (passwordEncoder.matches(newPassword, user.getPassword())) {
+            throw new CustomException(CommonErrorCode.SAME_PASSWORD);
+        }
+
         // 새 비밀번호로 변경
         String encodedNewPassword = passwordEncoder.encode(newPassword);
         user.updatePassword(encodedNewPassword);
