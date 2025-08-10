@@ -1,5 +1,7 @@
 package com.phonebid.app.auction.domain;
 
+import com.phonebid.app.common.errorcode.AuctionErrorCode;
+import com.phonebid.app.common.exception.CustomException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -156,8 +158,8 @@ class PricePlanTest {
                 .planName("  ")
                 .planPrice(0)
                 .build())
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("요금제 이름은 빈 문자열일 수 없습니다.");
+                .isInstanceOf(CustomException.class)
+                .hasMessage(AuctionErrorCode.INVALID_PRICE_PLAN_NAME.getMessage());
     }
 
     @Test
@@ -168,8 +170,8 @@ class PricePlanTest {
                 .planName("  ") // 빈 문자열
                 .planPrice(75000)
                 .build())
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("요금제 이름은 빈 문자열일 수 없습니다.");
+                .isInstanceOf(CustomException.class)
+                .hasMessage(AuctionErrorCode.INVALID_PRICE_PLAN_NAME.getMessage());
     }
 
     @Test
@@ -180,8 +182,8 @@ class PricePlanTest {
                 .planName("5G 스탠다드")
                 .planPrice(-1000) // 음수
                 .build())
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("요금제 가격은 0 이상이어야 합니다.");
+                .isInstanceOf(CustomException.class)
+                .hasMessage(AuctionErrorCode.INVALID_PRICE_PLAN_PRICE.getMessage());
     }
 
     @Test
@@ -193,10 +195,9 @@ class PricePlanTest {
         // when & then
         assertThatThrownBy(() -> PricePlan.builder()
                 .planName(longPlanName)
-                .planPrice(75000)
                 .build())
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("요금제 이름은 100자를 초과할 수 없습니다.");
+                .isInstanceOf(CustomException.class)
+                .hasMessage(AuctionErrorCode.INVALID_PRICE_PLAN_NAME.getMessage());
     }
 
     @Test

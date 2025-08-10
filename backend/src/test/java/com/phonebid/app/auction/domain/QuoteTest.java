@@ -1,5 +1,7 @@
 package com.phonebid.app.auction.domain;
 
+import com.phonebid.app.common.errorcode.AuctionErrorCode;
+import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.member.domain.Provider;
 import com.phonebid.app.member.domain.Role;
 import com.phonebid.app.member.domain.User;
@@ -129,8 +131,8 @@ class QuoteTest {
 
         // when & then
         assertThatThrownBy(quote::close)
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("진행중인 견적만 마감할 수 있습니다.");
+                .isInstanceOf(CustomException.class)
+                .hasMessage(AuctionErrorCode.INVALID_QUOTE_STATUS.getMessage());
     }
 
     @Test
@@ -150,8 +152,8 @@ class QuoteTest {
 
         // when & then
         assertThatThrownBy(quote::contract)
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("입찰 선택이 불가능한 견적입니다.");
+                    .isInstanceOf(CustomException.class)
+                .hasMessage(AuctionErrorCode.INVALID_QUOTE_STATUS.getMessage());
     }
 
     @Test
@@ -179,8 +181,8 @@ class QuoteTest {
 
         // when & then
         assertThatThrownBy(() -> quote.extendExpiration(pastTime))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("마감 시간은 현재 시간보다 이후여야 합니다.");
+                .isInstanceOf(CustomException.class)
+                .hasMessage(AuctionErrorCode.INVALID_END_TIME.getMessage());
     }
 
     @Test
