@@ -106,12 +106,7 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public ProfileResponseDto getProfile(String username) {
-        User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new CustomException(CommonErrorCode.USER_NOT_FOUND));
-        
-        if (user.isDeleted()) {
-            throw new CustomException(CommonErrorCode.USER_NOT_FOUND);
-        }
+        User user = loadActiveUser(username);
         
         return ProfileResponseDto.from(user);
     }
@@ -121,12 +116,7 @@ public class UserService {
      */
     @Transactional
     public void updateProfile(String username, ProfileUpdateRequestDto requestDto) {
-        User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new CustomException(CommonErrorCode.USER_NOT_FOUND));
-        
-        if (user.isDeleted()) {
-            throw new CustomException(CommonErrorCode.USER_NOT_FOUND);
-        }
+        User user = loadActiveUser(username);
 
         String newNickname = requestDto.getNickname();
         
@@ -144,12 +134,7 @@ public class UserService {
      */
     @Transactional
     public void changePassword(String username, PasswordChangeRequestDto requestDto) {
-        User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new CustomException(CommonErrorCode.USER_NOT_FOUND));
-        
-        if (user.isDeleted()) {
-            throw new CustomException(CommonErrorCode.USER_NOT_FOUND);
-        }
+        User user = loadActiveUser(username);
 
         String currentPassword = requestDto.getCurrentPassword();
         String newPassword = requestDto.getNewPassword();
@@ -169,14 +154,19 @@ public class UserService {
      */
     @Transactional
     public void deleteProfile(String username) {
-        User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new CustomException(CommonErrorCode.USER_NOT_FOUND));
-        
-        if (user.isDeleted()) {
-            throw new CustomException(CommonErrorCode.USER_NOT_FOUND);
-        }
+        User user = loadActiveUser(username);
 
         // 소프트 삭제 (삭제한 사용자 정보 기록)
         user.softDelete(username);
+    }
+
+    /**
+     * 활성 사용자 조회 헬퍼 메서드
+     * 삭제되지 않은 사용자만 조회하며, 없으면 예외 발생
+     */
+    private User loadActiveUser(String username) {
+        return userRepository.findByUsername(username)
+            .filter(user -> !user.isDeleted())
+            .orElseThrow(() -> new CustomException(CommonErrorCode.USER_NOT_FOUND));
     }
 }   
