@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -109,5 +110,17 @@ public class User extends BaseEntity {
 
     public void updateProviderId(String providerId) {
         this.providerId = providerId;
+    }
+
+    // 논리적 삭제
+    public void softDelete(String deletedBy) {
+        this.deletedAt = LocalDateTime.now();
+        this.deletedBy = deletedBy;
+        this.isDelete = true;
+    }
+
+    // 삭제 여부 확인
+    public boolean isDeleted() {
+        return Boolean.TRUE.equals(this.isDelete);
     }
 }

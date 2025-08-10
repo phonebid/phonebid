@@ -5,9 +5,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.common.errorcode.CommonErrorCode;
-import com.phonebid.app.member.dto.RequestDto.SignupRequestDto;
-import com.phonebid.app.member.dto.RequestDto.LoginRequestDto;
-import com.phonebid.app.member.dto.ResponseDto.LoginResponseDto;
+import com.phonebid.app.member.dto.request.SignupRequestDto;
+import com.phonebid.app.member.dto.request.LoginRequestDto;
+import com.phonebid.app.member.dto.request.ProfileUpdateRequestDto;
+import com.phonebid.app.member.dto.request.PasswordChangeRequestDto;
+import com.phonebid.app.member.dto.response.LoginResponseDto;
+import com.phonebid.app.member.dto.response.ProfileResponseDto;
 import com.phonebid.app.member.domain.User;
 import com.phonebid.app.member.domain.Role;
 import com.phonebid.app.member.repository.UserRepository;
@@ -96,5 +99,79 @@ public class UserService {
             user.getNickname(), 
             user.getRole().name()
         );
+    }
+
+    /**
+     * 내 정보 조회
+     */
+    @Transactional(readOnly = true)
+    public ProfileResponseDto getProfile(String username) {
+        User user = loadActiveUser(username);
+        
+        return ProfileResponseDto.from(user);
+    }
+
+    /**
+     * 내 정보 수정 (닉네임만 수정 가능)
+     */
+    @Transactional
+    public void updateProfile(String username, ProfileUpdateRequestDto requestDto) {
+        User user = loadActiveUser(username);
+
+        String newNickname = requestDto.getNickname();
+        
+        // 닉네임 중복 확인 (자신의 기존 닉네임은 제외)
+        Optional<User> checkNickname = userRepository.findByNickname(newNickname);
+        if (checkNickname.isPresent() && !checkNickname.get().getId().equals(user.getId())) {
+            throw new CustomException(CommonErrorCode.DUPLICATE_NICKNAME);
+        }
+
+        user.updateNickname(newNickname);
+    }
+
+    /**
+     * 비밀번호 변경
+     */
+    @Transactional
+    public void changePassword(String username, PasswordChangeRequestDto requestDto) {
+        User user = loadActiveUser(username);
+
+        String currentPassword = requestDto.getCurrentPassword();
+        String newPassword = requestDto.getNewPassword();
+
+        // 현재 비밀번호 확인
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new CustomException(CommonErrorCode.INVALID_PASSWORD);
+        }
+
+        // 새 비밀번호가 현재 비밀번호와 동일한지 확인
+        if (passwordEncoder.matches(newPassword, user.getPassword())) {
+            throw new CustomException(CommonErrorCode.SAME_PASSWORD);
+        }
+
+        // 새 비밀번호로 변경
+        String encodedNewPassword = passwordEncoder.encode(newPassword);
+        user.updatePassword(encodedNewPassword);
+    }
+
+    /**
+     * 회원 탈퇴 (소프트 삭제)
+     */
+    @Transactional
+    public void deleteProfile(String username) {
+        User user = loadActiveUser(username);
+
+        // 소프트 삭제 (삭제한 사용자 정보 기록)
+        user.softDelete(username);
+    }
+
+    /**
+     * 활성 사용자 조회 헬퍼 메서드
+     * 삭제되지 않은 사용자만 조회하며, 없으면 예외 발생
+     */
+    private User loadActiveUser(String username) {
+        return userRepository.findByUsername(username)
+            .filter(user -> !user.isDeleted())
+            .orElseThrow(() -> new CustomException(CommonErrorCode.USER_NOT_FOUND));
     }
 }   

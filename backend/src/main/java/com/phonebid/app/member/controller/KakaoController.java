@@ -5,7 +5,7 @@ import com.phonebid.app.common.dto.ApiResponse;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.common.errorcode.KakaoErrorCode;
 import com.phonebid.app.jwt.JwtUtil;
-import com.phonebid.app.member.dto.ResponseDto.LoginResponseDto;
+import com.phonebid.app.member.dto.response.LoginResponseDto;
 import com.phonebid.app.member.service.KakaoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
