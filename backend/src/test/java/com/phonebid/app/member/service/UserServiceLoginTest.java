@@ -21,8 +21,8 @@ import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.common.errorcode.CommonErrorCode;
 import com.phonebid.app.member.domain.Role;
 import com.phonebid.app.member.domain.User;
-import com.phonebid.app.member.dto.RequestDto.LoginRequestDto;
-import com.phonebid.app.member.dto.ResponseDto.LoginResponseDto;
+import com.phonebid.app.member.dto.request.LoginRequestDto;
+import com.phonebid.app.member.dto.response.LoginResponseDto;
 import com.phonebid.app.member.repository.UserRepository;
 import com.phonebid.app.jwt.JwtUtil;
 
