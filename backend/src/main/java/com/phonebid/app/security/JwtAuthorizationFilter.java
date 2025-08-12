@@ -51,7 +51,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
             // 토큰 검증
             if (!jwtUtil.validateToken(tokenValue)) {
-                log.error("JWT 토큰 검증 실패: {}", tokenValue);
+                log.warn("JWT 토큰 검증 실패: tokenFingerprint={}", tokenFingerprint(tokenValue));
                 sendUnauthorizedResponse(res, "유효하지 않은 토큰입니다.");
                 return;
             }
@@ -99,5 +99,22 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     private Authentication createAuthentication(String username) {
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);  // 사용자 정보 가져오기
         return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+    }
+
+    /**
+     * 토큰의 안전한 해시값을 생성하여 로깅에 사용하는 메서드
+     */
+    private String tokenFingerprint(String token) {
+        if (token == null || token.isBlank()) return "blank";
+        try {
+            var md = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] digest = md.digest(token.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            // Java 17 HexFormat 사용
+            String hex = java.util.HexFormat.of().formatHex(digest);
+            // 앞 12자리만 사용해도 충분
+            return hex.substring(0, 12);
+        } catch (Exception e) {
+            return "hash_error";
+        }
     }
 }
