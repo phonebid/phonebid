@@ -62,7 +62,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
                 setAuthentication(info.getSubject());
             } catch (Exception e) {
                 log.warn("사용자 인증 처리 중 오류 발생", e);
-                // 실패 시 잔존 인증 정보 제거(방어적)
+                // 실패 시 잔존 인증 정보 제거
                 SecurityContextHolder.clearContext();
                 sendUnauthorizedResponse(res, "사용자 인증에 실패했습니다.");
                 return;
@@ -113,7 +113,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             byte[] digest = md.digest(token.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             // Java 17 HexFormat 사용
             String hex = java.util.HexFormat.of().formatHex(digest);
-            // 앞 12자리만 사용해도 충분
+            // 앞 12자리만 사용
             return hex.substring(0, 12);
         } catch (Exception e) {
             return "hash_error";
