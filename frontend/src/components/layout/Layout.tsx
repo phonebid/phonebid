@@ -3,7 +3,6 @@ interface LayoutProps {
 }
 
 import Header from "./Header";
-import Footer from "./Footer";
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
@@ -11,7 +10,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     <div className="min-h-screen h-screen flex flex-col">
       <Header />
       <main className="flex-1">{children}</main>
-      <Footer />
     </div>
   );
 };

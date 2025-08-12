@@ -4,7 +4,6 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 import Layout from "components/layout/Layout";
-import HomePage from "pages/HomePage";
 import LoginPage from "pages/LoginPage";
 import SignupPage from "pages/SignupPage";
 import AuthCallbackPage from "pages/AuthCallbackPage";
@@ -12,6 +11,7 @@ import ConfettiTestPage from "@/pages/ConfettiPage";
 import { useAuthStore } from "store/authStore";
 import AuctionListPage from "./pages/AuctionListPage";
 import WeeklyRankingPage from "./pages/WeeklyRankingPage";
+import QuoteCreatePage from "./pages/QuoteCreatePage";
 
 function App() {
   const { initializeAuth } = useAuthStore();
@@ -29,6 +29,7 @@ function App() {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/confetti" element={<ConfettiTestPage />} />
+        <Route path="/auctions/create" element={<QuoteCreatePage />} />
 
         {/* Layout이 포함된 일반 페이지들 */}
         <Route
