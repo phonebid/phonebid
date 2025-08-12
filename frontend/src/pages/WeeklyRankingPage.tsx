@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
 import RankingCard from "components/ranking/RankingCard";
+import FloatingCTA from "components/common/FloatingCTA";
 
 const WeeklyRankingPage: React.FC = () => {
   useEffect(() => {
@@ -69,17 +69,7 @@ const WeeklyRankingPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 하단 고정 CTA (떠있는 느낌, 컨텐츠가 보이도록 투명 배경/여백) */}
-      <div className="fixed inset-x-0 bottom-0 z-40 pointer-events-none">
-        <div className="max-w-md mx-auto px-4 pb-[max(20px,env(safe-area-inset-bottom))]">
-          <Link
-            to="/auctions/create"
-            className="pointer-events-auto block w-full text-center rounded-xl py-3 text-sm font-medium text-white bg-black "
-          >
-            핸드폰 가격 알아보기
-          </Link>
-        </div>
-      </div>
+      <FloatingCTA label="핸드폰 가격 알아보기" to="/auctions/create" variant="black" />
     </div>
   );
 };
