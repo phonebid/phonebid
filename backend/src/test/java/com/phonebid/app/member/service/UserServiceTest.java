@@ -1,7 +1,7 @@
 package com.phonebid.app.member.service;
 
 import com.phonebid.app.member.domain.User;
-import com.phonebid.app.member.dto.RequestDto.SignupRequestDto;
+import com.phonebid.app.member.dto.request.SignupRequestDto;
 import com.phonebid.app.member.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
