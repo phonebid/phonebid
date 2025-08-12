@@ -61,7 +61,9 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             try {
                 setAuthentication(info.getSubject());
             } catch (Exception e) {
-                log.error("사용자 인증 처리 중 오류 발생: {}", e.getMessage());
+                log.warn("사용자 인증 처리 중 오류 발생", e);
+                // 실패 시 잔존 인증 정보 제거(방어적)
+                SecurityContextHolder.clearContext();
                 sendUnauthorizedResponse(res, "사용자 인증에 실패했습니다.");
                 return;
             }
