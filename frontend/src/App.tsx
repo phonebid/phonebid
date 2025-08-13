@@ -4,12 +4,14 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 import Layout from "components/layout/Layout";
-import HomePage from "pages/HomePage";
 import LoginPage from "pages/LoginPage";
 import SignupPage from "pages/SignupPage";
 import AuthCallbackPage from "pages/AuthCallbackPage";
 import ConfettiTestPage from "@/pages/ConfettiPage";
 import { useAuthStore } from "store/authStore";
+import AuctionListPage from "./pages/AuctionListPage";
+import WeeklyRankingPage from "./pages/WeeklyRankingPage";
+import QuoteCreatePage from "./pages/QuoteCreatePage";
 
 function App() {
   const { initializeAuth } = useAuthStore();
@@ -26,6 +28,8 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
+        <Route path="/confetti" element={<ConfettiTestPage />} />
+        <Route path="/auctions/create" element={<QuoteCreatePage />} />
 
         {/* Layout이 포함된 일반 페이지들 */}
         <Route
@@ -33,11 +37,10 @@ function App() {
           element={
             <Layout>
               <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/confetti" element={<ConfettiTestPage />} />
+                <Route path="/" element={<WeeklyRankingPage />} />
                 {/* 추후 추가될 라우트들 */}
-                {/* <Route path="/auctions" element={<AuctionListPage />} /> */}
-                {/* <Route path="/auction/:id" element={<AuctionDetailPage />} /> */}
+                <Route path="/auctions" element={<AuctionListPage />} />
+
                 {/* <Route path="/register" element={<RegisterPage />} /> */}
                 {/* <Route path="/profile" element={<ProfilePage />} /> */}
               </Routes>
