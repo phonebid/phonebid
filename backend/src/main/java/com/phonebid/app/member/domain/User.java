@@ -96,6 +96,10 @@ public class User extends BaseEntity {
         this.phone = phone;
     }
 
+    public void updateEmail(String email) {
+        this.email = email;
+    }
+
     public void updatePassword(String password) {
         this.password = password;
     }
