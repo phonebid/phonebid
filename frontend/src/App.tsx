@@ -12,6 +12,7 @@ import { useAuthStore } from "store/authStore";
 import AuctionListPage from "./pages/AuctionListPage";
 import WeeklyRankingPage from "./pages/WeeklyRankingPage";
 import QuoteCreatePage from "./pages/QuoteCreatePage";
+import SWRProvider from "providers/SWRProvider";
 
 function App() {
   const { initializeAuth } = useAuthStore();
@@ -22,46 +23,48 @@ function App() {
   }, [initializeAuth]);
 
   return (
-    <Router>
-      <Routes>
-        {/* 전체화면 페이지들 (Layout 없음) */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
-        <Route path="/auth/callback" element={<AuthCallbackPage />} />
-        <Route path="/confetti" element={<ConfettiTestPage />} />
-        <Route path="/auctions/create" element={<QuoteCreatePage />} />
+    <SWRProvider>
+      <Router>
+        <Routes>
+          {/* 전체화면 페이지들 (Layout 없음) */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
+          <Route path="/confetti" element={<ConfettiTestPage />} />
+          <Route path="/auctions/create" element={<QuoteCreatePage />} />
 
-        {/* Layout이 포함된 일반 페이지들 */}
-        <Route
-          path="/*"
-          element={
-            <Layout>
-              <Routes>
-                <Route path="/" element={<WeeklyRankingPage />} />
-                {/* 추후 추가될 라우트들 */}
-                <Route path="/auctions" element={<AuctionListPage />} />
+          {/* Layout이 포함된 일반 페이지들 */}
+          <Route
+            path="/*"
+            element={
+              <Layout>
+                <Routes>
+                  <Route path="/" element={<WeeklyRankingPage />} />
+                  {/* 추후 추가될 라우트들 */}
+                  <Route path="/auctions" element={<AuctionListPage />} />
 
-                {/* <Route path="/register" element={<RegisterPage />} /> */}
-                {/* <Route path="/profile" element={<ProfilePage />} /> */}
-              </Routes>
-            </Layout>
-          }
+                  {/* <Route path="/register" element={<RegisterPage />} /> */}
+                  {/* <Route path="/profile" element={<ProfilePage />} /> */}
+                </Routes>
+              </Layout>
+            }
+          />
+        </Routes>
+
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
         />
-      </Routes>
-
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-      />
-    </Router>
+      </Router>
+    </SWRProvider>
   );
 }
 
