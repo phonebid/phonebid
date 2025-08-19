@@ -113,7 +113,13 @@ public class SellerService {
         
         // 이메일 업데이트 (제공된 경우에만)
         if (requestDto.getEmail() != null && !requestDto.getEmail().trim().isEmpty()) {
-            user.updateEmail(requestDto.getEmail());
+            String newEmail = requestDto.getEmail().trim();
+            userRepository.findByEmail(newEmail).ifPresent(other -> {
+                if (!other.getId().equals(user.getId())) {
+                    throw new CustomException(MemberErrorCode.DUPLICATE_EMAIL);
+                }
+            });
+            user.updateEmail(newEmail);
         }
 
         sellerRepository.save(seller);
