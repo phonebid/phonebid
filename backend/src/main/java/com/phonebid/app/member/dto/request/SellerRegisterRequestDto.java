@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 public class SellerRegisterRequestDto {
 
     @NotBlank(message = "사업자등록번호는 필수입니다")
-    @Pattern(regexp = "^\\d{10}$", message = "사업자등록번호는 10자리 숫자여야 합니다")
+    @Pattern(regexp = "^\\d{10}$", message = "사업자등록번호는 하이픈(-) 없이 10자리 숫자로 입력해주세요")
     private String businessNumber;
 
     @NotBlank(message = "매장명은 필수입니다")

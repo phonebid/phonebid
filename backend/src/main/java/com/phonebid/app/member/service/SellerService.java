@@ -63,9 +63,7 @@ public class SellerService {
 
         // 판매자 저장
         sellerRepository.save(seller);
-        
-        log.info("판매자 등록 완료: sellerId={}, username={}, businessNumber={}", 
-                seller.getSellerId(), username, requestDto.getBusinessNumber());
+    
     }
 
     /**
