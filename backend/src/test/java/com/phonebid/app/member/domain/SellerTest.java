@@ -7,11 +7,16 @@ import com.phonebid.app.common.exception.CustomException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("Seller 엔티티 테스트")
 class SellerTest {
+
+    // 테스트용 고정 UUID
+    private static final UUID TEST_SELLER_ID = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
 
     @Test
     @DisplayName("Seller 객체를 생성할 수 있다")
@@ -22,20 +27,31 @@ class SellerTest {
         String storeName = "테스트 스토어";
 
         // when
-        Seller seller = Seller.builder()
-                .user(user)
-                .businessNumber(businessNumber)
-                .storeName(storeName)
-                .storeAddress(createTestAddress())
-                .build();
+        Seller seller = createTestSellerWithId(user, businessNumber, storeName);
 
         // then
         assertThat(seller.getUser()).isEqualTo(user);
-        assertThat(seller.getUserId()).isEqualTo(user.getId());
+        assertThat(seller.getSellerId()).isEqualTo(TEST_SELLER_ID);
         assertThat(seller.getBusinessNumber()).isEqualTo(businessNumber);
         assertThat(seller.getStoreName()).isEqualTo(storeName);
         assertThat(seller.getStoreAddress()).isNotNull();
         assertThat(seller.getApprovalStatus()).isEqualTo(ApprovalStatus.PENDING);
+    }
+
+    @Test
+    @DisplayName("Seller는 독립적인 UUID를 가진다")
+    void sellerHasIndependentUUID() {
+        // given
+        User user = createTestUser();
+        
+        // when
+        Seller seller1 = createTestSellerWithId(user, "123-45-67890", "테스트 스토어 1");
+        Seller seller2 = createTestSellerWithId(user, "987-65-43210", "테스트 스토어 2");
+
+        // then
+        assertThat(seller1.getSellerId()).isEqualTo(TEST_SELLER_ID);
+        assertThat(seller2.getSellerId()).isEqualTo(TEST_SELLER_ID);
+        assertThat(seller1.getUser()).isEqualTo(seller2.getUser()); // 같은 User 참조
     }
 
     @Test
@@ -199,8 +215,12 @@ class SellerTest {
 
     private User createTestUser() {
         return User.builder()
+                .username("testuser")
+                .password("password123")
                 .email("seller@example.com")
                 .name("판매자")
+                .nickname("판매자닉")
+                .phone("01012345678")
                 .role(Role.SELLER)
                 .provider(Provider.KAKAO)
                 .providerId("kakao456")
@@ -214,6 +234,26 @@ class SellerTest {
                 .storeName("테스트 스토어")
                 .storeAddress(createTestAddress())
                 .build();
+    }
+
+    private Seller createTestSellerWithId(User user, String businessNumber, String storeName) {
+        Seller seller = Seller.builder()
+                .user(user)
+                .businessNumber(businessNumber)
+                .storeName(storeName)
+                .storeAddress(createTestAddress())
+                .build();
+        
+        // Reflection을 사용하여 sellerId 설정
+        try {
+            java.lang.reflect.Field sellerIdField = Seller.class.getDeclaredField("sellerId");
+            sellerIdField.setAccessible(true);
+            sellerIdField.set(seller, TEST_SELLER_ID);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set sellerId for test", e);
+        }
+        
+        return seller;
     }
 
     private Address createTestAddress() {
