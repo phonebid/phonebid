@@ -1,6 +1,6 @@
 import React from "react";
 import { SWRConfig } from "swr";
-import { defaultSWRConfig } from "lib/swrConfig";
+import { defaultSWRConfig } from "services/swrConfig";
 
 interface SWRProviderProps {
   children: React.ReactNode;

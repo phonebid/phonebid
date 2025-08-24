@@ -92,7 +92,7 @@ function RealtimeData() {
 ### Before (기존 apiClient 사용)
 
 ```typescript
-import { apiClient } from "lib/apiClient";
+import { apiClient } from "services/apiClient";
 
 function UserProfile() {
   const [user, setUser] = useState<User | null>(null);
@@ -162,7 +162,7 @@ function UpdateUserButton() {
 
 ```typescript
 import useSWRMutation from "swr/mutation";
-import { apiClient } from "lib/apiClient";
+import { apiClient } from "services/apiClient";
 
 // mutation 함수 정의
 async function updateUser(url: string, { arg }: { arg: UserData }) {
@@ -507,7 +507,7 @@ const { data } = useCustomSWR<User>("/users/me");
 
 ```typescript
 import { useCustomSWR } from "hooks/useSWR";
-import { staticDataConfig } from "lib/swrConfig";
+import { staticDataConfig } from "services/swrConfig";
 
 function PhoneModelsSelect() {
   const { data: models } = useCustomSWR<PhoneModel[]>(
@@ -539,7 +539,7 @@ function PhoneModelsSelect() {
 
 ```typescript
 import { useCustomSWR } from "hooks/useSWR";
-import { userDataConfig } from "lib/swrConfig";
+import { userDataConfig } from "services/swrConfig";
 
 function UserProfile() {
   const { data: user } = useCustomSWR<User>("/users/me", userDataConfig);
@@ -565,7 +565,7 @@ function UserProfile() {
 
 ```typescript
 import { useCustomSWR } from "hooks/useSWR";
-import { realtimeDataConfig } from "lib/swrConfig";
+import { realtimeDataConfig } from "services/swrConfig";
 
 function LiveBidList({ quoteId }: { quoteId: string }) {
   const { data: bids } = useCustomSWR<Bid[]>(
@@ -598,7 +598,7 @@ function LiveBidList({ quoteId }: { quoteId: string }) {
 
 ```typescript
 import { useCustomSWR } from "hooks/useSWR";
-import { sensitiveDataConfig } from "lib/swrConfig";
+import { sensitiveDataConfig } from "services/swrConfig";
 
 function PaymentStatus({ contractId }: { contractId: string }) {
   const { data: payment } = useCustomSWR<Payment>(
@@ -634,7 +634,7 @@ function PaymentStatus({ contractId }: { contractId: string }) {
 
 ## 🔧 설정 파일
 
-- **SWR 설정**: `lib/swrConfig.ts`
+- **SWR 설정**: `services/swrConfig.ts`
 - **SWR 훅**: `hooks/useSWR.ts`
 - **SWR Provider**: `app/providers/SWRProvider.tsx`
 
