@@ -32,4 +32,12 @@ public class S3Service {
         return s3Client.getUrl(bucket, fileName).toString();
         
     }
+
+    /**
+     * S3에서 파일 삭제
+     * @param fileName 삭제할 파일명
+     */
+    public void deleteFile(String fileName) {
+        s3Client.deleteObject(bucket, fileName);
+    }
 }

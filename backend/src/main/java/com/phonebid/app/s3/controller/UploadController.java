@@ -3,6 +3,7 @@ package com.phonebid.app.s3.controller;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.ResponseEntity;
@@ -38,6 +39,24 @@ public class UploadController {
         } catch (IOException e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * S3의 test 폴더에서 파일 삭제
+     * @param fileName 삭제할 파일명
+     * @return 삭제 성공 메시지
+     */
+    @DeleteMapping
+    public ResponseEntity<String> deleteFile(@RequestParam("fileName") String fileName) {
+        try {
+            String fullFileName = "test/" + fileName; // test 폴더 아래의 파일 삭제
+            s3Service.deleteFile(fullFileName);
+            return ResponseEntity.ok("File deleted successfully: " + fullFileName);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to delete file: " + e.getMessage());
         }
     }
 }
