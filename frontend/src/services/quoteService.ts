@@ -1,4 +1,4 @@
-import { apiClient } from "services/apiClient";
+import { apiClient } from "lib/apiClient";
 import type { CreateQuoteRequest } from "types/QuoteTypes";
 
 export const createQuote = async (payload: CreateQuoteRequest) => {

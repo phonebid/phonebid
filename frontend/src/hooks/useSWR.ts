@@ -1,5 +1,5 @@
 import useSWR, { SWRConfiguration, SWRResponse } from "swr";
-import { apiClient } from "services/apiClient";
+import { apiClient } from "lib/apiClient";
 import { defaultSWRConfig } from "lib/swrConfig";
 
 // 기본 SWR 훅

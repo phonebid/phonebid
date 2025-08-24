@@ -6,7 +6,7 @@ import Input from "components/common/Input";
 import Button from "components/common/Button";
 import Checkbox from "components/common/Checkbox";
 import { loginWithKakao, loginWithNaver } from "services/authService";
-import { apiClient } from "services/apiClient";
+import { apiClient } from "lib/apiClient";
 import { toast } from "react-toastify";
 
 const SignupPage = () => {

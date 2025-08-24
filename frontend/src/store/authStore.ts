@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 import type { AuthState, User } from "types/UserTypes";
-import { apiClient } from "services/apiClient";
+import { apiClient } from "lib/apiClient";
 import { toast } from "react-toastify";
 
 interface AuthStore extends AuthState {
