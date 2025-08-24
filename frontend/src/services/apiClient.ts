@@ -2,24 +2,7 @@ import axios, { AxiosInstance, AxiosResponse } from "axios";
 import { toast } from "react-toastify";
 import type { ApiResponse } from "types/ApiTypes";
 import { ApiErrorClass } from "types/ApiTypes";
-
-// 환경별 API URL 설정
-const getApiBaseUrl = (): string => {
-  // 환경변수가 있으면 사용, 없으면 환경에 따라 기본값 사용
-  const envBaseUrl = import.meta.env.VITE_API_BASE_URL;
-
-  if (envBaseUrl) {
-    return envBaseUrl;
-  }
-
-  // 개발 환경: localhost:8080
-  if (import.meta.env.DEV) {
-    return "http://localhost:8080";
-  }
-
-  // 프로덕션 환경: 실제 도메인 (배포 시 수정 필요)
-  return "https://api.phonebid.com";
-};
+import { getApiBaseUrl, getApiTimeout, API_CONSTANTS } from "utils/apiUtils";
 
 class ApiClient {
   private client: AxiosInstance;
@@ -28,14 +11,15 @@ class ApiClient {
     const baseURL = getApiBaseUrl();
 
     this.client = axios.create({
-      baseURL: `${baseURL}/api/v1`,
-      timeout: parseInt(import.meta.env.VITE_API_TIMEOUT || "10000"),
-      headers: {
-        "Content-Type": "application/json",
-      },
+      baseURL: `${baseURL}${API_CONSTANTS.ENDPOINTS.API_V1}`,
+      timeout: getApiTimeout(),
+      headers: API_CONSTANTS.DEFAULT_HEADERS,
     });
 
-    console.log("API Client initialized with baseURL:", `${baseURL}/api/v1`);
+    console.log(
+      "API Client initialized with baseURL:",
+      `${baseURL}${API_CONSTANTS.ENDPOINTS.API_V1}`
+    );
     this.setupInterceptors();
   }
 
