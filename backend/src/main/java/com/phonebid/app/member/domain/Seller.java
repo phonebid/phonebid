@@ -20,12 +20,12 @@ import com.phonebid.app.common.exception.CustomException;
 public class Seller extends BaseEntity {
 
     @Id
-    @Column(name = "user_id")
-    private UUID userId;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "seller_id")
+    private UUID sellerId;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @MapsId
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @Column(name = "business_number", nullable = false)
@@ -44,7 +44,6 @@ public class Seller extends BaseEntity {
     @Builder
     public Seller(User user, String businessNumber, String storeName, Address storeAddress) {
         this.user = user;
-        this.userId = user.getId();
         this.businessNumber = businessNumber;
         this.storeName = storeName;
         this.storeAddress = storeAddress;
