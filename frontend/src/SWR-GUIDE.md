@@ -479,6 +479,159 @@ function BestExample({
 
 A: 컴포넌트별로 `{ revalidateIfStale: false, revalidateOnFocus: false, revalidateOnReconnect: false }` 설정을 사용하세요.
 
+## ⚙️ SWR 설정 프리셋
+
+프로젝트에서는 데이터 특성에 따라 최적화된 SWR 설정 프리셋을 제공합니다.
+
+### 기본 설정 (defaultSWRConfig)
+
+모든 SWR 요청의 기본 설정입니다:
+
+```typescript
+import { useCustomSWR } from "hooks/useSWR";
+
+// 기본 설정 사용 (별도 설정 없이)
+const { data } = useCustomSWR<User>("/users/me");
+```
+
+**특징:**
+
+- 보수적인 캐싱 전략으로 안정성 우선
+- 포커스 시 재검증 비활성화 (성능 고려)
+- 네트워크 재연결 시 재검증 활성화
+- 최대 3회 에러 재시도
+
+### 정적 데이터용 설정 (staticDataConfig)
+
+**사용 대상:** 휴대폰 모델 목록, 통신사 목록, 색상 옵션 등 거의 변하지 않는 데이터
+
+```typescript
+import { useCustomSWR } from "hooks/useSWR";
+import { staticDataConfig } from "services/swrConfig";
+
+function PhoneModelsSelect() {
+  const { data: models } = useCustomSWR<PhoneModel[]>(
+    "/phone-models",
+    staticDataConfig
+  );
+
+  return (
+    <select>
+      {models?.map((model) => (
+        <option key={model.id} value={model.id}>
+          {model.name}
+        </option>
+      ))}
+    </select>
+  );
+}
+```
+
+**특징:**
+
+- 장기간 캐싱 (1시간간 동일 요청 차단)
+- 포커스/재연결 시에도 갱신 안 함
+- 메모리 효율적인 캐싱
+
+### 사용자 데이터용 설정 (userDataConfig)
+
+**사용 대상:** 사용자 프로필, 설정 정보, 개인 정보 등 가끔 변하는 데이터
+
+```typescript
+import { useCustomSWR } from "hooks/useSWR";
+import { userDataConfig } from "services/swrConfig";
+
+function UserProfile() {
+  const { data: user } = useCustomSWR<User>("/users/me", userDataConfig);
+
+  return (
+    <div>
+      <h2>{user?.name}님의 프로필</h2>
+      <p>이메일: {user?.email}</p>
+    </div>
+  );
+}
+```
+
+**특징:**
+
+- 중간 수준의 캐싱 (10분간 동일 요청 차단)
+- 포커스 시 갱신 비활성화
+- 개인정보 특성상 빈번한 변경이 없음을 고려
+
+### 실시간 데이터용 설정 (realtimeDataConfig)
+
+**사용 대상:** 입찰 현황, 경매 상태 등 자주 변하는 데이터
+
+```typescript
+import { useCustomSWR } from "hooks/useSWR";
+import { realtimeDataConfig } from "services/swrConfig";
+
+function LiveBidList({ quoteId }: { quoteId: string }) {
+  const { data: bids } = useCustomSWR<Bid[]>(
+    `/quotes/${quoteId}/bids`,
+    realtimeDataConfig
+  );
+
+  return (
+    <div>
+      <h3>실시간 입찰 현황</h3>
+      {bids?.map((bid) => (
+        <div key={bid.id}>
+          {bid.price.toLocaleString()}원 - {bid.seller.name}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+**특징:**
+
+- 30초마다 자동 갱신
+- 포커스/재연결 시 즉시 갱신
+- 짧은 중복 방지 간격 (5초)
+
+### 민감한 데이터용 설정 (sensitiveDataConfig)
+
+**사용 대상:** 결제 정보, 계약 상태 등 항상 최신이어야 하는 중요한 데이터
+
+```typescript
+import { useCustomSWR } from "hooks/useSWR";
+import { sensitiveDataConfig } from "services/swrConfig";
+
+function PaymentStatus({ contractId }: { contractId: string }) {
+  const { data: payment } = useCustomSWR<Payment>(
+    `/contracts/${contractId}/payment`,
+    sensitiveDataConfig
+  );
+
+  return (
+    <div>
+      <h3>결제 상태</h3>
+      <p>상태: {payment?.status}</p>
+      <p>금액: {payment?.amount.toLocaleString()}원</p>
+    </div>
+  );
+}
+```
+
+**특징:**
+
+- 모든 상황에서 즉시 재검증
+- 최소한의 중복 방지 (1초)
+- 에러 재시도 1회로 제한 (빠른 실패)
+
+### 설정 프리셋 선택 가이드
+
+| 데이터 유형   | 변경 빈도      | 사용 설정             | 예시                     |
+| ------------- | -------------- | --------------------- | ------------------------ |
+| 마스터 데이터 | 거의 없음      | `staticDataConfig`    | 휴대폰 모델, 통신사 목록 |
+| 사용자 데이터 | 가끔           | `userDataConfig`      | 프로필, 설정             |
+| 일반 데이터   | 보통           | `defaultSWRConfig`    | 견적 목록, 게시글        |
+| 실시간 데이터 | 자주           | `realtimeDataConfig`  | 입찰 현황, 채팅          |
+| 민감한 데이터 | 즉시 반영 필요 | `sensitiveDataConfig` | 결제, 계약 상태          |
+
 ## 🔧 설정 파일
 
 - **SWR 설정**: `services/swrConfig.ts`
