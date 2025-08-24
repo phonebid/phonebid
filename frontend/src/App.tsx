@@ -12,7 +12,7 @@ import { useAuthStore } from "store/authStore";
 import AuctionListPage from "./pages/AuctionListPage";
 import WeeklyRankingPage from "./pages/WeeklyRankingPage";
 import QuoteCreatePage from "./pages/QuoteCreatePage";
-import SWRProvider from "providers/SWRProvider";
+import SWRProvider from "app/providers/SWRProvider";
 
 function App() {
   const { initializeAuth } = useAuthStore();
