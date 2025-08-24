@@ -50,7 +50,7 @@ const AuthCallbackPage = () => {
           }
         }
 
-        console.log("OAuth 콜백 처리:", { provider, code, state });
+        // handle OAuth callback
 
         // AuthStore를 통해 콜백 처리
         await handleOAuthCallback(provider, code, state);

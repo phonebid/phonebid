@@ -16,10 +16,6 @@ class ApiClient {
       headers: API_CONSTANTS.DEFAULT_HEADERS,
     });
 
-    console.log(
-      "API Client initialized with baseURL:",
-      `${baseURL}${API_CONSTANTS.ENDPOINTS.API_V1}`
-    );
     this.setupInterceptors();
   }
 

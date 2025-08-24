@@ -6,10 +6,8 @@ import type { User } from "types/UserTypes";
  * 카카오 로그인 - URL 리다이렉트 방식
  */
 export const loginWithKakao = (): void => {
-  console.log("카카오 로그인 리다이렉트 시작");
   try {
     const authURL = createKakaoAuthURL();
-    console.log("카카오 OAuth URL:", authURL);
     window.location.href = authURL;
   } catch (error) {
     console.error("카카오 로그인 URL 생성 실패:", error);
@@ -22,10 +20,8 @@ export const loginWithKakao = (): void => {
  * 네이버 로그인 - URL 리다이렉트 방식
  */
 export const loginWithNaver = (): void => {
-  console.log("네이버 로그인 리다이렉트 시작");
   try {
     const authURL = createNaverAuthURL();
-    console.log("네이버 OAuth URL:", authURL);
     window.location.href = authURL;
   } catch (error) {
     console.error("네이버 로그인 URL 생성 실패:", error);
