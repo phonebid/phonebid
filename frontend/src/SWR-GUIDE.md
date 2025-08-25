@@ -636,7 +636,7 @@ function PaymentStatus({ contractId }: { contractId: string }) {
 
 - **SWR 설정**: `services/swrConfig.ts`
 - **SWR 훅**: `hooks/useSWR.ts`
-- **SWR Provider**: `providers/SWRProvider.tsx`
+- **SWR Provider**: `app/providers/SWRProvider.tsx`
 
 ## 📚 추가 학습 자료
 

@@ -159,7 +159,7 @@ const AuctionListPage: React.FC = () => {
                   className="rounded-lg border border-border bg-card p-5 shadow-sm hover:shadow transition-shadow cursor-pointer"
                   onClick={() => {
                     // TODO: 견적 상세 페이지로 이동
-                    console.log("견적 상세:", quote.id);
+                    // open quote detail
                   }}
                 >
                   <div className="flex items-start justify-between">
