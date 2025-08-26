@@ -9,7 +9,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -37,9 +36,6 @@ public class SellerDocument extends BaseEntity {
     @Column(name = "file_url", nullable = false)
     private String fileUrl;
 
-    @Column(name = "uploaded_at", nullable = false)
-    private LocalDateTime uploadedAt;
-
     @Builder
     public SellerDocument(Seller seller, DocumentType type, String fileUrl) {
         validateDocumentCreation(seller, type, fileUrl);
@@ -47,7 +43,6 @@ public class SellerDocument extends BaseEntity {
         this.seller = seller;
         this.type = type;
         this.fileUrl = fileUrl;
-        this.uploadedAt = LocalDateTime.now();
     }
 
     // 비즈니스 메서드
@@ -77,7 +72,7 @@ public class SellerDocument extends BaseEntity {
         return String.format("%s - %s (%s)", 
             type.getDisplayName(), 
             getFileName(),
-            uploadedAt.toLocalDate().toString()
+            getUpdatedAt() != null ? getUpdatedAt().toLocalDate().toString() : "N/A"
         );
     }
 
@@ -87,7 +82,7 @@ public class SellerDocument extends BaseEntity {
         }
         
         this.fileUrl = newFileUrl.trim();
-        this.uploadedAt = LocalDateTime.now();
+        // BaseEntity의 updatedAt은 JPA Auditing에 의해 자동으로 업데이트됨
     }
 
     // 검증 메서드
