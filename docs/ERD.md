@@ -130,3 +130,57 @@ ALTER TABLE quotes ADD CONSTRAINT fk_quotes_user FOREIGN KEY (user_id) REFERENCE
 ALTER TABLE bids ADD CONSTRAINT fk_bids_quote FOREIGN KEY (quote_id) REFERENCES quotes(id);
 ALTER TABLE bids ADD CONSTRAINT fk_bids_seller FOREIGN KEY (seller_id) REFERENCES sellers(user_id);
 ALTER TABLE bid_history ADD CONSTRAINT fk_history_bid FOREIGN KEY (bid_id) REFERENCES bids(id);
+
+-- 휴대폰 카탈로그 테이블
+CREATE TABLE phone_brands (
+id UUID PRIMARY KEY, -- UUID PK (전역 고유)
+name VARCHAR(255) NOT NULL UNIQUE, -- 브랜드명 유니크: "Apple", "Samsung"
+created_at TIMESTAMP NOT NULL, -- BaseEntity
+updated_at TIMESTAMP NOT NULL,
+created_by VARCHAR(255),
+last_modified_by VARCHAR(255),
+is_delete BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE TABLE phone_models (
+id UUID PRIMARY KEY,
+brand_id UUID NOT NULL, -- FK: phone_brands.id
+model VARCHAR(255) NOT NULL, -- 모델명 예: "iPhone 16", "Galaxy S24"
+model_number VARCHAR(255), -- 제조사 모델 번호 예: "A3101"(선택)
+released_price INTEGER, -- 출시가(원)
+released_at DATE, -- 출시일
+created_at TIMESTAMP NOT NULL, -- BaseEntity
+updated_at TIMESTAMP NOT NULL,
+created_by VARCHAR(255),
+last_modified_by VARCHAR(255),
+is_delete BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+ALTER TABLE phone_models ADD CONSTRAINT fk_phone_models_brand FOREIGN KEY (brand_id) REFERENCES phone_brands(id);
+
+-- 동일 브랜드 내 동일 모델명 중복 방지
+CREATE UNIQUE INDEX uq_phone_models_brand_model ON phone_models(brand_id, model);
+-- 자주 조회되는 FK 인덱스
+CREATE INDEX idx_phone_models_brand_id ON phone_models(brand_id);
+
+CREATE TABLE phone_options (
+id UUID PRIMARY KEY,
+model_id UUID NOT NULL, -- FK: phone_models.id
+option_type VARCHAR(100) NOT NULL, -- 예: 'COLOR', 'STORAGE'
+option_value VARCHAR(255) NOT NULL, -- 예: 'Black', '128'
+display_label VARCHAR(255), -- 표시명(예: '블랙', '128GB')
+created_at TIMESTAMP NOT NULL, -- BaseEntity
+updated_at TIMESTAMP NOT NULL,
+created_by VARCHAR(255),
+last_modified_by VARCHAR(255),
+is_delete BOOLEAN NOT NULL DEFAULT FALSE,
+CONSTRAINT chk_phone_options_type CHECK (option_type IN ('COLOR', 'STORAGE'))
+);
+
+ALTER TABLE phone_options ADD CONSTRAINT fk_phone_options_model FOREIGN KEY (model_id) REFERENCES phone_models(id);
+
+-- 동일 모델 내 동일 타입-값 조합 유니크
+CREATE UNIQUE INDEX uq_phone_options_model_type_value ON phone_options(model_id, option_type, option_value);
+-- 모델/타입별 조회 인덱스
+CREATE INDEX idx_phone_options_model_id ON phone_options(model_id);
+CREATE INDEX idx_phone_options_model_type ON phone_options(model_id, option_type);
