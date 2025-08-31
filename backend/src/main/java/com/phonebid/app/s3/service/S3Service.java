@@ -40,4 +40,16 @@ public class S3Service {
     public void deleteFile(String fileName) {
         s3Client.deleteObject(bucket, fileName);
     }
+
+    /**
+     * S3에서 파일 URL로 파일 삭제
+     * @param fileUrl 삭제할 파일의 URL
+     */
+    public void deleteFileByUrl(String fileUrl) {
+        if (fileUrl != null && fileUrl.contains(bucket)) {
+            // URL에서 파일 경로 추출
+            String filePath = fileUrl.substring(fileUrl.indexOf(bucket) + bucket.length() + 1);
+            s3Client.deleteObject(bucket, filePath);
+        }
+    }
 }
