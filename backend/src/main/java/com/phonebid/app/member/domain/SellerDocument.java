@@ -61,6 +61,27 @@ public class SellerDocument extends BaseEntity {
         
         // URL에서 파일명 추출 (마지막 / 이후 부분)
         String[] parts = fileUrl.split("/");
+        String fullFileName = parts.length > 0 ? parts[parts.length - 1] : fileUrl;
+        
+        // UUID-{originalFilename} 형식에서 원본 파일명만 추출
+        if (fullFileName.contains("-")) {
+            int firstDashIndex = fullFileName.indexOf("-");
+            return fullFileName.substring(firstDashIndex + 1);
+        }
+        
+        return fullFileName;
+    }
+
+    /**
+     * UUID가 포함된 전체 파일명 반환
+     */
+    public String getFullFileName() {
+        if (fileUrl == null || fileUrl.trim().isEmpty()) {
+            return "";
+        }
+        
+        // URL에서 파일명 추출 (마지막 / 이후 부분)
+        String[] parts = fileUrl.split("/");
         return parts.length > 0 ? parts[parts.length - 1] : fileUrl;
     }
 
