@@ -6,7 +6,6 @@ import com.phonebid.app.member.dto.request.SellerDocumentUploadRequestDto;
 import com.phonebid.app.member.dto.response.SellerDocumentUploadResponseDto;
 import com.phonebid.app.member.service.SellerDocumentService;
 import com.phonebid.app.security.UserDetailsImpl;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
