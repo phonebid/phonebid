@@ -12,6 +12,8 @@ import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
+import org.hibernate.annotations.Comment;
+
 @Entity
 @Table(name = "notifications", indexes = {
     @Index(name = "idx_notifications_user_id", columnList = "user_id"),
@@ -26,6 +28,7 @@ public class Notification extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
+    @Comment("알림 고유 ID (UUID)")
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -34,22 +37,28 @@ public class Notification extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false)
+    @Comment("알림 타입 (QUOTE_REQUEST, BID_SELECTED, CONTRACT_SIGNED, SYSTEM)")
     private NotificationType type;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "channel", nullable = false)
+    @Comment("알림 채널 (EMAIL, SMS, PUSH)")
     private NotificationChannel channel;
 
     @Column(name = "title", nullable = false)
+    @Comment("알림 제목")
     private String title;
 
     @Column(name = "message", nullable = false, length = 1000)
+    @Comment("알림 내용")
     private String message;
 
     @Column(name = "is_read", nullable = false)
+    @Comment("알림 읽음 여부")
     private Boolean isRead;
 
     @Column(name = "reference_id")
+    @Comment("관련 엔터티 ID (Quote, Bid, Contract 등)")
     private UUID referenceId; // 관련 엔터티 ID (Quote, Bid, Contract 등)
 
     @Builder

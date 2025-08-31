@@ -12,6 +12,8 @@ import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
+import org.hibernate.annotations.Comment;
+
 @Entity
 @Table(name = "bids", indexes = {
     @Index(name = "idx_bids_quote_id", columnList = "quote_id"),
@@ -24,6 +26,7 @@ public class Bid extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
+    @Comment("입찰 고유 ID (UUID)")
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -34,44 +37,58 @@ public class Bid extends BaseEntity {
     @JoinColumn(name = "seller_id", nullable = false)
     private Seller seller;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "price_plan_id", nullable = false)
+    private PricePlan pricePlan;
+
+
     @Column(name = "price", nullable = false)
+    @Comment("입찰가 (원)")
     private Integer price;
 
     @Column(name = "delivery_days", nullable = false)
+    @Comment("배송 예상일 (일)")
     private Integer deliveryDays;
 
     @Column(name = "rating_snapshot")
+    @Comment("입찰 당시 판매자 평점 스냅샷")
     private Double ratingSnapshot;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "purchase_method", nullable = false)
+    @Comment("구매방법 (NUMBER_TRANSFER, DEVICE_CHANGE, NEW_SUBSCRIPTION, ANY)")
     private PurchaseMethod purchaseMethod;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "carrier", nullable = false)
+    @Comment("통신사 (이동할/사용할 통신사) 3사 (SKT, KT, LGU)")
     private Carrier carrier;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "current_carrier")
+    @Comment("기존 통신사 (번호이동/기기변경 시)")
     private Carrier currentCarrier;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "activation_method", nullable = false)
+    @Comment("개통방법 (SELECTIVE_SUBSIDY, COMMON_SUBSIDY, ANY)")
     private ActivationMethod activationMethod;
 
     @Column(name = "additional_subsidy")
+    @Comment("추가지원금 (원)")
     private Integer additionalSubsidy;
 
     @Column(name = "installment_principal")
+    @Comment("할부원금 (원)")
     private Integer installmentPrincipal;
 
     @Column(name = "additional_services", length = 500)
+    @Comment("부가서비스 설명")
     private String additionalServices;
 
-    @Embedded
-    private PricePlan pricePlan;
 
     @Column(name = "contract_months")
+    @Comment("약정개월")
     private Integer contractMonths;
 
     @Builder

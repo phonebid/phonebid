@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
+import org.hibernate.annotations.Comment;
+
 @Entity
 @Table(name = "bid_history", indexes = {
     @Index(name = "idx_bid_history_bid_id", columnList = "bid_id"),
@@ -21,6 +23,7 @@ public class BidHistory extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
+    @Comment("입찰 수정 이력 고유 ID (UUID)")
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -28,20 +31,18 @@ public class BidHistory extends BaseEntity {
     private Bid bid;
 
     @Column(name = "version", nullable = false)
+    @Comment("수정 버전")
     private Integer version;
 
     @Column(name = "price", nullable = false)
+    @Comment("입찰가")
     private Integer price;
 
-    @Column(name = "delivery_days", nullable = false)
-    private Integer deliveryDays;
-
     @Builder
-    public BidHistory(Bid bid, Integer version, Integer price, Integer deliveryDays) {
+    public BidHistory(Bid bid, Integer version, Integer price) {
         this.bid = bid;
         this.version = version;
         this.price = price;
-        this.deliveryDays = deliveryDays;
     }
 
     // 정적 팩토리 메서드
@@ -50,7 +51,6 @@ public class BidHistory extends BaseEntity {
                 .bid(bid)
                 .version(version)
                 .price(bid.getPrice())
-                .deliveryDays(bid.getDeliveryDays())
                 .build();
     }
 
@@ -60,14 +60,12 @@ public class BidHistory extends BaseEntity {
     }
 
     public String getHistorySummary() {
-        return String.format("v%d: %,d원, %d일", version, price, deliveryDays);
+        return String.format("v%d: %,d원", version, price);
     }
 
     public boolean hasPriceChanged(Integer newPrice) {
         return !this.price.equals(newPrice);
     }
 
-    public boolean hasDeliveryDaysChanged(Integer newDeliveryDays) {
-        return !this.deliveryDays.equals(newDeliveryDays);
-    }
+
 } 

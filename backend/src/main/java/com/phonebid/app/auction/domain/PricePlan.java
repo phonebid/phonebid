@@ -1,32 +1,40 @@
 package com.phonebid.app.auction.domain;
 
-import com.phonebid.app.common.errorcode.AuctionErrorCode;
-import com.phonebid.app.common.exception.CustomException;
-import jakarta.persistence.Column;
-import jakarta.persistence.Embeddable;
+
+import com.phonebid.app.common.domain.BaseEntity;
+
+import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Embeddable
+import java.util.UUID;
+
+import org.hibernate.annotations.Comment;
+
+@Entity
+@Table(name = "price_plans")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PricePlan {
+public class PricePlan extends BaseEntity{
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", updatable = false, nullable = false)
+    @Comment("요금제 고유 ID (UUID)")
+    private UUID id;
+
+    @Column(name = "carrier")
+    @Comment("통신사")
+    private Carrier carrier;
+    
     @Column(name = "plan_name")
+    @Comment("요금제 이름")
     private String planName;
 
     @Column(name = "plan_price")
+    @Comment("요금제 가격")
     private Integer planPrice;
-
-    @Builder
-    public PricePlan(String planName, Integer planPrice) {
-        validatePricePlan(planName, planPrice);
-        
-        this.planName = planName;
-        this.planPrice = planPrice;
-    }
 
     // 비즈니스 메서드
     public String getPlanSummary() {
@@ -46,33 +54,5 @@ public class PricePlan {
                (planPrice == null || planPrice == 0);
     }
 
-    public boolean isAffordable(Integer budget) {
-        if (planPrice == null || budget == null) {
-            return false;
-        }
-        return planPrice <= budget;
-    }
 
-    public boolean isUnlimited() {
-        if (planName == null) {
-            return false;
-        }
-        String lowerName = planName.toLowerCase();
-        return lowerName.contains("무제한") || lowerName.contains("unlimited");
-    }
-
-    // 검증 메서드
-    private void validatePricePlan(String planName, Integer planPrice) {
-        if (planName != null && planName.trim().isEmpty()) {
-            throw new CustomException(AuctionErrorCode.INVALID_PRICE_PLAN_NAME);
-        }
-        
-        if (planPrice != null && planPrice < 0) {
-            throw new CustomException(AuctionErrorCode.INVALID_PRICE_PLAN_PRICE);
-        }
-        
-        if (planName != null && planName.length() > 100) {
-            throw new CustomException(AuctionErrorCode.INVALID_PRICE_PLAN_NAME);
-        }
-    }
 } 

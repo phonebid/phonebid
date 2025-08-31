@@ -12,6 +12,8 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.Comment;
+
 @Entity
 @Table(name = "seller_documents", indexes = {
     @Index(name = "idx_seller_documents_seller_id", columnList = "seller_id"),
@@ -24,6 +26,7 @@ public class SellerDocument extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
+    @Comment("판매자 문서 고유 ID (UUID)")
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -32,12 +35,15 @@ public class SellerDocument extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false)
+    @Comment("문서 타입 (BUSINESS_LICENSE, CONSENT_FORM)")
     private DocumentType type;
 
     @Column(name = "file_url", nullable = false)
+    @Comment("문서 파일 URL")
     private String fileUrl;
 
     @Column(name = "uploaded_at", nullable = false)
+    @Comment("문서 업로드 일시")
     private LocalDateTime uploadedAt;
 
     @Builder

@@ -12,6 +12,8 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.Comment;
+
 @Entity
 @Table(name = "deliveries", indexes = {
     @Index(name = "idx_deliveries_contract_id", columnList = "contract_id"),
@@ -25,6 +27,7 @@ public class Delivery extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
+    @Comment("배송 고유 ID (UUID)")
     private UUID id;
 
     @OneToOne(fetch = FetchType.LAZY)
@@ -33,13 +36,16 @@ public class Delivery extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "courier", nullable = false)
+    @Comment("배송 택배사 (CJ_LOGISTICS, HANJIN, LOTTE)")
     private Courier courier;
 
     @Column(name = "invoice_number", nullable = false)
+    @Comment("배송 송장번호")
     private String invoiceNumber;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
+    @Comment("배송 상태 (READY, SHIPPED, DELIVERED)")
     private DeliveryStatus status;
 
 
