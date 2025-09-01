@@ -185,4 +185,61 @@ public class SellerDocumentService {
 
         return SellerDocumentUploadResponseDto.from(document);
     }
+
+    /**
+     * 판매자 서류 삭제
+     */
+    public void deleteDocument(String username, DocumentType documentType) {
+        // 판매자 조회
+        Seller seller = sellerRepository.findByUsername(username)
+                .orElseThrow(() -> new CustomException(MemberErrorCode.SELLER_NOT_FOUND));
+
+        // 삭제할 문서 조회
+        SellerDocument document = sellerDocumentRepository.findBySellerAndType(seller, documentType)
+                .orElseThrow(() -> new CustomException(MemberErrorCode.DOCUMENT_NOT_FOUND));
+
+        // S3에서 파일 삭제
+        try {
+            s3Service.deleteFileByUrl(document.getFileUrl());
+            log.info("S3 파일 삭제 완료: {}", document.getFileUrl());
+        } catch (Exception e) {
+            log.error("S3 파일 삭제 실패: {}", document.getFileUrl(), e);
+            throw new CustomException(MemberErrorCode.FILE_DELETE_FAILED);
+        }
+
+        // S3 삭제 성공 후 DB에서 문서 삭제
+        sellerDocumentRepository.delete(document);
+        
+        log.info("판매자 문서 삭제 완료: sellerId={}, documentType={}, fileName={}", 
+                seller.getSellerId(), documentType, document.getFileName());
+    }
+
+    /**
+     * 판매자 서류 삭제 (파일 ID 기반)
+     */
+    public void deleteDocumentById(String username, UUID fileId) {
+        // 판매자 조회
+        Seller seller = sellerRepository.findByUsername(username)
+                .orElseThrow(() -> new CustomException(MemberErrorCode.SELLER_NOT_FOUND));
+
+        // 삭제할 문서 조회
+        SellerDocument document = sellerDocumentRepository.findById(fileId)
+                .orElseThrow(() -> new CustomException(MemberErrorCode.DOCUMENT_NOT_FOUND));
+
+        // 해당 문서가 이 판매자의 것인지 확인
+        if (!document.getSeller().getSellerId().equals(seller.getSellerId())) {
+            throw new CustomException(MemberErrorCode.DOCUMENT_NOT_FOUND);
+        }
+
+        // S3에서 파일 삭제
+        try {
+            s3Service.deleteFileByUrl(document.getFileUrl());
+        } catch (Exception e) {
+            log.error("S3 파일 삭제 실패: {}", document.getFileUrl(), e);
+            throw new CustomException(MemberErrorCode.FILE_DELETE_FAILED);
+        }
+
+        // S3 삭제 성공 후 DB에서 문서 삭제
+        sellerDocumentRepository.delete(document);
+    }
 }

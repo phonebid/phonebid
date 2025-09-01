@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 판매자 문서 컨트롤러
@@ -92,4 +93,37 @@ public class SellerDocumentController {
                 .body(ApiResponse.success(HttpStatus.OK, 
                         "문서 조회가 성공적으로 완료되었습니다.", document));
     }
+
+    /**
+     * 판매자 서류 삭제 (파일 ID 기반)
+     * DELETE /api/v1/sellers/documents/file/{fileId}
+     */
+    @DeleteMapping("/file/{fileId}")
+    public ResponseEntity<ApiResponse<Void>> deleteDocumentById(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @PathVariable UUID fileId) {
+        
+        sellerDocumentService.deleteDocumentById(userDetails.getUsername(), fileId);
+
+        return ResponseEntity.ok()
+                .body(ApiResponse.success(HttpStatus.OK, 
+                        "문서 삭제가 성공적으로 완료되었습니다.", null));
+    }
+
+    // /**
+    //  * 판매자 서류 삭제 (문서 타입 기반)
+    //  * DELETE /api/v1/sellers/documents/{documentType}
+    //  */
+    // @DeleteMapping("/{documentType}")
+    // public ResponseEntity<ApiResponse<Void>> deleteDocument(
+    //         @AuthenticationPrincipal UserDetailsImpl userDetails,
+    //         @PathVariable DocumentType documentType) {
+    //     
+    //     sellerDocumentService.deleteDocument(userDetails.getUsername(), documentType);
+    // 
+    //     return ResponseEntity.ok()
+    //             .body(ApiResponse.success(HttpStatus.OK, 
+    //                     "문서 삭제가 성공적으로 완료되었습니다.", null));
+    // }
+    
 }
