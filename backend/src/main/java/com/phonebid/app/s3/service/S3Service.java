@@ -5,6 +5,9 @@ import org.springframework.web.multipart.MultipartFile;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3URI;
+import com.phonebid.app.common.errorcode.MemberErrorCode;
+import com.phonebid.app.common.exception.CustomException;
 import java.io.IOException;
 
 /**
@@ -46,10 +49,31 @@ public class S3Service {
      * @param fileUrl 삭제할 파일의 URL
      */
     public void deleteFileByUrl(String fileUrl) {
-        if (fileUrl != null && fileUrl.contains(bucket)) {
-            // URL에서 파일 경로 추출
-            String filePath = fileUrl.substring(fileUrl.indexOf(bucket) + bucket.length() + 1);
-            s3Client.deleteObject(bucket, filePath);
+        if (fileUrl == null || fileUrl.trim().isEmpty()) {
+            throw new CustomException(MemberErrorCode.MISSING_FILE_URL);
+        }
+        
+        try {
+            // AmazonS3URI를 사용하여 안전하게 URL 파싱
+            AmazonS3URI s3Uri = new AmazonS3URI(fileUrl);
+            String urlBucket = s3Uri.getBucket();
+            String key = s3Uri.getKey();
+            
+            if (urlBucket == null || key == null || key.trim().isEmpty()) {
+                throw new CustomException(MemberErrorCode.INVALID_FILE_NAME);
+            }
+            
+            if (!bucket.equals(urlBucket)) {
+                throw new CustomException(MemberErrorCode.FILE_DELETE_FAILED);
+            }
+            
+            // 파일 삭제
+            s3Client.deleteObject(bucket, key);
+            
+        } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new CustomException(MemberErrorCode.FILE_DELETE_FAILED);
         }
     }
 }
