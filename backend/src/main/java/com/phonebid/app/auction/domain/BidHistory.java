@@ -38,11 +38,16 @@ public class BidHistory extends BaseEntity {
     @Comment("입찰가")
     private Integer price;
 
+    @Column(name = "delivery_days", nullable = false)
+    @Comment("배송 예상일")
+    private Integer deliveryDays;
+
     @Builder
-    public BidHistory(Bid bid, Integer version, Integer price) {
+    public BidHistory(Bid bid, Integer version, Integer price, Integer deliveryDays) {
         this.bid = bid;
         this.version = version;
         this.price = price;
+        this.deliveryDays = deliveryDays;
     }
 
     // 정적 팩토리 메서드
@@ -51,6 +56,7 @@ public class BidHistory extends BaseEntity {
                 .bid(bid)
                 .version(version)
                 .price(bid.getPrice())
+                .deliveryDays(bid.getDeliveryDays())
                 .build();
     }
 
@@ -60,12 +66,15 @@ public class BidHistory extends BaseEntity {
     }
 
     public String getHistorySummary() {
-        return String.format("v%d: %,d원", version, price);
+        return String.format("v%d: %,d원, %d일", version, price, deliveryDays);
     }
 
     public boolean hasPriceChanged(Integer newPrice) {
         return !this.price.equals(newPrice);
     }
 
+    public boolean hasDeliveryDaysChanged(Integer newDeliveryDays) {
+        return !this.deliveryDays.equals(newDeliveryDays);
+    }
 
 } 
