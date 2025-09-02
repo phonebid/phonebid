@@ -5,6 +5,7 @@ import com.phonebid.app.common.domain.BaseEntity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -24,6 +25,7 @@ public class PricePlan extends BaseEntity{
     @Comment("요금제 고유 ID (UUID)")
     private UUID id;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "carrier")
     @Comment("통신사")
     private Carrier carrier;
@@ -35,6 +37,13 @@ public class PricePlan extends BaseEntity{
     @Column(name = "plan_price")
     @Comment("요금제 가격")
     private Integer planPrice;
+
+    @Builder
+    private PricePlan(Carrier carrier, String planName, Integer planPrice) {
+        this.carrier = carrier;
+        this.planName = planName;
+        this.planPrice = planPrice;
+    }
 
     // 비즈니스 메서드
     public String getPlanSummary() {
@@ -54,5 +63,19 @@ public class PricePlan extends BaseEntity{
                (planPrice == null || planPrice == 0);
     }
 
+    public boolean isAffordable(Integer budget) {
+        if (budget == null || planPrice == null) {
+            return false;
+        }
+        return budget >= planPrice;
+    }
+
+    public boolean isUnlimited() {
+        if (planName == null) {
+            return false;
+        }
+        String lowerPlanName = planName.toLowerCase();
+        return lowerPlanName.contains("무제한") || lowerPlanName.contains("unlimited");
+    }
 
 } 
