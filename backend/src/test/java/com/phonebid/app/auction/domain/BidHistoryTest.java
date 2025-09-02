@@ -64,7 +64,7 @@ class BidHistoryTest {
                 .additionalSubsidy(50000)
                 .installmentPrincipal(1000000)
                 .additionalServices("보험")
-                .pricePlan(PricePlan.builder().planName("5G 스탠다드").planPrice(75000).build())
+                .pricePlan(PricePlan.builder().planName("5G 스탠다드").planPrice(75000).carrier(Carrier.SKT).build())
                 .contractMonths(24)
                 .build();
     }
@@ -79,7 +79,6 @@ class BidHistoryTest {
         assertThat(history.getBid()).isEqualTo(bid);
         assertThat(history.getVersion()).isEqualTo(1);
         assertThat(history.getPrice()).isEqualTo(bid.getPrice());
-        assertThat(history.getDeliveryDays()).isEqualTo(bid.getDeliveryDays());
     }
 
     @Test
@@ -118,32 +117,4 @@ class BidHistoryTest {
         assertThat(history.hasPriceChanged(1150000)).isTrue();  // 다른 가격
     }
 
-    @Test
-    @DisplayName("배송일 변경 여부를 확인할 수 있다")
-    void hasDeliveryDaysChanged_ShouldDetectDeliveryDaysChange() {
-        // Given
-        BidHistory history = BidHistory.createFromBid(bid, 1);
-
-        // When & Then
-        assertThat(history.hasDeliveryDaysChanged(3)).isFalse(); // 동일한 배송일
-        assertThat(history.hasDeliveryDaysChanged(2)).isTrue();  // 다른 배송일
-    }
-
-    @Test
-    @DisplayName("Builder 패턴으로 직접 생성할 수 있다")
-    void builder_ShouldCreateBidHistory() {
-        // When
-        BidHistory history = BidHistory.builder()
-                .bid(bid)
-                .version(1)
-                .price(1100000)
-                .deliveryDays(2)
-                .build();
-
-        // Then
-        assertThat(history.getBid()).isEqualTo(bid);
-        assertThat(history.getVersion()).isEqualTo(1);
-        assertThat(history.getPrice()).isEqualTo(1100000);
-        assertThat(history.getDeliveryDays()).isEqualTo(2);
-    }
 } 

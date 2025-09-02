@@ -69,7 +69,7 @@ class ContractTest {
                 .additionalSubsidy(50000)
                 .installmentPrincipal(1000000)
                 .additionalServices("보험")
-                .pricePlan(PricePlan.builder().planName("5G 스탠다드").planPrice(75000).build())
+                .pricePlan(PricePlan.builder().planName("5G 스탠다드").planPrice(75000).carrier(Carrier.SKT).build())
                 .contractMonths(24)
                 .build();
 
