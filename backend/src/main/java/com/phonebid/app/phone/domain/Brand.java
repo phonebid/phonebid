@@ -55,7 +55,7 @@ public enum Brand {
      * 브랜드가 주요 브랜드인지 확인
      */
     public boolean isMajorBrand() {
-        return this == APPLE || this == SAMSUNG || this == LG;
+        return this == APPLE || this == SAMSUNG ;
     }
 
     /**
