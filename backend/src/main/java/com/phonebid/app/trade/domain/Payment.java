@@ -40,7 +40,7 @@ public class Payment extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "method", nullable = false)
-    @Comment("결제 방법 (CARD, TRANSFER, POINT)")
+    @Comment("결제 방법 (CARD, BANK, MOBILE)")
     private PaymentMethod method;
 
     @Enumerated(EnumType.STRING)

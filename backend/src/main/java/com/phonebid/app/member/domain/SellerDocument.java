@@ -38,14 +38,10 @@ public class SellerDocument extends BaseEntity {
     @Comment("문서 타입 (BUSINESS_LICENSE, CONSENT_FORM)")
     private DocumentType type;
 
-    @Column(name = "file_url", nullable = false)
+    @Column(name = "file_url", nullable = false, length = 2048)
     @Comment("문서 파일 URL")
     private String fileUrl;
-
-    @Column(name = "uploaded_at", nullable = false)
-    @Comment("문서 업로드 일시")
-    private LocalDateTime uploadedAt;
-
+    
     @Builder
     public SellerDocument(Seller seller, DocumentType type, String fileUrl) {
         validateDocumentCreation(seller, type, fileUrl);
