@@ -53,7 +53,6 @@ public class SellerDocument extends BaseEntity {
         this.seller = seller;
         this.type = type;
         this.fileUrl = fileUrl;
-        this.uploadedAt = LocalDateTime.now();
     }
 
     // 비즈니스 메서드
@@ -72,6 +71,27 @@ public class SellerDocument extends BaseEntity {
         
         // URL에서 파일명 추출 (마지막 / 이후 부분)
         String[] parts = fileUrl.split("/");
+        String fullFileName = parts.length > 0 ? parts[parts.length - 1] : fileUrl;
+        
+        // UUID-{originalFilename} 형식에서 원본 파일명만 추출
+        if (fullFileName.contains("-")) {
+            int firstDashIndex = fullFileName.indexOf("-");
+            return fullFileName.substring(firstDashIndex + 1);
+        }
+        
+        return fullFileName;
+    }
+
+    /**
+     * UUID가 포함된 전체 파일명 반환
+     */
+    public String getFullFileName() {
+        if (fileUrl == null || fileUrl.trim().isEmpty()) {
+            return "";
+        }
+        
+        // URL에서 파일명 추출 (마지막 / 이후 부분)
+        String[] parts = fileUrl.split("/");
         return parts.length > 0 ? parts[parts.length - 1] : fileUrl;
     }
 
@@ -83,7 +103,7 @@ public class SellerDocument extends BaseEntity {
         return String.format("%s - %s (%s)", 
             type.getDisplayName(), 
             getFileName(),
-            uploadedAt.toLocalDate().toString()
+            getUpdatedAt() != null ? getUpdatedAt().toLocalDate().toString() : "N/A"
         );
     }
 
@@ -93,7 +113,7 @@ public class SellerDocument extends BaseEntity {
         }
         
         this.fileUrl = newFileUrl.trim();
-        this.uploadedAt = LocalDateTime.now();
+        // BaseEntity의 updatedAt은 JPA Auditing에 의해 자동으로 업데이트됨
     }
 
     // 검증 메서드

@@ -16,7 +16,14 @@ public enum MemberErrorCode implements ErrorCode {
     MISSING_SELLER_INFO(HttpStatus.BAD_REQUEST, "판매자 정보는 필수입니다."),
     MISSING_DOCUMENT_TYPE(HttpStatus.BAD_REQUEST, "문서 종류는 필수입니다."),
     SELLER_CANNOT_APPROVE(HttpStatus.BAD_REQUEST, "승인 대기 상태가 아닌 판매자는 승인할 수 없습니다."),
-    SELLER_CANNOT_REJECT(HttpStatus.BAD_REQUEST, "승인 대기 상태가 아닌 판매자는 거부할 수 없습니다.");
+    SELLER_CANNOT_REJECT(HttpStatus.BAD_REQUEST, "승인 대기 상태가 아닌 판매자는 거부할 수 없습니다."),
+    MISSING_FILE(HttpStatus.BAD_REQUEST, "업로드할 파일은 필수입니다."),
+    FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "파일 크기가 제한을 초과했습니다. (최대 10MB)"),
+    INVALID_FILE_NAME(HttpStatus.BAD_REQUEST, "유효하지 않은 파일명입니다."),
+    INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "지원하지 않는 파일 형식입니다. (jpg, jpeg, png, pdf만 가능)"),
+    FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드에 실패했습니다."),
+    FILE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일 삭제에 실패했습니다."),
+    DOCUMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 문서를 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String message;
