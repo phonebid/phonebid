@@ -132,7 +132,7 @@ id              UUID PRIMARY KEY    -- 요금제 고유 ID
 -- 요금제 정보
 plan_name       VARCHAR(255)        -- 요금제 이름
 plan_price      INTEGER             -- 요금제 가격 (원)
-carrier         SMALLINT            -- 통신사 (enum 숫자값)
+carrier         VARCHAR(255)        -- 통신사 (SKT, KT, LGU)
 
 -- BaseEntity 필드
 ```
@@ -400,16 +400,16 @@ idx_seller_documents_type       -- seller_documents(type) - 문서 타입별 조
 
 ### PaymentStatus (결제 상태)
 
-- `PENDING`: 결제 대기
-- `COMPLETED`: 결제 완료
+- `REQUESTED`: 결제 요청
+- `PENDING_APPROVAL`: 승인 대기
+- `PAID`: 결제 완료
 - `FAILED`: 결제 실패
-- `CANCELLED`: 결제 취소
 
 ### PaymentMethod (결제 방법)
 
 - `CARD`: 카드
-- `BANK_TRANSFER`: 무통장입금
-- `PHONE`: 휴대폰 결제
+- `BANK`: 무통장입금
+- `MOBILE`: 휴대폰 결제
 
 ### DeliveryStatus (배송 상태)
 
@@ -620,7 +620,7 @@ id              UUID PRIMARY KEY    -- 요금제 고유 ID
 -- 요금제 정보
 plan_name       VARCHAR(255)        -- 요금제 이름
 plan_price      INTEGER             -- 요금제 가격 (원)
-carrier         SMALLINT            -- 통신사 (enum 숫자값)
+carrier         VARCHAR(255)        -- 통신사 (SKT, KT, LGU)
 
 -- BaseEntity 필드
 is_delete       BOOLEAN
@@ -906,16 +906,16 @@ idx_seller_documents_type       -- seller_documents(type) - 문서 타입별 조
 
 ### PaymentStatus (결제 상태)
 
-- `PENDING`: 결제 대기
-- `COMPLETED`: 결제 완료
+- `REQUESTED`: 결제 요청
+- `PENDING_APPROVAL`: 승인 대기
+- `PAID`: 결제 완료
 - `FAILED`: 결제 실패
-- `CANCELLED`: 결제 취소
 
 ### PaymentMethod (결제 방법)
 
 - `CARD`: 카드
-- `BANK_TRANSFER`: 무통장입금
-- `PHONE`: 휴대폰 결제
+- `BANK`: 무통장입금
+- `MOBILE`: 휴대폰 결제
 
 ### DeliveryStatus (배송 상태)
 
