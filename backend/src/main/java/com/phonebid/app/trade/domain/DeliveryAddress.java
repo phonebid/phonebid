@@ -9,24 +9,31 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import org.hibernate.annotations.Comment;
+
 @Embeddable
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class DeliveryAddress {
 
     @Column(name = "recipient_name", nullable = false)
+    @Comment("수령자 이름")
     private String recipientName;
 
     @Column(name = "recipient_phone", nullable = false)
+    @Comment("수령자 전화번호")
     private String recipientPhone;
 
     @Column(name = "postal_code", nullable = false)
+    @Comment("우편번호")
     private String postalCode;
 
     @Column(name = "address", nullable = false)
+    @Comment("주소")
     private String address;
 
     @Column(name = "detail_address")
+    @Comment("상세주소")
     private String detailAddress;
 
     @Builder

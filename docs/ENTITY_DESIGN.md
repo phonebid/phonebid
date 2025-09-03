@@ -313,35 +313,60 @@ public class Bid extends BaseEntity {
 - **검증 로직**: 구매방법에 따른 필수 필드 검증
 - `canModify()`: 입찰 수정 가능 여부
 
-### 7. PricePlan (요금제 - 임베디드 타입)
+### 7. PricePlan (요금제 - 엔터티)
 
 ```java
-@Embeddable
-public class PricePlan {
+@Entity
+@Table(name = "price_plans")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class PricePlan extends BaseEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", updatable = false, nullable = false)
+    private UUID id;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "carrier")
+    private Carrier carrier;
+
     @Column(name = "plan_name")
     private String planName;
 
     @Column(name = "plan_price")
     private Integer planPrice;
+
+    @Builder
+    private PricePlan(Carrier carrier, String planName, Integer planPrice) {
+        this.carrier = carrier;
+        this.planName = planName;
+        this.planPrice = planPrice;
+    }
 }
 ```
 
 **비즈니스 로직:**
 
 - `getPlanSummary()`: "요금제명 (가격원)" 형태 요약
-- `isAffordable()`: 예산 내 이용 가능 여부
-- `isUnlimited()`: 무제한 요금제 감지
-- `isComplete()`: 완전한 요금제 정보 여부
-- **검증**: 빈 문자열, 음수 가격, 길이 제한
+- `isAffordable(Integer budget)`: 예산 내 이용 가능 여부 확인
+- `isUnlimited()`: 무제한 요금제 감지 (이름에 "무제한" 또는 "unlimited" 포함)
+- `isComplete()`: 완전한 요금제 정보 여부 (이름과 가격 모두 유효)
+- `isEmpty()`: 요금제 정보 비어있음 여부 확인
 
 ### 8. BidHistory (입찰 수정 이력)
 
 ```java
 @Entity
-@Table(name = "bid_history")
+@Table(name = "bid_history", indexes = {
+    @Index(name = "idx_bid_history_bid_id", columnList = "bid_id"),
+    @Index(name = "idx_bid_history_version", columnList = "bid_id, version")
+})
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BidHistory extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -356,14 +381,35 @@ public class BidHistory extends BaseEntity {
 
     @Column(name = "delivery_days", nullable = false)
     private Integer deliveryDays;
+
+    @Builder
+    public BidHistory(Bid bid, Integer version, Integer price, Integer deliveryDays) {
+        this.bid = bid;
+        this.version = version;
+        this.price = price;
+        this.deliveryDays = deliveryDays;
+    }
+
+    // 정적 팩토리 메서드
+    public static BidHistory createFromBid(Bid bid, Integer version) {
+        return BidHistory.builder()
+                .bid(bid)
+                .version(version)
+                .price(bid.getPrice())
+                .deliveryDays(bid.getDeliveryDays())
+                .build();
+    }
 }
 ```
 
 **비즈니스 로직:**
 
-- 입찰 수정 이력 추적
-- 버전 관리로 변경 사항 추적
-- 감사 로그 목적
+- `createFromBid(Bid bid, Integer version)`: 입찰 정보로부터 히스토리 생성
+- `isLatestVersion(Integer currentVersion)`: 최신 버전 여부 확인
+- `getHistorySummary()`: "v버전: 가격원, 배송일일" 형태 요약
+- `hasPriceChanged(Integer newPrice)`: 가격 변경 여부 확인
+- `hasDeliveryDaysChanged(Integer newDeliveryDays)`: 배송일 변경 여부 확인
+- **감사 로그**: 입찰 수정 이력 추적 및 버전 관리
 
 ## 🔄 Enum 타입들
 

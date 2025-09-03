@@ -12,6 +12,8 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.Comment;
+
 @Entity
 @Table(name = "payments", indexes = {
     @Index(name = "idx_payments_contract_id", columnList = "contract_id"),
@@ -25,6 +27,7 @@ public class Payment extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
+    @Comment("결제 고유 ID (UUID)")
     private UUID id;
 
     @OneToOne(fetch = FetchType.LAZY)
@@ -32,20 +35,25 @@ public class Payment extends BaseEntity {
     private Contract contract;
 
     @Column(name = "amount", nullable = false)
+    @Comment("결제 금액")
     private Integer amount;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "method", nullable = false)
+    @Comment("결제 방법 (CARD, BANK, MOBILE)")
     private PaymentMethod method;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
+    @Comment("결제 상태 (REQUESTED, PENDING_APPROVAL, PAID, FAILED)")
     private PaymentStatus status;
 
     @Column(name = "pg_tid", nullable = false, unique = true)
+    @Comment("PG 거래 고유 ID")
     private String pgTid;
 
     @Column(name = "paid_at")
+    @Comment("결제 완료 일시")
     private LocalDateTime paidAt;
 
 

@@ -157,6 +157,7 @@ class BidTest {
         PricePlan pricePlan = PricePlan.builder()
                 .planName("5G 프리미엄")
                 .planPrice(80000)
+                .carrier(Carrier.SKT)
                 .build();
 
         Bid bid = Bid.builder()
@@ -302,6 +303,7 @@ class BidTest {
         return PricePlan.builder()
                 .planName("5G 스탠다드")
                 .planPrice(75000)
+                .carrier(Carrier.SKT)
                 .build();
     }
 

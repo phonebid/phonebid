@@ -147,7 +147,8 @@ POST /api/bids
   "additionalServices": "보험, 액세서리",
   "pricePlan": {
     "planName": "5G 프리미엄",
-    "planPrice": 89000
+    "planPrice": 89000,
+    "carrier": "SKT"
   },
   "contractMonths": 24
 }
@@ -184,6 +185,7 @@ POST /api/bids
   "pricePlan": {
     "planName": "5G 프리미엄",
     "planPrice": 89000,
+    "carrier": "SKT",
     "planSummary": "5G 프리미엄 (89,000원)"
   },
   "contractMonths": 24,
@@ -249,7 +251,8 @@ PUT /api/bids/{bidId}
   "additionalSubsidy": 70000,
   "pricePlan": {
     "planName": "5G 스탠다드",
-    "planPrice": 75000
+    "planPrice": 75000,
+    "carrier": "SKT"
   }
 }
 ```

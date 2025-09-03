@@ -13,6 +13,8 @@ import com.phonebid.app.common.domain.BaseEntity;
 import com.phonebid.app.common.errorcode.MemberErrorCode;
 import com.phonebid.app.common.exception.CustomException;
 
+import org.hibernate.annotations.Comment;
+
 @Entity
 @Table(name = "sellers")
 @Getter
@@ -22,6 +24,7 @@ public class Seller extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "seller_id")
+    @Comment("판매자 고유 ID (UUID)")
     private UUID sellerId;
 
     @OneToOne(fetch = FetchType.LAZY)
@@ -29,13 +32,16 @@ public class Seller extends BaseEntity {
     private User user;
 
     @Column(name = "business_number", nullable = false)
+    @Comment("사업자등록번호")
     private String businessNumber;
 
     @Column(name = "store_name", nullable = false)
+    @Comment("상호명")
     private String storeName;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "approval_status", nullable = false)
+    @Comment("승인 상태 (PENDING, APPROVED, REJECTED)")
     private ApprovalStatus approvalStatus;
 
     @Embedded

@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
+import org.hibernate.annotations.Comment;
+
 @Entity
 @Table(name = "bid_history", indexes = {
     @Index(name = "idx_bid_history_bid_id", columnList = "bid_id"),
@@ -21,6 +23,7 @@ public class BidHistory extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
+    @Comment("입찰 수정 이력 고유 ID (UUID)")
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -28,12 +31,15 @@ public class BidHistory extends BaseEntity {
     private Bid bid;
 
     @Column(name = "version", nullable = false)
+    @Comment("수정 버전")
     private Integer version;
 
     @Column(name = "price", nullable = false)
+    @Comment("입찰가")
     private Integer price;
 
     @Column(name = "delivery_days", nullable = false)
+    @Comment("배송 예상일")
     private Integer deliveryDays;
 
     @Builder
@@ -70,4 +76,5 @@ public class BidHistory extends BaseEntity {
     public boolean hasDeliveryDaysChanged(Integer newDeliveryDays) {
         return !this.deliveryDays.equals(newDeliveryDays);
     }
+
 } 

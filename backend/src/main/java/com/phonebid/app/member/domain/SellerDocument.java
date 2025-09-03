@@ -9,7 +9,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
+
+import org.hibernate.annotations.Comment;
 
 @Entity
 @Table(name = "seller_documents", indexes = {
@@ -23,6 +26,7 @@ public class SellerDocument extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
+    @Comment("판매자 문서 고유 ID (UUID)")
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -31,11 +35,13 @@ public class SellerDocument extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false)
+    @Comment("문서 타입 (BUSINESS_LICENSE, CONSENT_FORM)")
     private DocumentType type;
 
-    @Column(name = "file_url", nullable = false)
+    @Column(name = "file_url", nullable = false, length = 2048)
+    @Comment("문서 파일 URL")
     private String fileUrl;
-
+    
     @Builder
     public SellerDocument(Seller seller, DocumentType type, String fileUrl) {
         validateDocumentCreation(seller, type, fileUrl);

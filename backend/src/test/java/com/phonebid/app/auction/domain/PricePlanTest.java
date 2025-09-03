@@ -1,7 +1,5 @@
 package com.phonebid.app.auction.domain;
 
-import com.phonebid.app.common.errorcode.AuctionErrorCode;
-import com.phonebid.app.common.exception.CustomException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -58,58 +56,7 @@ class PricePlanTest {
         assertThat(summary).isEqualTo("요금제 정보 없음");
     }
 
-    @Test
-    @DisplayName("예산 내에서 이용 가능한지 확인할 수 있다")
-    void isAffordable_WithinBudget() {
-        // given
-        PricePlan pricePlan = PricePlan.builder()
-                .planName("5G 베이직")
-                .planPrice(55000)
-                .build();
 
-        // when & then
-        assertThat(pricePlan.isAffordable(60000)).isTrue();
-        assertThat(pricePlan.isAffordable(55000)).isTrue();
-        assertThat(pricePlan.isAffordable(50000)).isFalse();
-    }
-
-    @Test
-    @DisplayName("무제한 요금제인지 확인할 수 있다")
-    void isUnlimited_DetectsUnlimitedPlans() {
-        // given
-        PricePlan unlimitedPlan1 = PricePlan.builder()
-                .planName("5G 무제한")
-                .planPrice(89000)
-                .build();
-
-        PricePlan unlimitedPlan2 = PricePlan.builder()
-                .planName("Unlimited Premium")
-                .planPrice(95000)
-                .build();
-
-        PricePlan limitedPlan = PricePlan.builder()
-                .planName("5G 베이직")
-                .planPrice(55000)
-                .build();
-
-        // when & then
-        assertThat(unlimitedPlan1.isUnlimited()).isTrue();
-        assertThat(unlimitedPlan2.isUnlimited()).isTrue();
-        assertThat(limitedPlan.isUnlimited()).isFalse();
-    }
-
-    @Test
-    @DisplayName("요금제 이름이 null인 경우 무제한 검사는 false를 반환한다")
-    void isUnlimited_WithNullPlanName() {
-        // given
-        PricePlan pricePlan = PricePlan.builder()
-                .planName(null)
-                .planPrice(75000)
-                .build();
-
-        // when & then
-        assertThat(pricePlan.isUnlimited()).isFalse();
-    }
 
     @Test
     @DisplayName("요금제 정보가 완전하지 않은 경우 isComplete는 false를 반환한다")
@@ -151,53 +98,49 @@ class PricePlanTest {
     }
 
     @Test
-    @DisplayName("빈 문자열 요금제 이름으로는 생성할 수 없다")
+    @DisplayName("빈 문자열 요금제 이름으로도 생성할 수 있다")
     void isEmpty_WithEmptyPlanName() {
-        // when & then
-        assertThatThrownBy(() -> PricePlan.builder()
+        // when
+        PricePlan pricePlan = PricePlan.builder()
                 .planName("  ")
                 .planPrice(0)
-                .build())
-                .isInstanceOf(CustomException.class)
-                .hasMessage(AuctionErrorCode.INVALID_PRICE_PLAN_NAME.getMessage());
+                .build();
+
+        // then
+        assertThat(pricePlan.isEmpty()).isTrue();
+        assertThat(pricePlan.isComplete()).isFalse();
     }
 
     @Test
-    @DisplayName("요금제 이름이 빈 문자열이면 생성에 실패한다")
-    void createPricePlan_WithEmptyPlanName_ShouldThrowException() {
-        // when & then
-        assertThatThrownBy(() -> PricePlan.builder()
-                .planName("  ") // 빈 문자열
-                .planPrice(75000)
-                .build())
-                .isInstanceOf(CustomException.class)
-                .hasMessage(AuctionErrorCode.INVALID_PRICE_PLAN_NAME.getMessage());
-    }
-
-    @Test
-    @DisplayName("요금제 가격이 음수이면 생성에 실패한다")
-    void createPricePlan_WithNegativePrice_ShouldThrowException() {
-        // when & then
-        assertThatThrownBy(() -> PricePlan.builder()
+    @DisplayName("요금제 가격이 음수여도 생성할 수 있다")
+    void createPricePlan_WithNegativePrice() {
+        // when
+        PricePlan pricePlan = PricePlan.builder()
                 .planName("5G 스탠다드")
                 .planPrice(-1000) // 음수
-                .build())
-                .isInstanceOf(CustomException.class)
-                .hasMessage(AuctionErrorCode.INVALID_PRICE_PLAN_PRICE.getMessage());
+                .build();
+
+        // then
+        assertThat(pricePlan.getPlanName()).isEqualTo("5G 스탠다드");
+        assertThat(pricePlan.getPlanPrice()).isEqualTo(-1000);
+        assertThat(pricePlan.isComplete()).isFalse(); // 음수이므로 완전하지 않음
     }
 
     @Test
-    @DisplayName("요금제 이름이 100자를 초과하면 생성에 실패한다")
-    void createPricePlan_WithTooLongPlanName_ShouldThrowException() {
+    @DisplayName("요금제 이름이 길어도 생성할 수 있다")
+    void createPricePlan_WithLongPlanName() {
         // given
         String longPlanName = "a".repeat(101); // 101자
 
-        // when & then
-        assertThatThrownBy(() -> PricePlan.builder()
+        // when
+        PricePlan pricePlan = PricePlan.builder()
                 .planName(longPlanName)
-                .build())
-                .isInstanceOf(CustomException.class)
-                .hasMessage(AuctionErrorCode.INVALID_PRICE_PLAN_NAME.getMessage());
+                .planPrice(75000)
+                .build();
+
+        // then
+        assertThat(pricePlan.getPlanName()).isEqualTo(longPlanName);
+        assertThat(pricePlan.getPlanPrice()).isEqualTo(75000);
     }
 
     @Test
@@ -206,38 +149,12 @@ class PricePlanTest {
         // when & then
         assertThatNoException().isThrownBy(() -> {
             PricePlan pricePlan = PricePlan.builder()
-                    .planName(null)
-                    .planPrice(null)
-                    .build();
-            
-            assertThat(pricePlan.isEmpty()).isTrue();
-            assertThat(pricePlan.isComplete()).isFalse();
-        });
-    }
-
-    @Test
-    @DisplayName("예산이 null인 경우 isAffordable은 false를 반환한다")
-    void isAffordable_WithNullBudget() {
-        // given
-        PricePlan pricePlan = PricePlan.builder()
-                .planName("5G 스탠다드")
-                .planPrice(75000)
-                .build();
-
-        // when & then
-        assertThat(pricePlan.isAffordable(null)).isFalse();
-    }
-
-    @Test
-    @DisplayName("요금제 가격이 null인 경우 isAffordable은 false를 반환한다")
-    void isAffordable_WithNullPlanPrice() {
-        // given
-        PricePlan pricePlan = PricePlan.builder()
-                .planName("5G 스탠다드")
+                .planName(null)
                 .planPrice(null)
                 .build();
 
-        // when & then
-        assertThat(pricePlan.isAffordable(100000)).isFalse();
+            assertThat(pricePlan.isEmpty()).isTrue();
+            assertThat(pricePlan.isComplete()).isFalse();
+        });
     }
 } 

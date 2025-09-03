@@ -14,6 +14,8 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.Comment;
+
 @Entity
 @Table(name = "contracts", indexes = {
     @Index(name = "idx_contracts_quote_id", columnList = "quote_id"),
@@ -27,6 +29,7 @@ public class Contract extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
+    @Comment("계약 고유 ID (UUID)")
     private UUID id;
 
     @OneToOne(fetch = FetchType.LAZY)
@@ -41,9 +44,11 @@ public class Contract extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
+    @Comment("계약 상태 (SIGNING, SIGNED, CANCELLED)")
     private ContractStatus status;
 
     @Column(name = "signed_at")
+    @Comment("계약 체결 일시")
     private LocalDateTime signedAt;
 
     @Builder
