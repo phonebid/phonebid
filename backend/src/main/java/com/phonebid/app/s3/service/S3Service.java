@@ -9,6 +9,10 @@ import com.amazonaws.services.s3.AmazonS3URI;
 import com.phonebid.app.common.errorcode.MemberErrorCode;
 import com.phonebid.app.common.exception.CustomException;
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * S3 파일 업로드 서비스
@@ -67,8 +71,11 @@ public class S3Service {
                 throw new CustomException(MemberErrorCode.FILE_DELETE_FAILED);
             }
             
+            // URL 인코딩된 key를 디코딩
+            String decodedKey = URLDecoder.decode(key, StandardCharsets.UTF_8);
+            
             // 파일 삭제
-            s3Client.deleteObject(bucket, key);
+            s3Client.deleteObject(bucket, decodedKey);
             
         } catch (CustomException e) {
             throw e;

@@ -81,9 +81,6 @@ public class SellerDocumentService {
 
             SellerDocument savedDocument = sellerDocumentRepository.save(sellerDocument);
 
-            log.info("판매자 문서 업로드 완료: sellerId={}, documentType={}, fileName={}", 
-                    seller.getSellerId(), documentType, fileName);
-
             return SellerDocumentUploadResponseDto.from(savedDocument);
 
         } catch (IOException e) {
@@ -235,7 +232,8 @@ public class SellerDocumentService {
         try {
             s3Service.deleteFileByUrl(document.getFileUrl());
         } catch (Exception e) {
-            log.error("S3 파일 삭제 실패: {}", document.getFileUrl(), e);
+            log.error("S3 파일 삭제 실패: fileUrl={}, fileName={}, error={}", 
+                    document.getFileUrl(), document.getFileName(), e.getMessage(), e);
             throw new CustomException(MemberErrorCode.FILE_DELETE_FAILED);
         }
 
