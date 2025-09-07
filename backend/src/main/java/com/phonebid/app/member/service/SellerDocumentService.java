@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.Arrays;
 import java.util.List;
@@ -33,6 +34,7 @@ public class SellerDocumentService {
     private final SellerDocumentRepository sellerDocumentRepository;
     private final SellerRepository sellerRepository;
     private final S3Service s3Service;
+    private final TransactionTemplate transactionTemplate;
 
     // 허용된 파일 확장자
     private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList(
@@ -104,30 +106,31 @@ public class SellerDocumentService {
     }
 
     /**
-     * 기존 문서를 DB에서 교체 저장 (트랜잭션)
+     * 기존 문서를 DB에서 교체 저장 (프로그램적 트랜잭션)
      * - 기존 레코드가 있으면 삭제하고 이전 파일 URL을 보관
      * - 새 레코드를 저장하고 이전 파일 URL을 반환하여 사후 처리에서 삭제
      */
-    @Transactional
     private UploadDbResult saveDocumentToDbReplacing(Seller seller, DocumentType documentType, String newFileUrl) {
-        String previousFileUrl = null;
+        return transactionTemplate.execute(status -> {
+            String previousFileUrl = null;
 
-        // 기존 문서 조회 후 URL 보관 및 레코드 삭제
-        Optional<SellerDocument> existingOpt = sellerDocumentRepository.findBySellerAndType(seller, documentType);
-        if (existingOpt.isPresent()) {
-            previousFileUrl = existingOpt.get().getFileUrl();
-            sellerDocumentRepository.delete(existingOpt.get());
-        }
+            // 기존 문서 조회 후 URL 보관 및 레코드 삭제
+            Optional<SellerDocument> existingOpt = sellerDocumentRepository.findBySellerAndType(seller, documentType);
+            if (existingOpt.isPresent()) {
+                previousFileUrl = existingOpt.get().getFileUrl();
+                sellerDocumentRepository.delete(existingOpt.get());
+            }
 
-        // 새 문서 저장
-        SellerDocument sellerDocument = SellerDocument.builder()
-                .seller(seller)
-                .type(documentType)
-                .fileUrl(newFileUrl)
-                .build();
+            // 새 문서 저장
+            SellerDocument sellerDocument = SellerDocument.builder()
+                    .seller(seller)
+                    .type(documentType)
+                    .fileUrl(newFileUrl)
+                    .build();
 
-        SellerDocument saved = sellerDocumentRepository.save(sellerDocument);
-        return new UploadDbResult(saved, previousFileUrl);
+            SellerDocument saved = sellerDocumentRepository.save(sellerDocument);
+            return new UploadDbResult(saved, previousFileUrl);
+        });
     }
 
     /**
