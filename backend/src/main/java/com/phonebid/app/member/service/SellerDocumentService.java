@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -56,38 +55,78 @@ public class SellerDocumentService {
         // 파일 검증
         validateFile(file);
 
+        String uploadedFileUrl = null;
         try {
-            // S3에 파일 업로드
+            // Step 1: S3 업로드 (외부 I/O)
             String fileName = generateFileName(seller.getSellerId(), documentType, file.getOriginalFilename());
-            String fileUrl = s3Service.uploadFile(fileName, file);
+            uploadedFileUrl = s3Service.uploadFile(fileName, file);
 
-            // 기존 문서가 있다면 삭제
-            sellerDocumentRepository.findBySellerAndType(seller, documentType)
-                    .ifPresent(existingDocument -> {
-                        // S3에서 기존 파일 삭제
-                        try {
-                            s3Service.deleteFileByUrl(existingDocument.getFileUrl());
-                        } catch (Exception e) {
-                            log.warn("기존 S3 파일 삭제 실패: {}", existingDocument.getFileUrl(), e);
-                        }
-                        sellerDocumentRepository.delete(existingDocument);
-                    });
+            // Step 2: DB 저장 (트랜잭션) - 기존 레코드 교체 저장, 이전 파일 URL 반환
+            UploadDbResult result = saveDocumentToDbReplacing(seller, documentType, uploadedFileUrl);
 
-            // 새로운 문서 엔티티 생성 및 저장
-            SellerDocument sellerDocument = SellerDocument.builder()
-                    .seller(seller)
-                    .type(documentType)
-                    .fileUrl(fileUrl)
-                    .build();
+            // Step 3: 사후 처리 - 이전 S3 파일 삭제 (best-effort)
+            if (result.previousFileUrl != null) {
+                try {
+                    s3Service.deleteFileByUrl(result.previousFileUrl);
+                } catch (Exception e) {
+                    log.warn("기존 S3 파일 삭제 실패(무시): {}", result.previousFileUrl, e);
+                }
+            }
 
-            SellerDocument savedDocument = sellerDocumentRepository.save(sellerDocument);
+            return SellerDocumentUploadResponseDto.from(result.savedDocument);
 
-            return SellerDocumentUploadResponseDto.from(savedDocument);
-
-        } catch (IOException e) {
-            log.error("S3 파일 업로드 실패: {}", e.getMessage(), e);
+        } catch (Exception e) {
+            // DB 저장 실패 등 예외 시 보상 트랜잭션: 업로드한 신규 파일을 S3에서 삭제
+            if (uploadedFileUrl != null) {
+                try {
+                    s3Service.deleteFileByUrl(uploadedFileUrl);
+                    log.warn("DB 저장 실패로 업로드 파일 롤백 완료: {}", uploadedFileUrl);
+                } catch (Exception ignore) {
+                    log.error("업로드 파일 롤백 실패 - 수동 삭제 필요: {}", uploadedFileUrl, ignore);
+                }
+            }
             throw new CustomException(MemberErrorCode.FILE_UPLOAD_FAILED);
         }
+    }
+
+    /**
+     * 업로드 DB 처리 결과 모델
+     */
+    private static class UploadDbResult {
+        private final SellerDocument savedDocument;
+        private final String previousFileUrl;
+
+        private UploadDbResult(SellerDocument savedDocument, String previousFileUrl) {
+            this.savedDocument = savedDocument;
+            this.previousFileUrl = previousFileUrl;
+        }
+    }
+
+    /**
+     * 기존 문서를 DB에서 교체 저장 (트랜잭션)
+     * - 기존 레코드가 있으면 삭제하고 이전 파일 URL을 보관
+     * - 새 레코드를 저장하고 이전 파일 URL을 반환하여 사후 처리에서 삭제
+     */
+    @Transactional
+    private UploadDbResult saveDocumentToDbReplacing(Seller seller, DocumentType documentType, String newFileUrl) {
+        String previousFileUrl = null;
+
+        // 기존 문서 조회 후 URL 보관 및 레코드 삭제
+        var existingOpt = sellerDocumentRepository.findBySellerAndType(seller, documentType);
+        if (existingOpt.isPresent()) {
+            previousFileUrl = existingOpt.get().getFileUrl();
+            sellerDocumentRepository.delete(existingOpt.get());
+        }
+
+        // 새 문서 저장
+        SellerDocument sellerDocument = SellerDocument.builder()
+                .seller(seller)
+                .type(documentType)
+                .fileUrl(newFileUrl)
+                .build();
+
+        SellerDocument saved = sellerDocumentRepository.save(sellerDocument);
+        return new UploadDbResult(saved, previousFileUrl);
     }
 
     /**
@@ -170,6 +209,48 @@ public class SellerDocumentService {
                 .map(SellerDocumentUploadResponseDto::from)
                 .toList();
     }
+
+    // previous (for reference)
+    /*
+    public SellerDocumentUploadResponseDto uploadDocument(String username, SellerDocumentUploadRequestDto requestDto) {
+        Seller seller = sellerRepository.findByUsername(username)
+                .orElseThrow(() -> new CustomException(MemberErrorCode.SELLER_NOT_FOUND));
+
+        MultipartFile file = requestDto.getFile();
+        DocumentType documentType = requestDto.getDocumentType();
+
+        validateFile(file);
+
+        try {
+            String fileName = generateFileName(seller.getSellerId(), documentType, file.getOriginalFilename());
+            String fileUrl = s3Service.uploadFile(fileName, file);
+
+            sellerDocumentRepository.findBySellerAndType(seller, documentType)
+                    .ifPresent(existingDocument -> {
+                        try {
+                            s3Service.deleteFileByUrl(existingDocument.getFileUrl());
+                        } catch (Exception e) {
+                            log.warn("기존 S3 파일 삭제 실패: {}", existingDocument.getFileUrl(), e);
+                        }
+                        sellerDocumentRepository.delete(existingDocument);
+                    });
+
+            SellerDocument sellerDocument = SellerDocument.builder()
+                    .seller(seller)
+                    .type(documentType)
+                    .fileUrl(fileUrl)
+                    .build();
+
+            SellerDocument savedDocument = sellerDocumentRepository.save(sellerDocument);
+
+            return SellerDocumentUploadResponseDto.from(savedDocument);
+
+        } catch (IOException e) {
+            log.error("S3 파일 업로드 실패: {}", e.getMessage(), e);
+            throw new CustomException(MemberErrorCode.FILE_UPLOAD_FAILED);
+        }
+    }
+    */
 
     /**
      * 특정 문서 조회
