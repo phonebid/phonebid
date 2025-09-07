@@ -314,12 +314,12 @@ public class SellerDocumentService {
         }
 
         try {
-            // Step 1: DB에서 삭제 (트랜잭션 적용, 빠른 작업부터)
+            // Step 1: DB에서 삭제 (프로그램적 트랜잭션 보장)
             deleteDocumentFromDb(document);
-            
+
             // Step 2: S3에서 파일 삭제 (외부 서비스)
             s3Service.deleteFileByUrl(document.getFileUrl());
-                    
+
         } catch (Exception e) {
             // S3 삭제 실패 시 보상 트랜잭션으로 DB 복구
             try {
@@ -334,18 +334,16 @@ public class SellerDocumentService {
     }
 
     /**
-     * DB에서 문서 삭제 (트랜잭션 적용)
+     * DB에서 문서 삭제 (프로그램적 트랜잭션)
      */
-    @Transactional
     private void deleteDocumentFromDb(SellerDocument document) {
-        sellerDocumentRepository.delete(document);
+        transactionTemplate.executeWithoutResult(status -> sellerDocumentRepository.delete(document));
     }
 
     /**
-     * DB에 문서 복구 (보상 트랜잭션)
+     * DB에 문서 복구 (보상 트랜잭션, 프로그램적)
      */
-    @Transactional
     private void restoreDocumentToDb(SellerDocument document) {
-        sellerDocumentRepository.save(document);
+        transactionTemplate.executeWithoutResult(status -> sellerDocumentRepository.save(document));
     }
 }
