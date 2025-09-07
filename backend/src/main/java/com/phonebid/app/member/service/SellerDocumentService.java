@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -112,7 +113,7 @@ public class SellerDocumentService {
         String previousFileUrl = null;
 
         // 기존 문서 조회 후 URL 보관 및 레코드 삭제
-        var existingOpt = sellerDocumentRepository.findBySellerAndType(seller, documentType);
+        Optional<SellerDocument> existingOpt = sellerDocumentRepository.findBySellerAndType(seller, documentType);
         if (existingOpt.isPresent()) {
             previousFileUrl = existingOpt.get().getFileUrl();
             sellerDocumentRepository.delete(existingOpt.get());
