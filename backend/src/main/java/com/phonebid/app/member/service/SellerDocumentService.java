@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -184,8 +185,7 @@ public class SellerDocumentService {
     }
 
     /**
-     * 판매자 서류 삭제
-     */
+     * 판매자 서류 삭제 
     public void deleteDocument(String username, DocumentType documentType) {
         // 판매자 조회
         Seller seller = sellerRepository.findByUsername(username)
@@ -209,7 +209,7 @@ public class SellerDocumentService {
         
         log.info("판매자 문서 삭제 완료: sellerId={}, documentType={}, fileName={}", 
                 seller.getSellerId(), documentType, document.getFileName());
-    }
+    } */
 
     /**
      * 판매자 서류 삭제 (파일 ID 기반)
@@ -228,16 +228,39 @@ public class SellerDocumentService {
             throw new CustomException(MemberErrorCode.DOCUMENT_NOT_FOUND);
         }
 
-        // S3에서 파일 삭제
         try {
+            // Step 1: DB에서 삭제 (트랜잭션 적용, 빠른 작업부터)
+            deleteDocumentFromDb(document);
+            
+            // Step 2: S3에서 파일 삭제 (외부 서비스)
             s3Service.deleteFileByUrl(document.getFileUrl());
+                    
         } catch (Exception e) {
-            log.error("S3 파일 삭제 실패: fileUrl={}, fileName={}, error={}", 
-                    document.getFileUrl(), document.getFileName(), e.getMessage(), e);
+            // S3 삭제 실패 시 보상 트랜잭션으로 DB 복구
+            try {
+                restoreDocumentToDb(document);
+                log.warn("S3 삭제 실패로 인한 DB 복구 완료: fileUrl={}", document.getFileUrl());
+            } catch (Exception restoreException) {
+                log.error("DB 복구 실패 - 수동 처리 필요: fileUrl={}", document.getFileUrl(), restoreException);
+                // TODO: 알림 서비스 또는 별도 처리 로직 필요
+            }
             throw new CustomException(MemberErrorCode.FILE_DELETE_FAILED);
         }
+    }
 
-        // S3 삭제 성공 후 DB에서 문서 삭제
+    /**
+     * DB에서 문서 삭제 (트랜잭션 적용)
+     */
+    @Transactional
+    private void deleteDocumentFromDb(SellerDocument document) {
         sellerDocumentRepository.delete(document);
+    }
+
+    /**
+     * DB에 문서 복구 (보상 트랜잭션)
+     */
+    @Transactional
+    private void restoreDocumentToDb(SellerDocument document) {
+        sellerDocumentRepository.save(document);
     }
 }
