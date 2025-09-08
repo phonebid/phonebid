@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.Arrays;
@@ -35,6 +36,7 @@ public class SellerDocumentService {
     private final SellerRepository sellerRepository;
     private final S3Service s3Service;
     private final TransactionTemplate transactionTemplate;
+    private final PlatformTransactionManager transactionManager;
 
     // 허용된 파일 확장자
     private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList(
@@ -341,9 +343,11 @@ public class SellerDocumentService {
     }
 
     /**
-     * DB에 문서 복구 (보상 트랜잭션, 프로그램적)
+     * DB에 문서 복구 (보상 트랜잭션, REQUIRES_NEW로 독립 보장)
      */
     private void restoreDocumentToDb(SellerDocument document) {
-        transactionTemplate.executeWithoutResult(status -> sellerDocumentRepository.save(document));
+        TransactionTemplate requiresNewTemplate = new TransactionTemplate(transactionManager);
+        requiresNewTemplate.setPropagationBehavior(org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        requiresNewTemplate.executeWithoutResult(status -> sellerDocumentRepository.save(document));
     }
 }
