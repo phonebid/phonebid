@@ -58,3 +58,9 @@ cloud:
       secret-key: ${AWS_SECRET_KEY}
     s3:
       bucket: ${AWS_S3_BUCKET}
+
+# PG 결제 설정 (V2)
+portone:
+  v2:
+    store-id: ${PORTONE_STORE_ID}
+    api-secret: ${PORTONE_API_SECRET}
