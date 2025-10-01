@@ -1,6 +1,8 @@
 package com.phonebid.app.phone.dto.response;
 
 import com.phonebid.app.phone.domain.Brand;
+import com.phonebid.app.phone.domain.PhoneOption.OptionType;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -62,11 +64,11 @@ public class PhoneModelWithOptionsResponseDto {
                 .collect(Collectors.groupingBy(option -> option.getOptionType().name()));
             
             this.colorOptions = allOptions.stream()
-                .filter(PhoneOptionResponseDto::isColorOption)
+                .filter(option -> option.getOptionType() == OptionType.COLOR)
                 .collect(Collectors.toList());
             
             this.storageOptions = allOptions.stream()
-                .filter(PhoneOptionResponseDto::isStorageOption)
+                .filter(option -> option.getOptionType() == OptionType.STORAGE)
                 .collect(Collectors.toList());
         }
     }

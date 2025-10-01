@@ -18,30 +18,19 @@ public class PhoneOptionResponseDto {
     private UUID id;
     private UUID modelId;
     private OptionType optionType;
-    private String optionTypeDisplayName;
     private String optionValue;
     private String displayLabel;
-    private String formattedValue;
-    private String optionSummary;
-    private boolean isColorOption;
-    private boolean isStorageOption;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     public PhoneOptionResponseDto(UUID id, UUID modelId, OptionType optionType, 
-                                String optionValue, String displayLabel, String formattedValue, 
-                                String optionSummary, boolean isColorOption, boolean isStorageOption,
+                                String optionValue, String displayLabel,
                                 LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.modelId = modelId;
         this.optionType = optionType;
-        this.optionTypeDisplayName = optionType != null ? optionType.getDisplayName() : null;
         this.optionValue = optionValue;
         this.displayLabel = displayLabel;
-        this.formattedValue = formattedValue;
-        this.optionSummary = optionSummary;
-        this.isColorOption = isColorOption;
-        this.isStorageOption = isStorageOption;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -56,10 +45,6 @@ public class PhoneOptionResponseDto {
             phoneOption.getOptionType(),
             phoneOption.getOptionValue(),
             phoneOption.getDisplayLabel(),
-            phoneOption.getFormattedValue(),
-            phoneOption.getOptionSummary(),
-            phoneOption.isColorOption(),
-            phoneOption.isStorageOption(),
             phoneOption.getCreatedAt(),
             phoneOption.getUpdatedAt()
         );

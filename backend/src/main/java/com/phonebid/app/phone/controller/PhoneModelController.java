@@ -31,14 +31,14 @@ import com.phonebid.app.phone.dto.response.PhoneModelResponseDto;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/phone-models") 
+@RequestMapping("/api/v1/phone/models") 
 public class PhoneModelController {
 
     private final PhoneModelService phoneModelService;
 
     /**
      * 휴대폰 모델 목록 조회
-     * GET /api/v1/phone-models
+     * GET /api/v1/phone/models
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<PhoneModelResponseDto>>> getPhoneModels() {

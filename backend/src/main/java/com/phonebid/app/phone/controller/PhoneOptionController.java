@@ -26,7 +26,7 @@ import com.phonebid.app.phone.dto.response.PhoneOptionResponseDto;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/phone-options") 
+@RequestMapping("/api/v1/phone/options") 
 public class PhoneOptionController {
 
     private final PhoneOptionService phoneOptionService;
