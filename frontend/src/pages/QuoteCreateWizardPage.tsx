@@ -93,6 +93,7 @@ const QuoteCreateWizardPage: React.FC = () => {
   const navigate = useNavigate();
   const { draft, updateDraft, reset, setStep } = useQuoteCreateStore();
   const [step, setLocalStep] = useState(1);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     document.title = "견적 작성 | PhoneBid";
@@ -169,10 +170,18 @@ const QuoteCreateWizardPage: React.FC = () => {
     }
     if (step === 6) {
       // TODO: 생성 API 연동
-      navigate("/auctions");
+      setShowSuccess(true);
       return;
     }
     setLocalStep((prev) => Math.min(6, prev + 1));
+  };
+
+  const handleGoToProfile = () => {
+    navigate("/consumer/quotes");
+  };
+
+  const handleGoHome = () => {
+    navigate("/");
   };
 
   const renderStep = () => {
@@ -399,6 +408,42 @@ const QuoteCreateWizardPage: React.FC = () => {
     );
   };
 
+  if (showSuccess) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="mx-auto w-full max-w-md space-y-8 px-8 text-center">
+          <div className="flex flex-col items-center space-y-6">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary">
+              <CheckIcon className="h-10 w-10 text-white" />
+            </div>
+            <div className="space-y-3">
+              <h1 className="text-2xl font-bold tracking-tight">
+                견적가 시작합니다!
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                곧바 최저가를 찾아줄거에요.
+                <br />
+                조금만 기다려주세요.
+              </p>
+            </div>
+          </div>
+          <div className="space-y-3 pt-8">
+            <Button
+              onClick={handleGoToProfile}
+              className="w-full rounded-2xl bg-primary/10 text-primary hover:bg-primary/20"
+              variant="ghost"
+            >
+              진구들에게 프로필 공유하기
+            </Button>
+            <Button onClick={handleGoHome} className="w-full rounded-2xl">
+              홈으로 돌아가기
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="grid grid-cols-3 items-center h-14 px-4 max-w-md mx-auto">
@@ -501,6 +546,23 @@ const ArrowLeftIcon = () => (
   >
     <path
       d="M15 6L9 12L15 18"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const CheckIcon = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6L9 17L4 12"
       stroke="currentColor"
       strokeWidth="2"
       strokeLinecap="round"
