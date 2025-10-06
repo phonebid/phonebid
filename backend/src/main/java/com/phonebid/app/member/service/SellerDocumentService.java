@@ -14,10 +14,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -32,6 +35,8 @@ public class SellerDocumentService {
     private final SellerDocumentRepository sellerDocumentRepository;
     private final SellerRepository sellerRepository;
     private final S3Service s3Service;
+    private final TransactionTemplate transactionTemplate;
+    private final PlatformTransactionManager transactionManager;
 
     // 허용된 파일 확장자
     private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList(
@@ -55,41 +60,79 @@ public class SellerDocumentService {
         // 파일 검증
         validateFile(file);
 
+        String uploadedFileUrl = null;
         try {
-            // S3에 파일 업로드
+            // Step 1: S3 업로드 (외부 I/O)
             String fileName = generateFileName(seller.getSellerId(), documentType, file.getOriginalFilename());
-            String fileUrl = s3Service.uploadFile(fileName, file);
+            uploadedFileUrl = s3Service.uploadFile(fileName, file);
 
-            // 기존 문서가 있다면 삭제
-            sellerDocumentRepository.findBySellerAndType(seller, documentType)
-                    .ifPresent(existingDocument -> {
-                        // S3에서 기존 파일 삭제
-                        try {
-                            s3Service.deleteFileByUrl(existingDocument.getFileUrl());
-                        } catch (Exception e) {
-                            log.warn("기존 S3 파일 삭제 실패: {}", existingDocument.getFileUrl(), e);
-                        }
-                        sellerDocumentRepository.delete(existingDocument);
-                    });
+            // Step 2: DB 저장 (트랜잭션) - 기존 레코드 교체 저장, 이전 파일 URL 반환
+            UploadDbResult result = saveDocumentToDbReplacing(seller, documentType, uploadedFileUrl);
 
-            // 새로운 문서 엔티티 생성 및 저장
+            // Step 3: 사후 처리 - 이전 S3 파일 삭제 (best-effort)
+            if (result.previousFileUrl != null) {
+                try {
+                    s3Service.deleteFileByUrl(result.previousFileUrl);
+                } catch (Exception e) {
+                    log.warn("기존 S3 파일 삭제 실패(무시): {}", result.previousFileUrl, e);
+                }
+            }
+
+            return SellerDocumentUploadResponseDto.from(result.savedDocument);
+
+        } catch (Exception e) {
+            // DB 저장 실패 등 예외 시 보상 트랜잭션: 업로드한 신규 파일을 S3에서 삭제
+            if (uploadedFileUrl != null) {
+                try {
+                    s3Service.deleteFileByUrl(uploadedFileUrl);
+                    log.warn("DB 저장 실패로 업로드 파일 롤백 완료: {}", uploadedFileUrl);
+                } catch (Exception ignore) {
+                    log.error("업로드 파일 롤백 실패 - 수동 삭제 필요: {}", uploadedFileUrl, ignore);
+                }
+            }
+            throw new CustomException(MemberErrorCode.FILE_UPLOAD_FAILED);
+        }
+    }
+
+    /**
+     * 업로드 DB 처리 결과 모델
+     */
+    private static class UploadDbResult {
+        private final SellerDocument savedDocument;
+        private final String previousFileUrl;
+
+        private UploadDbResult(SellerDocument savedDocument, String previousFileUrl) {
+            this.savedDocument = savedDocument;
+            this.previousFileUrl = previousFileUrl;
+        }
+    }
+
+    /**
+     * 기존 문서를 DB에서 교체 저장 (프로그램적 트랜잭션)
+     * - 기존 레코드가 있으면 삭제하고 이전 파일 URL을 보관
+     * - 새 레코드를 저장하고 이전 파일 URL을 반환하여 사후 처리에서 삭제
+     */
+    private UploadDbResult saveDocumentToDbReplacing(Seller seller, DocumentType documentType, String newFileUrl) {
+        return transactionTemplate.execute(status -> {
+            String previousFileUrl = null;
+
+            // 기존 문서 조회 후 URL 보관 및 레코드 삭제
+            Optional<SellerDocument> existingOpt = sellerDocumentRepository.findBySellerAndType(seller, documentType);
+            if (existingOpt.isPresent()) {
+                previousFileUrl = existingOpt.get().getFileUrl();
+                sellerDocumentRepository.delete(existingOpt.get());
+            }
+
+            // 새 문서 저장
             SellerDocument sellerDocument = SellerDocument.builder()
                     .seller(seller)
                     .type(documentType)
-                    .fileUrl(fileUrl)
+                    .fileUrl(newFileUrl)
                     .build();
 
-            SellerDocument savedDocument = sellerDocumentRepository.save(sellerDocument);
-
-            log.info("판매자 문서 업로드 완료: sellerId={}, documentType={}, fileName={}", 
-                    seller.getSellerId(), documentType, fileName);
-
-            return SellerDocumentUploadResponseDto.from(savedDocument);
-
-        } catch (IOException e) {
-            log.error("S3 파일 업로드 실패: {}", e.getMessage(), e);
-            throw new CustomException(MemberErrorCode.FILE_UPLOAD_FAILED);
-        }
+            SellerDocument saved = sellerDocumentRepository.save(sellerDocument);
+            return new UploadDbResult(saved, previousFileUrl);
+        });
     }
 
     /**
@@ -173,6 +216,48 @@ public class SellerDocumentService {
                 .toList();
     }
 
+    // previous (for reference)
+    /*
+    public SellerDocumentUploadResponseDto uploadDocument(String username, SellerDocumentUploadRequestDto requestDto) {
+        Seller seller = sellerRepository.findByUsername(username)
+                .orElseThrow(() -> new CustomException(MemberErrorCode.SELLER_NOT_FOUND));
+
+        MultipartFile file = requestDto.getFile();
+        DocumentType documentType = requestDto.getDocumentType();
+
+        validateFile(file);
+
+        try {
+            String fileName = generateFileName(seller.getSellerId(), documentType, file.getOriginalFilename());
+            String fileUrl = s3Service.uploadFile(fileName, file);
+
+            sellerDocumentRepository.findBySellerAndType(seller, documentType)
+                    .ifPresent(existingDocument -> {
+                        try {
+                            s3Service.deleteFileByUrl(existingDocument.getFileUrl());
+                        } catch (Exception e) {
+                            log.warn("기존 S3 파일 삭제 실패: {}", existingDocument.getFileUrl(), e);
+                        }
+                        sellerDocumentRepository.delete(existingDocument);
+                    });
+
+            SellerDocument sellerDocument = SellerDocument.builder()
+                    .seller(seller)
+                    .type(documentType)
+                    .fileUrl(fileUrl)
+                    .build();
+
+            SellerDocument savedDocument = sellerDocumentRepository.save(sellerDocument);
+
+            return SellerDocumentUploadResponseDto.from(savedDocument);
+
+        } catch (IOException e) {
+            log.error("S3 파일 업로드 실패: {}", e.getMessage(), e);
+            throw new CustomException(MemberErrorCode.FILE_UPLOAD_FAILED);
+        }
+    }
+    */
+
     /**
      * 특정 문서 조회
      */
@@ -187,8 +272,7 @@ public class SellerDocumentService {
     }
 
     /**
-     * 판매자 서류 삭제
-     */
+     * 판매자 서류 삭제 
     public void deleteDocument(String username, DocumentType documentType) {
         // 판매자 조회
         Seller seller = sellerRepository.findByUsername(username)
@@ -212,7 +296,7 @@ public class SellerDocumentService {
         
         log.info("판매자 문서 삭제 완료: sellerId={}, documentType={}, fileName={}", 
                 seller.getSellerId(), documentType, document.getFileName());
-    }
+    } */
 
     /**
      * 판매자 서류 삭제 (파일 ID 기반)
@@ -231,15 +315,39 @@ public class SellerDocumentService {
             throw new CustomException(MemberErrorCode.DOCUMENT_NOT_FOUND);
         }
 
-        // S3에서 파일 삭제
         try {
+            // Step 1: DB에서 삭제 (프로그램적 트랜잭션 보장)
+            deleteDocumentFromDb(document);
+
+            // Step 2: S3에서 파일 삭제 (외부 서비스)
             s3Service.deleteFileByUrl(document.getFileUrl());
+
         } catch (Exception e) {
-            log.error("S3 파일 삭제 실패: {}", document.getFileUrl(), e);
+            // S3 삭제 실패 시 보상 트랜잭션으로 DB 복구
+            try {
+                restoreDocumentToDb(document);
+                log.warn("S3 삭제 실패로 인한 DB 복구 완료: fileUrl={}", document.getFileUrl());
+            } catch (Exception restoreException) {
+                log.error("DB 복구 실패 - 수동 처리 필요: fileUrl={}", document.getFileUrl(), restoreException);
+                // TODO: 알림 서비스 또는 별도 처리 로직 필요
+            }
             throw new CustomException(MemberErrorCode.FILE_DELETE_FAILED);
         }
+    }
 
-        // S3 삭제 성공 후 DB에서 문서 삭제
-        sellerDocumentRepository.delete(document);
+    /**
+     * DB에서 문서 삭제 (프로그램적 트랜잭션)
+     */
+    private void deleteDocumentFromDb(SellerDocument document) {
+        transactionTemplate.executeWithoutResult(status -> sellerDocumentRepository.delete(document));
+    }
+
+    /**
+     * DB에 문서 복구 (보상 트랜잭션, REQUIRES_NEW로 독립 보장)
+     */
+    private void restoreDocumentToDb(SellerDocument document) {
+        TransactionTemplate requiresNewTemplate = new TransactionTemplate(transactionManager);
+        requiresNewTemplate.setPropagationBehavior(org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        requiresNewTemplate.executeWithoutResult(status -> sellerDocumentRepository.save(document));
     }
 }
