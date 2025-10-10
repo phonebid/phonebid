@@ -61,7 +61,7 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({
       {showCheckIcon && (
         <CheckCircle2
           className={cn(
-            "absolute right-4 h-6 w-6 absolute top-1/2 -translate-y-1/2",
+            "absolute right-4 h-6 w-6 top-1/2 -translate-y-1/2",
             selected ? "text-primary" : "text-muted-foreground/30"
           )}
           aria-hidden
