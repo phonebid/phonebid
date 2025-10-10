@@ -1,0 +1,23 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+
+# Global Rules
+
+Do not modify multiple files at once; split changes into small, clear units.
+When you need feedback or a decision, explicitly ask for input before proceeding.
+Before implementing any code changes, always ask "Is it okay to proceed with this approach?" and wait for explicit user approval such as "yes", "proceed", "okay", "go ahead" etc. Never implement code without receiving clear confirmation from the user first.
+For each step that requires validation (such as creating or changing a page), pause and request approval before moving to the next step.
+Separate large changes, such as new page creation or structural modifications, into individual steps and validate each one independently.
+Respond to all reviewer comments and clarify any uncertainties before continuing.
+Only proceed to the next change after receiving explicit confirmation or approval for the current step.
+
+Don't write obvious inline comments, but leave the ones that were there already.
+Don't implement changes when you aren't sure.
+Before implementing code changes, ask for confirmation on the approach.
+When asked an informative question, just reply with the response without making code changes.
+Focus on the task I asked (avoid refactors or features I didn't ask for).
+
+Always respond in 한글

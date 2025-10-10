@@ -1,0 +1,15 @@
+{
+  "name": "root",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev:backend": "cd backend && ./gradlew bootRun",
+    "dev:frontend": "cd frontend && pnpm dev",
+    "dev": "sh -c 'cd backend && ./gradlew bootRun & cd frontend && pnpm dev'",
+    "test": "cd backend && ./gradlew test"
+  },
+  "packageManager": "pnpm@10.4.1",
+  "engines": {
+    "node": ">=20"
+  }
+}

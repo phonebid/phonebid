@@ -65,24 +65,6 @@ public class PhoneOption extends BaseEntity {
         this.displayLabel = displayLabel;
     }
 
-    public boolean isColorOption() {
-        return optionType == OptionType.COLOR;
-    }
-
-    public boolean isStorageOption() {
-        return optionType == OptionType.STORAGE;
-    }
-
-    public String getFormattedValue() {
-        if (isStorageOption() && !optionValue.toLowerCase().contains("gb") && !optionValue.toLowerCase().contains("tb")) {
-            return optionValue + "GB";
-        }
-        return displayLabel != null ? displayLabel : optionValue;
-    }
-
-    public String getOptionSummary() {
-        return String.format("%s: %s", optionType.getDisplayName(), getFormattedValue());
-    }
 
     // Enum 정의
     public enum OptionType {
