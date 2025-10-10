@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Comment;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -47,6 +48,10 @@ public class PhoneModel extends BaseEntity {
     @Comment("출시일")
     private LocalDate releasedAt;
 
+    @OneToMany(mappedBy = "model", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Comment("옵션 목록")
+    private List<PhoneOption> options;
+
     @Builder
     public PhoneModel(Brand brand, String model, String modelNumber, 
                      Integer releasedPrice, LocalDate releasedAt) {
@@ -57,21 +62,27 @@ public class PhoneModel extends BaseEntity {
         this.releasedAt = releasedAt;
     }
 
-    // 비즈니스 메서드
-    public void updateModel(String model) {
-        this.model = model;
-    }
 
-    public void updateModelNumber(String modelNumber) {
-        this.modelNumber = modelNumber;
-    }
-
-    public void updateReleasedPrice(Integer releasedPrice) {
-        this.releasedPrice = releasedPrice;
-    }
-
-    public void updateReleasedAt(LocalDate releasedAt) {
-        this.releasedAt = releasedAt;
+    /**
+     * 모든 필드를 한 번에 업데이트 (null이 아닌 값만)
+     */
+    public void updateAll(Brand brand, String model, String modelNumber, 
+                         Integer releasedPrice, LocalDate releasedAt) {
+        if (brand != null) {
+            this.brand = brand;
+        }
+        if (model != null && !model.trim().isEmpty()) {
+            this.model = model;
+        }
+        if (modelNumber != null) {
+            this.modelNumber = modelNumber;
+        }
+        if (releasedPrice != null) {
+            this.releasedPrice = releasedPrice;
+        }
+        if (releasedAt != null) {
+            this.releasedAt = releasedAt;
+        }
     }
 
     public String getFullModelName() {

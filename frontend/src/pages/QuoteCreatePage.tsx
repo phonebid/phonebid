@@ -162,7 +162,7 @@ const QuoteCreatePage: React.FC = () => {
             <button
               aria-label="뒤로가기"
               onClick={() => navigate(-1)}
-              className="inline-flex items-center justify-center size-9 rounded-md hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+              className="flex mr-auto items-center size-9 rounded-md hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
             >
               <svg
                 width="20"
@@ -180,7 +180,10 @@ const QuoteCreatePage: React.FC = () => {
                 />
               </svg>
             </button>
-            <div className="text-base font-semibold">견적 받아보기</div>
+            <div className="flex mx-auto text-base font-semibold">
+              견적 작성
+            </div>
+            <div className="flex mx-auto" />
           </div>
         </div>
         {step === 1 && (
