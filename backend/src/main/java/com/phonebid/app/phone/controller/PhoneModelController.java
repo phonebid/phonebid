@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.phonebid.app.phone.service.PhoneModelService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -49,19 +50,19 @@ public class PhoneModelController {
      * 휴대폰 모델 생성
      */
     @PostMapping
-    public ResponseEntity<ApiResponse<PhoneModelResponseDto>> createPhoneModel(@RequestBody PhoneModelCreateRequestDto requestDto) {
+    public ResponseEntity<ApiResponse<PhoneModelResponseDto>> createPhoneModel(@RequestBody @Valid PhoneModelCreateRequestDto requestDto) {
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "휴대폰 모델 생성이 성공적으로 완료되었습니다.", phoneModelService.createPhoneModel(requestDto)));
     }
 
     // 휴대폰 모델 수정
     @PutMapping
-    public ResponseEntity<ApiResponse<PhoneModelResponseDto>> updatePhoneModel(@RequestBody PhoneModelUpdateRequestDto requestDto) {
+    public ResponseEntity<ApiResponse<PhoneModelResponseDto>> updatePhoneModel(@RequestBody @Valid PhoneModelUpdateRequestDto requestDto) {
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "휴대폰 모델 수정이 성공적으로 완료되었습니다.", phoneModelService.updatePhoneModel(requestDto)));
     }
 
     // 휴대폰 모델 삭제
     @DeleteMapping
-    public ResponseEntity<ApiResponse<Void>> deletePhoneModel(@RequestBody PhoneModelDeleteRequestDto requestDto) {
+    public ResponseEntity<ApiResponse<Void>> deletePhoneModel(@RequestBody @Valid PhoneModelDeleteRequestDto requestDto) {
         phoneModelService.deletePhoneModel(requestDto);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "휴대폰 모델 삭제이 성공적으로 완료되었습니다.", null));
     }

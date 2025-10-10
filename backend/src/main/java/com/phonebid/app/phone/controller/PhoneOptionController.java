@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.phonebid.app.phone.service.PhoneOptionService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -37,13 +38,13 @@ public class PhoneOptionController {
      * 휴대폰 옵션 생성
      */
     @PostMapping
-    public ResponseEntity<ApiResponse<List<PhoneOptionResponseDto>>> createPhoneOption(@RequestBody List<PhoneOptionCreateRequestDto> requestDto) {
+    public ResponseEntity<ApiResponse<List<PhoneOptionResponseDto>>> createPhoneOption(@RequestBody List<@Valid PhoneOptionCreateRequestDto> requestDto) {
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "휴대폰 옵션 생성이 성공적으로 완료되었습니다.", phoneOptionService.createPhoneOptions(requestDto)));
     }
 
     // 휴대폰 옵션 삭제
     @DeleteMapping
-    public ResponseEntity<ApiResponse<Void>> deletePhoneOption(@RequestBody PhoneOptionDeleteRequestDto requestDto) {
+    public ResponseEntity<ApiResponse<Void>> deletePhoneOption(@RequestBody @Valid PhoneOptionDeleteRequestDto requestDto) {
         phoneOptionService.deletePhoneOption(requestDto);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "휴대폰 옵션 삭제이 성공적으로 완료되었습니다.", null));
     }
