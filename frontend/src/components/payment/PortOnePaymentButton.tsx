@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 import { Button } from "components/ui/button";
@@ -23,6 +24,7 @@ export const PortOnePaymentButton: React.FC<PortOnePaymentButtonProps> = ({
   label = "결제하기",
 }) => {
   const [isProcessing, setProcessing] = useState(false);
+  const navigate = useNavigate();
 
   const handleClick = useCallback(async () => {
     if (isProcessing) {
@@ -60,6 +62,14 @@ export const PortOnePaymentButton: React.FC<PortOnePaymentButtonProps> = ({
         };
         toast.error(response.message ?? "결제에 실패했습니다.");
         onFailure?.(failureResult);
+        const query = new URLSearchParams();
+        if (response.code) {
+          query.set("code", response.code);
+        }
+        if (response.message) {
+          query.set("message", response.message);
+        }
+        navigate(`/payment/fail?${query.toString()}`);
         return;
       }
 
@@ -68,14 +78,20 @@ export const PortOnePaymentButton: React.FC<PortOnePaymentButtonProps> = ({
       };
       toast.success("결제가 요청되었습니다.");
       onSuccess?.(successResult);
+      if (response.paymentId) {
+        navigate(`/payment/success?paymentId=${encodeURIComponent(response.paymentId)}`);
+      } else {
+        navigate(`/payment/success`);
+      }
     } catch (error) {
       console.error("PortOne 결제 호출 중 오류", error);
       toast.error("결제를 시작하지 못했습니다.");
       onFailure?.({ message: "SDK 호출 실패" });
+      navigate(`/payment/fail?message=${encodeURIComponent("SDK 호출 실패")}`);
     } finally {
       setProcessing(false);
     }
-  }, [isProcessing, onFailure, onSuccess, requestPayload]);
+  }, [isProcessing, navigate, onFailure, onSuccess, requestPayload]);
 
   return (
     <Button onClick={handleClick} disabled={isProcessing}>
