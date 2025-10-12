@@ -1,6 +1,7 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "store/authStore";
 import { useState } from "react";
+import { PortOnePaymentButton } from "../payment/PortOnePaymentButton";
 
 const Header: React.FC = () => {
   const { isAuthenticated, user, logout } = useAuthStore();
@@ -12,6 +13,7 @@ const Header: React.FC = () => {
       console.error("로그아웃 실패:", error);
     }
   };
+  const navigate = useNavigate();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -49,6 +51,22 @@ const Header: React.FC = () => {
             >
               이용방법
             </Link>
+            <div className="space-y-3">
+              <PortOnePaymentButton
+                label="결제 창 테스트"
+                requestPayload={{
+                  merchantUid: `demo-${Date.now()}`,
+                  amount: 1000,
+                  productName:  "PhoneBid 견적",
+                  buyerName: "홍길동",
+                  buyerEmail: "demo@example.com",
+                  buyerPhone: "01012345678",
+                  returnUrl: `${window.location.origin}/payment/success`,
+                  cancelUrl: `${window.location.origin}/payment/cancel`,
+                }}
+                onSuccess={() => navigate("/auctions")}
+              />
+            </div>
           </nav>
 
           {/* 사용자 메뉴 */}

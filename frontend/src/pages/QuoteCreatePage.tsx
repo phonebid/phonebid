@@ -7,6 +7,7 @@ import type {
   PurchaseMethod,
 } from "types/QuoteTypes";
 import { DEFAULT_EXPIRED_HOURS } from "types/QuoteTypes";
+import { PortOnePaymentButton } from "components/payment/PortOnePaymentButton";
 import OptionGrid from "components/quote/OptionGrid";
 
 const StepHeader = ({ title, step }: { title: string; step: number }) => (
@@ -414,7 +415,26 @@ const QuoteCreatePage: React.FC = () => {
                 마감: {draft.expiredHours ?? DEFAULT_EXPIRED_HOURS}시간 후
               </div>
             </div>
-            <StepFooter nextLabel="제출" onNext={() => navigate("/auctions")} />
+            <div className="space-y-3">
+              <PortOnePaymentButton
+                label="결제 창 테스트"
+                requestPayload={{
+                  merchantUid: `demo-${Date.now()}`,
+                  amount: 1000,
+                  productName: draft.model ?? "PhoneBid 견적",
+                  buyerName: "홍길동",
+                  buyerEmail: "demo@example.com",
+                  buyerPhone: "01012345678",
+                  returnUrl: `${window.location.origin}/payment/success`,
+                  cancelUrl: `${window.location.origin}/payment/cancel`,
+                }}
+                onSuccess={() => navigate("/auctions")}
+              />
+              <StepFooter
+                nextLabel="제출"
+                onNext={() => navigate("/auctions")}
+              />
+            </div>
           </>
         )}
       </div>
