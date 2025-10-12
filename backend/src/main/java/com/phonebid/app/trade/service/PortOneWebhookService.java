@@ -26,8 +26,6 @@ public class PortOneWebhookService {
         if (!verifySignature(payload, webhookId, webhookTimestamp, webhookSignature)) {
             throw new IllegalArgumentException("포트원 웹훅 서명 검증 실패");
         }
-
-        log.info("포트원 웹훅 수신: payload={}", payload);
     }
 
     private boolean verifySignature(String payload, String webhookId, String webhookTimestamp, String webhookSignature) {
