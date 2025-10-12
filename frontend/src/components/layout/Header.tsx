@@ -12,7 +12,6 @@ const Header: React.FC = () => {
       console.error("로그아웃 실패:", error);
     }
   };
-
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);

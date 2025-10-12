@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev:backend": "cd backend && ./gradlew bootRun",
+    "dev:backend:w": "cd backend && .\\gradlew bootRun",
     "dev:frontend": "cd frontend && pnpm dev",
     "dev": "sh -c 'cd backend && ./gradlew bootRun & cd frontend && pnpm dev'",
     "test": "cd backend && ./gradlew test"
