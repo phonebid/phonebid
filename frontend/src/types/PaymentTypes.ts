@@ -28,3 +28,14 @@ export interface PortOnePaymentResult {
   message?: string;
 }
 
+export interface PortOnePaymentConfirmRequest {
+  paymentId: string;
+}
+
+export interface PortOnePaymentStatusResponse {
+  paymentId: string;
+  status: string;
+  amount: number;
+  currency: string;
+}
+

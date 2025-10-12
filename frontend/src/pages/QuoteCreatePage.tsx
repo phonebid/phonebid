@@ -426,9 +426,8 @@ const QuoteCreatePage: React.FC = () => {
                   buyerEmail: "demo@example.com",
                   buyerPhone: "01012345678",
                   returnUrl: `${window.location.origin}/payment/success`,
-                  cancelUrl: `${window.location.origin}/payment/cancel`,
+                  cancelUrl: `${window.location.origin}/payment/fail`,
                 }}
-                onSuccess={() => navigate("/auctions")}
               />
               <StepFooter
                 nextLabel="제출"
