@@ -65,3 +65,4 @@ portone:
     store-id: ${PORTONE_STORE_ID}
     api-secret: ${PORTONE_API_SECRET}
     channel-key: ${PORTONE_CHANNEL_KEY}
+    webhook-secret: ${PORTONE_WEBHOOK_SECRET}
