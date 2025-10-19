@@ -8,6 +8,7 @@ interface AuthStore extends AuthState {
   // Actions
   login: (user: User, accessToken: string) => void;
   logout: () => void;
+  forceLogout: () => void;
   handleOAuthCallback: (
     provider: string,
     code: string,
@@ -58,6 +59,24 @@ export const useAuthStore = create<AuthStore>()(
             false,
             "auth/logout"
           );
+        },
+
+        forceLogout: () => {
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("userData");
+
+          set(
+            {
+              isAuthenticated: false,
+              user: null,
+              accessToken: null,
+            },
+            false,
+            "auth/forceLogout"
+          );
+
+          // 로그인 페이지로 리다이렉트
+          window.location.href = "/login";
         },
 
         // OAuth Actions

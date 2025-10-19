@@ -1,18 +1,20 @@
 import { apiClient } from "services/apiClient";
 import type {
-  CreateQuoteRequest,
+  QuoteCreateRequestDto,
   QuoteDetail,
   QuoteSummary,
 } from "types/QuoteTypes";
 
-export const createQuote = async (payload: CreateQuoteRequest) => {
-  return await apiClient.post("/quotes", payload);
+const BASE_URL = "/auction/quotes";
+
+export const createQuote = async (payload: QuoteCreateRequestDto) => {
+  return await apiClient.post(BASE_URL, payload);
 };
 
 export const getLatestQuotes = async (): Promise<QuoteSummary[]> => {
-  return await apiClient.get("/quotes/latest");
+  return await apiClient.get(`${BASE_URL}/latest`);
 };
 
 export const getQuoteDetail = async (quoteId: string): Promise<QuoteDetail> => {
-  return await apiClient.get(`/quotes/${quoteId}`);
+  return await apiClient.get(`${BASE_URL}/${quoteId}`);
 };

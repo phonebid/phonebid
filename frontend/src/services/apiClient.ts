@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import type { ApiResponse } from "types/ApiTypes";
 import { ApiErrorClass } from "types/ApiTypes";
 import { getApiBaseUrl, getApiTimeout, API_CONSTANTS } from "utils/apiUtils";
+import { useAuthStore } from "store/authStore";
 
 class ApiClient {
   private client: AxiosInstance;
@@ -41,8 +42,18 @@ class ApiClient {
         const errorCode = error.response?.status || 500;
 
         console.error("API Error:", error);
-        toast.error(errorMessage);
 
+        // 토큰 관련 에러 처리 (401, 403)
+        if (errorCode === 401 || errorCode === 403) {
+          const { forceLogout } = useAuthStore.getState();
+          toast.error("세션이 만료되었습니다. 다시 로그인해주세요.");
+          forceLogout();
+          return Promise.reject(
+            new ApiErrorClass(errorCode, "인증이 필요합니다.")
+          );
+        }
+
+        toast.error(errorMessage);
         return Promise.reject(new ApiErrorClass(errorCode, errorMessage));
       }
     );

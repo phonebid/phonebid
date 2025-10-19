@@ -2,7 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 import { useNavigate } from "react-router-dom";
 import { useQuoteCreateStore } from "store/quoteCreateStore";
-import type { PurchaseMethod, Carrier } from "types/QuoteTypes";
+import type {
+  PurchaseMethod,
+  Carrier,
+  ActivationMethod,
+} from "types/QuoteTypes";
 import { getPhoneModels } from "services/phoneModelService";
 import type {
   PhoneModelResponse,
@@ -18,6 +22,8 @@ import {
 } from "@/components/ui/card";
 import { SelectionCard } from "@/components/ui/selection-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { createQuote } from "@/services/quoteService";
+import { toast } from "react-toastify";
 
 interface PurchasePlanOption {
   title: string;
@@ -41,7 +47,7 @@ const purchasePlanOptions: PurchasePlanOption[] = [
 const carrierOptions: { id: Carrier; title: string }[] = [
   { id: "SKT", title: "SKT" },
   { id: "KT", title: "KT" },
-  { id: "LGU+", title: "LG U+" },
+  { id: "LGU", title: "LG U+" },
 ];
 
 const QuoteCreateWizardPage: React.FC = () => {
@@ -170,8 +176,20 @@ const QuoteCreateWizardPage: React.FC = () => {
     }
     if (step === 6) {
       // TODO: 생성 API 연동
-      setShowSuccess(true);
-      return;
+      createQuote({
+        model: draft.model ?? "",
+        storage: draft.storage ?? "",
+        color: draft.color ?? "",
+        carrier: draft.carrier as Carrier,
+        purchaseMethod: draft.purchaseMethod as PurchaseMethod,
+        activationMethod: draft.activationMethod as ActivationMethod,
+      })
+        .then(() => {
+          setShowSuccess(true);
+        })
+        .catch((error) => {
+          toast.error(error.message);
+        });
     }
     setLocalStep((prev) => Math.min(6, prev + 1));
   };

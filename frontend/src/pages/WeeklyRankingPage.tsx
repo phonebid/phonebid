@@ -36,16 +36,30 @@ const WeeklyRankingPage: React.FC = () => {
       price: 730000,
       helperText: "월실사용 8만 원부터",
     },
+    {
+      modelName: "갤럭시 25",
+      originalPrice: 1250000,
+      discountText: "최대 52만 원 할인",
+      price: 730000,
+      helperText: "월실사용 8만 원부터",
+    },
+    {
+      modelName: "갤럭시 25",
+      originalPrice: 1250000,
+      discountText: "최대 52만 원 할인",
+      price: 730000,
+      helperText: "월실사용 8만 원부터",
+    },
   ];
 
   return (
     <div className="bg-background min-h-[60vh] pb-24">
       {/* CTA 공간 확보 */}
-      <div className="max-w-md mx-auto px-4 py-6 space-y-4">
+      <div className="max-w-md mx-auto px-6 py-6 space-y-4">
         {/* 모바일 퍼스트 폭 */}
 
         {/* 후기 카드 */}
-        <div className="rounded-xl bg-gray-50 p-4">
+        <div className="rounded-xl bg-indigo-50 p-4">
           <div className="text-sm text-foreground leading-6">
             <span className="font-medium">SKT 번호 이동으로</span>
             <br />
@@ -59,7 +73,9 @@ const WeeklyRankingPage: React.FC = () => {
         </div>
 
         {/* 섹션 타이틀 */}
-        <h2 className="text-xl font-bold text-foreground mb-4">이번 주 랭킹</h2>
+        <h2 className="text-2xl font-bold text-foreground mb-4">
+          이번 주 랭킹
+        </h2>
 
         {/* 랭킹 카드 리스트 */}
         <div className="space-y-3">
@@ -69,7 +85,11 @@ const WeeklyRankingPage: React.FC = () => {
         </div>
       </div>
 
-      <FloatingCTA label="핸드폰 가격 알아보기" to="/auctions/create" variant="black" />
+      <FloatingCTA
+        label="핸드폰 가격 알아보기"
+        to="/auctions/create"
+        variant="black"
+      />
     </div>
   );
 };

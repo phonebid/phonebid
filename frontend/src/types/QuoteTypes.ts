@@ -15,13 +15,9 @@ export interface QuoteDraft {
   currentCarrier?: Carrier; // 번호이동 시 필요
   purchaseMethod?: PurchaseMethod;
   activationMethod?: ActivationMethod;
-
-  // Step 3: 가격/마감
-  hopePrice?: number; // 희망가(원)
-  expiredHours?: number; // 마감까지 시간(기본 24)
 }
 
-export interface CreateQuoteRequest {
+export interface QuoteCreateRequestDto {
   model: string;
   storage: string;
   color: string;
@@ -29,7 +25,6 @@ export interface CreateQuoteRequest {
   purchaseMethod: PurchaseMethod;
   activationMethod: ActivationMethod;
   currentCarrier?: Carrier;
-  hopePrice: number;
 }
 
 export interface QuoteSummary {
@@ -38,14 +33,13 @@ export interface QuoteSummary {
   storage: string;
   color: string;
   carrier: Carrier;
-  hopePrice: number;
   expiredAt: string;
   createdAt: string;
 }
 
 export interface QuoteDetail extends QuoteSummary {
   status: "OPEN" | "CLOSED" | "CONTRACTED";
-  purchaseMethod: PurchaseMethod;
+  purchaseMethod: PurchaseMethod; 
   activationMethod: ActivationMethod;
   currentCarrier?: Carrier;
   bidCount: number;

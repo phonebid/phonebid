@@ -3,6 +3,8 @@ package com.phonebid.app.auction.dto.request;
 import com.phonebid.app.auction.domain.ActivationMethod;
 import com.phonebid.app.auction.domain.Carrier;
 import com.phonebid.app.auction.domain.PurchaseMethod;
+import com.phonebid.app.auction.domain.Quote;
+import com.phonebid.app.member.domain.User;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -32,8 +34,18 @@ public class QuoteCreateRequestDto {
 
     private final Carrier currentCarrier;
 
-    @NotNull
-    @jakarta.validation.constraints.Positive
-    private final Integer hopePrice;
+
+    public Quote toEntity(User user) {
+        return Quote.builder()
+            .user(user)
+            .model(model)
+            .storage(storage)
+            .color(color)
+            .carrier(carrier)
+            .purchaseMethod(purchaseMethod)
+            .activationMethod(activationMethod)
+            .currentCarrier(currentCarrier)
+            .build();
+    }
 }
 
