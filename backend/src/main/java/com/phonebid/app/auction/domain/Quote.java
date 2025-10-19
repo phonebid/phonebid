@@ -2,8 +2,6 @@ package com.phonebid.app.auction.domain;
 
 
 import com.phonebid.app.common.domain.BaseEntity;
-import com.phonebid.app.common.errorcode.AuctionErrorCode;
-import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.member.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -76,8 +74,8 @@ public class Quote extends BaseEntity {
     private ActivationMethod activationMethod;
 
     @Builder
-    public Quote(User user, String model, String storage, Carrier carrier, String color, 
-                 LocalDateTime expiredAt, PurchaseMethod purchaseMethod, Carrier currentCarrier, 
+    public Quote(User user, String model, String storage, Carrier carrier, String color,
+                 LocalDateTime expiredAt, PurchaseMethod purchaseMethod, Carrier currentCarrier,
                  ActivationMethod activationMethod) {
         this.user = user;
         this.model = model;
@@ -102,30 +100,6 @@ public class Quote extends BaseEntity {
 
     public boolean canSelectBid() {
         return status.canSelectBid() && !isExpired();
-    }
-
-    public void close() {
-        if (status != QuoteStatus.OPEN) {
-            throw new CustomException(AuctionErrorCode.INVALID_QUOTE_STATUS);
-        }
-        this.status = QuoteStatus.CLOSED;
-    }
-
-    public void contract() {
-        if (!canSelectBid()) {
-            throw new CustomException(AuctionErrorCode.INVALID_QUOTE_STATUS);
-        }
-        this.status = QuoteStatus.CONTRACTED;
-    }
-
-    public void extendExpiration(LocalDateTime newExpiredAt) {
-        if (status != QuoteStatus.OPEN) {
-            throw new CustomException(AuctionErrorCode.INVALID_QUOTE_STATUS);
-        }
-        if (newExpiredAt.isBefore(LocalDateTime.now())) {
-            throw new CustomException(AuctionErrorCode.INVALID_END_TIME);
-        }
-        this.expiredAt = newExpiredAt;
     }
 
     public String getFullSpecification() {
