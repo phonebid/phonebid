@@ -119,7 +119,7 @@ const QuoteCreatePage: React.FC = () => {
   const carrierOptions = [
     { label: "SKT", value: "SKT" },
     { label: "KT", value: "KT" },
-    { label: "LGU+", value: "LGU+" },
+    { label: "LG U+", value: "LGU" },
   ];
   const purchaseOptions = [
     { label: "신규가입", value: "NEW" },

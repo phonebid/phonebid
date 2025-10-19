@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useCustomSWR } from "hooks/useSWR";
+import useSWR from "swr";
 import { Quote } from "types/AuctionTypes";
 
 interface FilterState {
@@ -36,7 +36,7 @@ const AuctionListPage: React.FC = () => {
     data: quotes,
     error,
     isLoading,
-  } = useCustomSWR<Quote[]>(queryString ? `/quotes?${queryString}` : "/quotes");
+  } = useSWR<Quote[]>(queryString ? `/quotes?${queryString}` : "/quotes");
 
   const handleFilterChange = (key: keyof FilterState, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -75,7 +75,7 @@ const AuctionListPage: React.FC = () => {
             <option value="">통신사 전체</option>
             <option value="SKT">SKT</option>
             <option value="KT">KT</option>
-            <option value="LGU+">LG U+</option>
+            <option value="LGU">LG U+</option>
           </select>
           <select
             className="border border-input rounded-md h-10 px-3 bg-white text-sm"
