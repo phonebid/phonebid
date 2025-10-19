@@ -9,10 +9,10 @@
 ### 1. 기본 사용법
 
 ```typescript
-import { useCustomSWR } from "hooks/useSWR";
+import useSWR from "swr";
 
 function UserProfile() {
-  const { data, error, isLoading } = useCustomSWR<User>("/users/me");
+  const { data, error, isLoading } = useSWR<User>("/users/me");
 
   if (error) return <div>에러가 발생했습니다</div>;
   if (isLoading) return <div>로딩 중...</div>;
@@ -26,7 +26,7 @@ function UserProfile() {
 ```typescript
 function QuoteDetail({ quoteId }: { quoteId?: string }) {
   // quoteId가 없으면 요청하지 않음
-  const { data } = useCustomSWR<Quote>(quoteId ? `/quotes/${quoteId}` : null);
+  const { data } = useSWR<Quote>(quoteId ? `/quotes/${quoteId}` : null);
 
   return data ? <QuoteCard quote={data} /> : <div>견적을 선택하세요</div>;
 }
@@ -37,7 +37,7 @@ function QuoteDetail({ quoteId }: { quoteId?: string }) {
 ```typescript
 function UserQuotes({ userId }: { userId: string }) {
   // URL path에 변수 포함
-  const { data } = useCustomSWR<Quote[]>(`/users/${userId}/quotes`);
+  const { data } = useSWR<Quote[]>(`/users/${userId}/quotes`);
 
   return <QuoteList quotes={data} />;
 }
@@ -54,7 +54,7 @@ function QuoteSearch({
   if (keyword) params.append("keyword", keyword);
   if (category) params.append("category", category);
 
-  const { data } = useCustomSWR<Quote[]>(`/quotes?${params.toString()}`);
+  const { data } = useSWR<Quote[]>(`/quotes?${params.toString()}`);
 
   return <SearchResults quotes={data} />;
 }
@@ -65,7 +65,7 @@ function QuoteSearch({
 ```typescript
 // POST body가 필요한 경우 (검색 등)
 function AdvancedSearch({ filters }: { filters: SearchFilters }) {
-  const { data } = useCustomSWR<Quote[]>(
+  const { data } = useSWR<Quote[]>(
     ["search-quotes", filters], // 키를 배열로 사용
     async ([url, searchFilters]) => {
       // POST 요청으로 복잡한 검색 조건 전달
@@ -78,7 +78,7 @@ function AdvancedSearch({ filters }: { filters: SearchFilters }) {
 
 // 커스텀 설정과 함께
 function RealtimeData() {
-  const { data } = useCustomSWR<Bid[]>("/bids", {
+  const { data } = useSWR<Bid[]>("/bids", {
     refreshInterval: 5000, // 5초마다 자동 갱신
     revalidateOnFocus: true, // 포커스 시 재검증
   });
@@ -125,10 +125,10 @@ function UserProfile() {
 ### After (SWR 사용)
 
 ```typescript
-import { useCustomSWR } from "hooks/useSWR";
+import useSWR from "swr";
 
 function UserProfile() {
-  const { data: user, error, isLoading } = useCustomSWR<User>("/users/me");
+  const { data: user, error, isLoading } = useSWR<User>("/users/me");
 
   if (error) return <div>에러가 발생했습니다</div>;
   if (isLoading) return <div>로딩 중...</div>;
@@ -211,6 +211,8 @@ function LogoutButton() {
 ### 견적 목록 페이지 (페이지네이션)
 
 ```typescript
+import useSWR from "swr";
+
 function QuoteListPage({
   page = 1,
   size = 10,
@@ -219,7 +221,7 @@ function QuoteListPage({
   size?: number;
 }) {
   // 쿼리 파라미터를 포함한 URL 생성
-  const { data: quotes, error } = useCustomSWR<Quote[]>(
+  const { data: quotes, error } = useSWR<Quote[]>(
     `/quotes?page=${page}&size=${size}`
   );
 
@@ -240,10 +242,12 @@ function QuoteListPage({
 ### 사용자별 견적 조회
 
 ```typescript
+import useSWR from "swr";
+
 function UserQuotesPage({ userId }: { userId: string }) {
   // URL path에 userId 포함
-  const { data: quotes } = useCustomSWR<Quote[]>(`/users/${userId}/quotes`);
-  const { data: user } = useCustomSWR<User>(`/users/${userId}`);
+  const { data: quotes } = useSWR<Quote[]>(`/users/${userId}/quotes`);
+  const { data: user } = useSWR<User>(`/users/${userId}`);
 
   if (!user || !quotes) return <LoadingSpinner />;
 
@@ -270,7 +274,7 @@ interface SearchFilters {
 
 function QuoteSearchPage({ filters }: { filters: SearchFilters }) {
   // POST 요청이 필요한 복잡한 검색
-  const { data: quotes, isLoading } = useCustomSWR<Quote[]>(
+  const { data: quotes, isLoading } = useSWR<Quote[]>(
     ["quotes-search", filters], // 배열 키 사용
     async ([url, searchFilters]) => {
       // 커스텀 fetcher로 POST 요청
@@ -296,8 +300,10 @@ function QuoteSearchPage({ filters }: { filters: SearchFilters }) {
 ### 입찰 실시간 업데이트
 
 ```typescript
+import useSWR from "swr";
+
 function BidList({ quoteId }: { quoteId: string }) {
-  const { data: bids } = useCustomSWR<Bid[]>(
+  const { data: bids } = useSWR<Bid[]>(
     `/quotes/${quoteId}/bids`,
     { refreshInterval: 3000 } // 3초마다 갱신
   );
@@ -337,7 +343,7 @@ function OptimizedSearch({ filters }: { filters: SearchFilters }) {
     ];
   }, [filters.keyword, filters.category, filters.priceMin, filters.priceMax]);
 
-  const { data: quotes, isLoading } = useCustomSWR<Quote[]>(
+  const { data: quotes, isLoading } = useSWR<Quote[]>(
     searchKey,
     searchKey
       ? async (key) => {
@@ -373,7 +379,7 @@ function SimpleSearch({
   category?: string;
 }) {
   // 키가 문자열이므로 React가 자동으로 메모이제이션
-  const { data } = useCustomSWR<Quote[]>(
+  const { data } = useSWR<Quote[]>(
     keyword
       ? `/quotes/search?keyword=${encodeURIComponent(keyword)}&category=${
           category || ""
@@ -400,14 +406,14 @@ A: 여러 방법이 있습니다:
 
 ```typescript
 // 1. URL path 파라미터
-const { data } = useCustomSWR<User>(`/users/${userId}`);
+const { data } = useSWR<User>(`/users/${userId}`);
 
 // 2. 쿼리 파라미터
 const params = new URLSearchParams({ page: "1", size: "10" });
-const { data } = useCustomSWR<Quote[]>(`/quotes?${params}`);
+const { data } = useSWR<Quote[]>(`/quotes?${params}`);
 
 // 3. POST body가 필요한 경우 (커스텀 fetcher)
-const { data } = useCustomSWR<Quote[]>(
+const { data } = useSWR<Quote[]>(
   ["search", filters], // 키를 배열로
   async ([url, searchFilters]) =>
     apiClient.post("/quotes/search", searchFilters)
@@ -447,7 +453,7 @@ A: SWR은 키가 동일하면 캐시를 재사용합니다. 최적화 방법들:
 ```typescript
 // ❌ 매번 새로운 객체 생성 - 불필요한 재요청 발생
 function BadExample({ filters }: { filters: SearchFilters }) {
-  const { data } = useCustomSWR(["search", filters], fetcher); // filters 객체가 매번 새로 생성되면 재요청
+  const { data } = useSWR(["search", filters], fetcher); // filters 객체가 매번 새로 생성되면 재요청
 }
 
 // ✅ useMemo로 객체 메모이제이션
@@ -457,7 +463,7 @@ function GoodExample({ filters }: { filters: SearchFilters }) {
     [filters.keyword, filters.category, filters.priceRange]
   );
 
-  const { data } = useCustomSWR(["search", stableFilters], fetcher);
+  const { data } = useSWR(["search", stableFilters], fetcher);
 }
 
 // ✅ 원시값으로 키 구성 (가장 권장)
@@ -468,7 +474,7 @@ function BestExample({
   keyword: string;
   category?: string;
 }) {
-  const { data } = useCustomSWR(
+  const { data } = useSWR(
     keyword ? `search?keyword=${keyword}&category=${category || ""}` : null,
     fetcher
   );
@@ -488,10 +494,10 @@ A: 컴포넌트별로 `{ revalidateIfStale: false, revalidateOnFocus: false, rev
 모든 SWR 요청의 기본 설정입니다:
 
 ```typescript
-import { useCustomSWR } from "hooks/useSWR";
+import useSWR from "swr";
 
 // 기본 설정 사용 (별도 설정 없이)
-const { data } = useCustomSWR<User>("/users/me");
+const { data } = useSWR<User>("/users/me");
 ```
 
 **특징:**
@@ -506,11 +512,11 @@ const { data } = useCustomSWR<User>("/users/me");
 **사용 대상:** 휴대폰 모델 목록, 통신사 목록, 색상 옵션 등 거의 변하지 않는 데이터
 
 ```typescript
-import { useCustomSWR } from "hooks/useSWR";
+import useSWR from "swr";
 import { staticDataConfig } from "services/swrConfig";
 
 function PhoneModelsSelect() {
-  const { data: models } = useCustomSWR<PhoneModel[]>(
+  const { data: models } = useSWR<PhoneModel[]>(
     "/phone-models",
     staticDataConfig
   );
@@ -538,11 +544,11 @@ function PhoneModelsSelect() {
 **사용 대상:** 사용자 프로필, 설정 정보, 개인 정보 등 가끔 변하는 데이터
 
 ```typescript
-import { useCustomSWR } from "hooks/useSWR";
+import useSWR from "swr";
 import { userDataConfig } from "services/swrConfig";
 
 function UserProfile() {
-  const { data: user } = useCustomSWR<User>("/users/me", userDataConfig);
+  const { data: user } = useSWR<User>("/users/me", userDataConfig);
 
   return (
     <div>
@@ -564,11 +570,11 @@ function UserProfile() {
 **사용 대상:** 입찰 현황, 경매 상태 등 자주 변하는 데이터
 
 ```typescript
-import { useCustomSWR } from "hooks/useSWR";
+import useSWR from "swr";
 import { realtimeDataConfig } from "services/swrConfig";
 
 function LiveBidList({ quoteId }: { quoteId: string }) {
-  const { data: bids } = useCustomSWR<Bid[]>(
+  const { data: bids } = useSWR<Bid[]>(
     `/quotes/${quoteId}/bids`,
     realtimeDataConfig
   );
@@ -597,11 +603,11 @@ function LiveBidList({ quoteId }: { quoteId: string }) {
 **사용 대상:** 결제 정보, 계약 상태 등 항상 최신이어야 하는 중요한 데이터
 
 ```typescript
-import { useCustomSWR } from "hooks/useSWR";
+import useSWR from "swr";
 import { sensitiveDataConfig } from "services/swrConfig";
 
 function PaymentStatus({ contractId }: { contractId: string }) {
-  const { data: payment } = useCustomSWR<Payment>(
+  const { data: payment } = useSWR<Payment>(
     `/contracts/${contractId}/payment`,
     sensitiveDataConfig
   );
@@ -635,7 +641,7 @@ function PaymentStatus({ contractId }: { contractId: string }) {
 ## 🔧 설정 파일
 
 - **SWR 설정**: `services/swrConfig.ts`
-- **SWR 훅**: `hooks/useSWR.ts`
+- **SWR 훅**: `useSWR` (직접 import)
 - **SWR Provider**: `app/providers/SWRProvider.tsx`
 
 ## 📚 추가 학습 자료
