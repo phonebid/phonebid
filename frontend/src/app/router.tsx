@@ -10,6 +10,7 @@ import AuctionListPage from "pages/AuctionListPage";
 import WeeklyRankingPage from "pages/WeeklyRankingPage";
 // import QuoteCreatePage from "pages/QuoteCreatePage";
 import QuoteCreateWizardPage from "@/pages/QuoteCreateWizardPage";
+import PhoneModelManagePage from "@/pages/admin/PhoneModelManagePage";
 
 export const AppRouter: React.FC = () => {
   return (
@@ -32,6 +33,10 @@ export const AppRouter: React.FC = () => {
                 <Route path="/" element={<WeeklyRankingPage />} />
                 {/* 추후 추가될 라우트들 */}
                 <Route path="/auctions" element={<AuctionListPage />} />
+                <Route
+                  path="/admin/phone-models"
+                  element={<PhoneModelManagePage />}
+                />
               </Routes>
             </Layout>
           }

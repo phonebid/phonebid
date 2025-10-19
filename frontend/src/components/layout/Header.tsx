@@ -49,6 +49,12 @@ const Header: React.FC = () => {
             >
               이용방법
             </Link>
+            <Link
+              to="/admin/phone-models"
+              className="text-gray-700 hover:text-indigo-500 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              휴대폰 모델 관리
+            </Link>
           </nav>
 
           {/* 사용자 메뉴 */}
@@ -56,7 +62,7 @@ const Header: React.FC = () => {
             {isAuthenticated && user ? (
               <div className="flex items-center space-x-3">
                 <span className="text-sm text-gray-700">
-                  안녕하세요, {user.name}님
+                  안녕하세요, {user.nickname}님
                 </span>
                 <Link
                   to="/dashboard"
