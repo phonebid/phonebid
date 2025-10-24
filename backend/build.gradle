@@ -28,6 +28,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	// WebFlux
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	// WebSocket
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
 	// Lombok
 	compileOnly 'org.projectlombok:lombok'
