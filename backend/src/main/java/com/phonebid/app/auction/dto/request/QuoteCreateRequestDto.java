@@ -5,8 +5,11 @@ import com.phonebid.app.auction.domain.Carrier;
 import com.phonebid.app.auction.domain.PurchaseMethod;
 import com.phonebid.app.auction.domain.Quote;
 import com.phonebid.app.member.domain.User;
+import com.phonebid.app.phone.domain.PhoneModel;
+import com.phonebid.app.phone.domain.PhoneOption;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.util.UUID;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -15,13 +18,13 @@ import lombok.Getter;
 public class QuoteCreateRequestDto {
 
     @NotBlank
-    private final String model;
+    private final UUID phoneModelId;
 
     @NotBlank
-    private final String storage;
+    private final UUID storageOptionId;
 
     @NotBlank
-    private final String color;
+    private final UUID colorOptionId;
 
     @NotNull
     private final Carrier carrier;
@@ -35,12 +38,12 @@ public class QuoteCreateRequestDto {
     private final Carrier currentCarrier;
 
 
-    public Quote toEntity(User user) {
+    public Quote toEntity(User user, PhoneModel phoneModel, PhoneOption colorOption, PhoneOption storageOption) {
         return Quote.builder()
             .user(user)
-            .model(model)
-            .storage(storage)
-            .color(color)
+            .phoneModel(phoneModel)
+            .storage(storageOption)
+            .color(colorOption)
             .carrier(carrier)
             .purchaseMethod(purchaseMethod)
             .activationMethod(activationMethod)

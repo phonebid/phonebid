@@ -18,5 +18,16 @@ public interface QuoteRepository extends JpaRepository<Quote, UUID> {
                     + "ORDER BY q.createdAt DESC")
     List<Quote> findLatestQuotesByStatus(
             @Param("status") QuoteStatus status, Pageable pageable);
+
+    @Query(
+            "SELECT q FROM Quote q "
+                    + "WHERE q.user.id = :userId "
+                    + "AND q.status = :status "
+                    + "AND (q.isDelete = false OR q.isDelete IS NULL) "
+                    + "ORDER BY q.createdAt DESC")
+    List<Quote> findByUserIdAndStatus(
+            @Param("userId") UUID userId, 
+            @Param("status") QuoteStatus status, 
+            Pageable pageable);
 }
 

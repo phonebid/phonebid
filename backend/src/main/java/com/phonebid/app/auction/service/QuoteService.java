@@ -1,16 +1,24 @@
 package com.phonebid.app.auction.service;
 
+import ch.qos.logback.core.joran.spi.ActionException;
 import com.phonebid.app.auction.domain.PurchaseMethod;
 import com.phonebid.app.auction.domain.Quote;
 import com.phonebid.app.auction.domain.QuoteStatus;
 import com.phonebid.app.auction.dto.request.QuoteCreateRequestDto;
+import com.phonebid.app.auction.dto.response.QuoteResponseDto;
 import com.phonebid.app.auction.repository.QuoteRepository;
 import com.phonebid.app.common.errorcode.AuctionErrorCode;
+import com.phonebid.app.common.errorcode.PhoneErrorCode;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.member.domain.User;
+import com.phonebid.app.phone.domain.PhoneModel;
+import com.phonebid.app.phone.domain.PhoneOption;
+import com.phonebid.app.phone.repository.PhoneModelRepository;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,10 +28,16 @@ import org.springframework.transaction.annotation.Transactional;
 public class QuoteService {
 
     private final QuoteRepository quoteRepository;
+    private final PhoneModelRepository phoneModelRepository;
 
     @Transactional
     public void createQuote(QuoteCreateRequestDto quoteRequestDto, User user) {
-        Quote quote = quoteRequestDto.toEntity(user);
+        PhoneModel phoneModel = phoneModelRepository.findById(quoteRequestDto.getPhoneModelId())
+            .orElseThrow(() -> new CustomException(PhoneErrorCode.PHONE_MODEL_NOT_FOUND));
+        PhoneOption colorOption = phoneModel.getOptions().stream().filter(phoneOption -> phoneOption.getId().equals(quoteRequestDto.getColorOptionId())).findFirst().orElseThrow(() -> new CustomException(PhoneErrorCode.PHONE_OPTION_NOT_FOUND));
+        PhoneOption storageOption = phoneModel.getOptions().stream().filter(phoneOption -> phoneOption.getId().equals(quoteRequestDto.getStorageOptionId())).findFirst().orElseThrow(() -> new CustomException(PhoneErrorCode.PHONE_OPTION_NOT_FOUND));
+
+        Quote quote = quoteRequestDto.toEntity(user, phoneModel, colorOption, storageOption);
         // validateQuote(quote);
         quoteRepository.save(quote);
     }
@@ -31,6 +45,22 @@ public class QuoteService {
     public List<Quote> getLatestOpenQuotes(int limit) {
         return quoteRepository.findLatestQuotesByStatus(
                 QuoteStatus.OPEN, PageRequest.of(0, limit));
+    }
+
+    public List<QuoteResponseDto> getMyOpenQuotes(User user, Pageable pageable) {
+        List<Quote> quotes = quoteRepository.findByUserIdAndStatus(
+                user.getId(), QuoteStatus.OPEN, pageable);
+        return quotes.stream()
+                .map(QuoteResponseDto::from)
+                .collect(Collectors.toList());
+    }
+
+    public List<QuoteResponseDto> getAllOpenQuotes(Pageable pageable) {
+        List<Quote> quotes = quoteRepository.findLatestQuotesByStatus(
+                QuoteStatus.OPEN, pageable);
+        return quotes.stream()
+                .map(QuoteResponseDto::from)
+                .collect(Collectors.toList());
     }
 
     private void validateQuote(Quote quote) {

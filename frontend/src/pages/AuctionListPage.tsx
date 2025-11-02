@@ -36,7 +36,9 @@ const AuctionListPage: React.FC = () => {
     data: quotes,
     error,
     isLoading,
-  } = useSWR<Quote[]>(queryString ? `/quotes?${queryString}` : "/quotes");
+  } = useSWR<Quote[]>(
+    queryString ? `/auction/quotes?${queryString}` : "/auction/quotes"
+  );
 
   const handleFilterChange = (key: keyof FilterState, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));

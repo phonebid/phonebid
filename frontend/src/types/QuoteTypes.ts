@@ -1,5 +1,7 @@
 // 견적 생성 플로우에서 사용하는 타입/상수 정의
 
+import { PhoneOptionResponse } from "./PhoneModelTypes";
+
 export type Carrier = "SKT" | "KT" | "LGU";
 export type PurchaseMethod = "NEW" | "NUMBER_TRANSFER" | "DEVICE_CHANGE";
 export type ActivationMethod = "DEVICE_ONLY" | "SELECTIVE_SUBSIDY" | "CONTRACT";
@@ -7,8 +9,8 @@ export type ActivationMethod = "DEVICE_ONLY" | "SELECTIVE_SUBSIDY" | "CONTRACT";
 export interface QuoteDraft {
   // Step 1: 기기 선택
   model?: string; // PhoneModelResponse.id
-  storage?: string; // PhoneOptionResponse.optionValue
-  color?: string; // PhoneOptionResponse.optionValue
+  storage?: PhoneOptionResponse; // PhoneOptionResponse.optionValue
+  color?: PhoneOptionResponse; // PhoneOptionResponse.optionValue
 
   // Step 2: 통신/구매 옵션
   carrier?: Carrier;
@@ -39,7 +41,7 @@ export interface QuoteSummary {
 
 export interface QuoteDetail extends QuoteSummary {
   status: "OPEN" | "CLOSED" | "CONTRACTED";
-  purchaseMethod: PurchaseMethod; 
+  purchaseMethod: PurchaseMethod;
   activationMethod: ActivationMethod;
   currentCarrier?: Carrier;
   bidCount: number;

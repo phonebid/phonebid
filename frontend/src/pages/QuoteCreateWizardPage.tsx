@@ -148,13 +148,13 @@ const QuoteCreateWizardPage: React.FC = () => {
 
   const handleSelectColor = (option: PhoneOptionResponse) => {
     updateDraft({
-      color: option.displayLabel ?? option.optionValue,
+      color: option,
     });
   };
 
   const handleSelectStorage = (option: PhoneOptionResponse) => {
     updateDraft({
-      storage: option.displayLabel ?? option.optionValue,
+      storage: option,
     });
   };
 
@@ -178,8 +178,8 @@ const QuoteCreateWizardPage: React.FC = () => {
       // TODO: 생성 API 연동
       createQuote({
         model: draft.model ?? "",
-        storage: draft.storage ?? "",
-        color: draft.color ?? "",
+        storage: draft.storage?.id ?? "",
+        color: draft.color?.id ?? "",
         carrier: draft.carrier as Carrier,
         purchaseMethod: draft.purchaseMethod as PurchaseMethod,
         activationMethod: draft.activationMethod as ActivationMethod,
@@ -371,7 +371,7 @@ const QuoteCreateWizardPage: React.FC = () => {
                 <SelectionCard
                   key={option.id}
                   title={label}
-                  selected={draft.color === label}
+                  selected={draft.color?.id === option.id}
                   onClick={() => handleSelectColor(option)}
                   className="py-4"
                 />
@@ -421,18 +421,17 @@ const QuoteCreateWizardPage: React.FC = () => {
               {storageTitle}
             </h2>
             <p className="text-sm text-muted-foreground">
-              {draft.color ?? "색상 미선택"}
+              {draft.color?.displayLabel ?? "색상 미선택"}
             </p>
             <p className="text-base font-semibold">용량</p>
           </div>
           <div className="space-y-3">
             {storageOptions.map((option) => {
-              const label = option.displayLabel ?? option.optionValue;
               return (
                 <SelectionCard
                   key={option.id}
-                  title={label}
-                  selected={draft.storage === label}
+                  title={option.displayLabel ?? option.optionValue}
+                  selected={draft.storage?.id === option.id}
                   onClick={() => handleSelectStorage(option)}
                   className="py-4"
                 />
@@ -452,7 +451,8 @@ const QuoteCreateWizardPage: React.FC = () => {
               {carrierTitle}
             </h2>
             <p className="text-sm text-muted-foreground">
-              {draft.color ?? "색상 미선택"}, {draft.storage ?? "용량 미선택"}
+              {draft.color?.displayLabel ?? "색상 미선택"},{" "}
+              {draft.storage?.displayLabel ?? "용량 미선택"}
             </p>
             <p className="text-base font-semibold">통신사</p>
           </div>
@@ -482,7 +482,8 @@ const QuoteCreateWizardPage: React.FC = () => {
             {selectedModelLabel ?? "기종 미선택"}
           </h2>
           <p className="text-sm text-muted-foreground">
-            {draft.color ?? "색상 미선택"}, {draft.storage ?? "용량 미선택"},{" "}
+            {draft.color?.displayLabel ?? "색상 미선택"},{" "}
+            {draft.storage?.displayLabel ?? "용량 미선택"},{" "}
             {draft.carrier ?? "통신사 미선택"}
           </p>
         </div>
@@ -495,8 +496,14 @@ const QuoteCreateWizardPage: React.FC = () => {
             label="선택한 기종"
             value={selectedModelLabel ?? "선택되지 않음"}
           />
-          <SummaryCard label="색상" value={draft.color ?? "선택되지 않음"} />
-          <SummaryCard label="용량" value={draft.storage ?? "선택되지 않음"} />
+          <SummaryCard
+            label="색상"
+            value={draft.color?.displayLabel ?? "선택되지 않음"}
+          />
+          <SummaryCard
+            label="용량"
+            value={draft.storage?.displayLabel   ?? "선택되지 않음"}
+          />
           <SummaryCard
             label="통신사"
             value={draft.carrier ?? "선택되지 않음"}
