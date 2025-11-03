@@ -17,13 +17,13 @@ import lombok.Getter;
 @Builder
 public class QuoteCreateRequestDto {
 
-    @NotBlank
+    @NotNull
     private final UUID phoneModelId;
 
-    @NotBlank
+    @NotNull
     private final UUID storageOptionId;
 
-    @NotBlank
+    @NotNull
     private final UUID colorOptionId;
 
     @NotNull

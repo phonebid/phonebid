@@ -10,6 +10,10 @@ import com.phonebid.app.auction.dto.response.QuoteResponseDto;
 import com.phonebid.app.auction.repository.QuoteRepository;
 import com.phonebid.app.member.domain.Role;
 import com.phonebid.app.member.domain.User;
+import com.phonebid.app.phone.domain.Brand;
+import com.phonebid.app.phone.domain.PhoneModel;
+import com.phonebid.app.phone.domain.PhoneOption;
+import com.phonebid.app.phone.repository.PhoneModelRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,6 +42,9 @@ class QuoteServiceTest {
     @Mock
     private QuoteRepository quoteRepository;
 
+    @Mock
+    private PhoneModelRepository phoneModelRepository;
+
     @InjectMocks
     private QuoteService quoteService;
 
@@ -45,6 +52,9 @@ class QuoteServiceTest {
     private Quote testQuote1;
     private Quote testQuote2;
     private QuoteCreateRequestDto quoteCreateRequestDto;
+    private PhoneModel phoneModel;
+    private PhoneOption storageOption;
+    private PhoneOption colorOption;
     private Pageable pageable;
 
     @BeforeEach
@@ -67,34 +77,107 @@ class QuoteServiceTest {
             throw new RuntimeException("Failed to set UUID", e);
         }
 
-        // 테스트 Quote 생성
+        // PhoneModel 및 옵션 생성
+        phoneModel = PhoneModel.builder()
+                .brand(Brand.APPLE)
+                .model("iPhone 16")
+                .build();
+        try {
+            java.lang.reflect.Field idField = PhoneModel.class.getDeclaredField("id");
+            idField.setAccessible(true);
+            idField.set(phoneModel, UUID.randomUUID());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set UUID for PhoneModel", e);
+        }
+        storageOption = PhoneOption.builder()
+                .model(phoneModel)
+                .optionType(PhoneOption.OptionType.STORAGE)
+                .optionValue("128")
+                .displayLabel("128GB")
+                .build();
+        colorOption = PhoneOption.builder()
+                .model(phoneModel)
+                .optionType(PhoneOption.OptionType.COLOR)
+                .optionValue("BLACK")
+                .displayLabel("블랙")
+                .build();
+        try {
+            java.lang.reflect.Field idField = PhoneOption.class.getDeclaredField("id");
+            idField.setAccessible(true);
+            idField.set(storageOption, UUID.randomUUID());
+            idField.set(colorOption, UUID.randomUUID());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set UUID for PhoneOption", e);
+        }
+
+        // PhoneModel 옵션 리스트 주입 (서비스에서 phoneModel.getOptions() 검색함)
+        try {
+            java.lang.reflect.Field optionsField = PhoneModel.class.getDeclaredField("options");
+            optionsField.setAccessible(true);
+            optionsField.set(phoneModel, java.util.Arrays.asList(storageOption, colorOption));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set options for PhoneModel", e);
+        }
+
+        // 테스트 Quote 생성 (연관관계 기반)
         testQuote1 = Quote.builder()
                 .user(testUser)
-                .model("iPhone 16")
-                .storage("128GB")
+                .phoneModel(phoneModel)
+                .storage(storageOption)
                 .carrier(Carrier.SKT)
-                .color("블랙")
+                .color(colorOption)
                 .purchaseMethod(PurchaseMethod.NEW_SUBSCRIPTION)
                 .activationMethod(ActivationMethod.SELECTIVE_SUBSIDY)
                 .expiredAt(LocalDateTime.now().plusHours(24))
                 .build();
 
+        PhoneModel phoneModel2 = PhoneModel.builder()
+                .brand(Brand.SAMSUNG)
+                .model("Galaxy S24")
+                .build();
+        try {
+            java.lang.reflect.Field idField = PhoneModel.class.getDeclaredField("id");
+            idField.setAccessible(true);
+            idField.set(phoneModel2, UUID.randomUUID());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set UUID for PhoneModel", e);
+        }
+        PhoneOption storageOption2 = PhoneOption.builder()
+                .model(phoneModel2)
+                .optionType(PhoneOption.OptionType.STORAGE)
+                .optionValue("256")
+                .displayLabel("256GB")
+                .build();
+        PhoneOption colorOption2 = PhoneOption.builder()
+                .model(phoneModel2)
+                .optionType(PhoneOption.OptionType.COLOR)
+                .optionValue("WHITE")
+                .displayLabel("화이트")
+                .build();
+        try {
+            java.lang.reflect.Field idField = PhoneOption.class.getDeclaredField("id");
+            idField.setAccessible(true);
+            idField.set(storageOption2, UUID.randomUUID());
+            idField.set(colorOption2, UUID.randomUUID());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set UUID for PhoneOption", e);
+        }
         testQuote2 = Quote.builder()
                 .user(testUser)
-                .model("Galaxy S24")
-                .storage("256GB")
+                .phoneModel(phoneModel2)
+                .storage(storageOption2)
                 .carrier(Carrier.KT)
-                .color("화이트")
+                .color(colorOption2)
                 .purchaseMethod(PurchaseMethod.DEVICE_CHANGE)
                 .activationMethod(ActivationMethod.COMMON_SUBSIDY)
                 .expiredAt(LocalDateTime.now().plusHours(12))
                 .build();
 
-        // 테스트 요청 DTO 생성
+        // 테스트 요청 DTO 생성 (ID 기반)
         quoteCreateRequestDto = QuoteCreateRequestDto.builder()
-                .model("iPhone 16")
-                .storage("128GB")
-                .color("블랙")
+                .phoneModelId(getUuid(phoneModel))
+                .storageOptionId(getUuid(storageOption))
+                .colorOptionId(getUuid(colorOption))
                 .carrier(Carrier.SKT)
                 .purchaseMethod(PurchaseMethod.NEW_SUBSCRIPTION)
                 .activationMethod(ActivationMethod.SELECTIVE_SUBSIDY)
@@ -116,8 +199,8 @@ class QuoteServiceTest {
 
         // then
         assertThat(result).hasSize(2);
-        assertThat(result.get(0).getModel()).isEqualTo("iPhone 16");
-        assertThat(result.get(1).getModel()).isEqualTo("Galaxy S24");
+        assertThat(result.get(0).getPhoneModel().getModel()).isEqualTo("iPhone 16");
+        assertThat(result.get(1).getPhoneModel().getModel()).isEqualTo("Galaxy S24");
         verify(quoteRepository).findByUserIdAndStatus(testUser.getId(), QuoteStatus.OPEN, pageable);
     }
 
@@ -149,8 +232,8 @@ class QuoteServiceTest {
 
         // then
         assertThat(result).hasSize(2);
-        assertThat(result.get(0).getModel()).isEqualTo("iPhone 16");
-        assertThat(result.get(1).getModel()).isEqualTo("Galaxy S24");
+        assertThat(result.get(0).getPhoneModel().getModel()).isEqualTo("iPhone 16");
+        assertThat(result.get(1).getPhoneModel().getModel()).isEqualTo("Galaxy S24");
         verify(quoteRepository).findLatestQuotesByStatus(QuoteStatus.OPEN, pageable);
     }
 
@@ -173,6 +256,7 @@ class QuoteServiceTest {
     @DisplayName("createQuote - 성공: 견적 생성 성공")
     void createQuote_Success() {
         // given
+        when(phoneModelRepository.findById(eq(getUuid(phoneModel)))).thenReturn(java.util.Optional.of(phoneModel));
         when(quoteRepository.save(any(Quote.class))).thenReturn(testQuote1);
 
         // when
@@ -180,5 +264,15 @@ class QuoteServiceTest {
 
         // then
         verify(quoteRepository).save(any(Quote.class));
+    }
+
+    private java.util.UUID getUuid(Object entity) {
+        try {
+            java.lang.reflect.Field idField = entity.getClass().getDeclaredField("id");
+            idField.setAccessible(true);
+            return (java.util.UUID) idField.get(entity);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get UUID via reflection", e);
+        }
     }
 }
