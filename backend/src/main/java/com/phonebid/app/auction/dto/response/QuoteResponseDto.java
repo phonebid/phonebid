@@ -5,8 +5,8 @@ import com.phonebid.app.auction.domain.Carrier;
 import com.phonebid.app.auction.domain.PurchaseMethod;
 import com.phonebid.app.auction.domain.Quote;
 import com.phonebid.app.auction.domain.QuoteStatus;
-import com.phonebid.app.phone.domain.PhoneModel;
-import com.phonebid.app.phone.domain.PhoneOption;
+import com.phonebid.app.phone.dto.response.PhoneModelResponseDto;
+import com.phonebid.app.phone.dto.response.PhoneOptionResponseDto;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -18,10 +18,10 @@ import java.util.UUID;
 public class QuoteResponseDto {
 
     private UUID id;
-    private PhoneModel phoneModel;
-    private PhoneOption storage;
+    private PhoneModelResponseDto phoneModel;
+    private PhoneOptionResponseDto storage;
     private Carrier carrier;
-    private PhoneOption color;
+    private PhoneOptionResponseDto color;
     private QuoteStatus status;
     private LocalDateTime expiredAt;
     private PurchaseMethod purchaseMethod;
@@ -32,10 +32,10 @@ public class QuoteResponseDto {
     public static QuoteResponseDto from(Quote quote) {
         return QuoteResponseDto.builder()
                 .id(quote.getId())
-                .phoneModel(quote.getPhoneModel())
-                .storage(quote.getStorage())
+                .phoneModel(PhoneModelResponseDto.fromWithoutOptions(quote.getPhoneModel()))
+                .storage(PhoneOptionResponseDto.from(quote.getStorage()))
                 .carrier(quote.getCarrier())
-                .color(quote.getColor())
+                .color(PhoneOptionResponseDto.from(quote.getColor()))
                 .status(quote.getStatus())
                 .expiredAt(quote.getExpiredAt())
                 .purchaseMethod(quote.getPurchaseMethod())

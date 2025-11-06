@@ -5,6 +5,7 @@ import com.phonebid.app.auction.dto.request.QuoteCreateRequestDto;
 import com.phonebid.app.auction.dto.response.QuoteResponseDto;
 import com.phonebid.app.common.dto.ApiResponse;
 import com.phonebid.app.security.UserDetailsImpl;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 판매자 문서 컨트롤러
@@ -35,7 +37,7 @@ public class QuoteController {
     private final QuoteService quoteService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Void>> createQuote(@RequestBody QuoteCreateRequestDto quoteRequestDto) {
+    public ResponseEntity<ApiResponse<Void>> createQuote(@RequestBody @Valid QuoteCreateRequestDto quoteRequestDto) {
         // JWT 토큰에서 사용자 정보 추출
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -61,12 +63,10 @@ public class QuoteController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<QuoteResponseDto>>> getAllOpenQuotes(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<ApiResponse<List<QuoteResponseDto>>> getAllOpenQuotes() {
         
-        Pageable pageable = PageRequest.of(page, size);
-        List<QuoteResponseDto> quotes = quoteService.getAllOpenQuotes(pageable);
+        
+        List<QuoteResponseDto> quotes = quoteService.getAllOpenQuotes();
         
         return ResponseEntity.ok()
                 .body(ApiResponse.success(HttpStatus.OK, "진행중인 견적 조회가 성공적으로 완료되었습니다.", quotes));

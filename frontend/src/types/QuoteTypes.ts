@@ -2,10 +2,13 @@
 
 import { PhoneOptionResponse } from "./PhoneModelTypes";
 
-export type Carrier = "SKT" | "KT" | "LGU";
-export type PurchaseMethod = "NEW" | "NUMBER_TRANSFER" | "DEVICE_CHANGE";
-export type ActivationMethod = "DEVICE_ONLY" | "SELECTIVE_SUBSIDY" | "CONTRACT";
-
+export type Carrier = "SKT" | "KT" | "LGU" | "SKT_ALD" | "KT_ALD" | "LGU_ALD";
+export type PurchaseMethod =
+  | "NUMBER_TRANSFER"
+  | "DEVICE_CHANGE"
+  | "NEW_SUBSCRIPTION"
+  | "ANY";
+export type ActivationMethod = "COMMON_SUBSIDY" | "SELECTIVE_SUBSIDY" | "ANY";
 export interface QuoteDraft {
   // Step 1: 기기 선택
   model?: string; // PhoneModelResponse.id
@@ -20,9 +23,9 @@ export interface QuoteDraft {
 }
 
 export interface QuoteCreateRequestDto {
-  model: string;
-  storage: string;
-  color: string;
+  phoneModelId: string;
+  storageOptionId: string;
+  colorOptionId: string;
   carrier: Carrier;
   purchaseMethod: PurchaseMethod;
   activationMethod: ActivationMethod;

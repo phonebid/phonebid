@@ -69,4 +69,22 @@ public class PhoneModelResponseDto {
         );
     }
 
+    /**
+     * Entity를 DTO로 변환하는 정적 메서드 (옵션 정보 제외)
+     * 순환 참조를 방지하기 위해 옵션 정보 없이 생성
+     */
+    public static PhoneModelResponseDto fromWithoutOptions(PhoneModel phoneModel) {
+        return new PhoneModelResponseDto(
+            phoneModel.getId(),
+            phoneModel.getBrand(),
+            phoneModel.getModel(),
+            phoneModel.getModelNumber(),
+            phoneModel.getReleasedPrice(),
+            phoneModel.getReleasedAt(),
+            null, // options는 null로 설정하여 순환 참조 방지
+            phoneModel.getCreatedAt(),
+            phoneModel.getUpdatedAt()
+        );
+    }
+
 }

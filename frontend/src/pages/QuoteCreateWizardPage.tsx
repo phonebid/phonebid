@@ -175,14 +175,14 @@ const QuoteCreateWizardPage: React.FC = () => {
       return;
     }
     if (step === 6) {
-      // TODO: 생성 API 연동
       createQuote({
-        model: draft.model ?? "",
-        storage: draft.storage?.id ?? "",
-        color: draft.color?.id ?? "",
+        phoneModelId: draft.model ?? "",
+        storageOptionId: draft.storage?.id ?? "",
+        colorOptionId: draft.color?.id ?? "",
         carrier: draft.carrier as Carrier,
         purchaseMethod: draft.purchaseMethod as PurchaseMethod,
         activationMethod: draft.activationMethod as ActivationMethod,
+        currentCarrier: draft.currentCarrier as Carrier,
       })
         .then(() => {
           setShowSuccess(true);
@@ -502,7 +502,7 @@ const QuoteCreateWizardPage: React.FC = () => {
           />
           <SummaryCard
             label="용량"
-            value={draft.storage?.displayLabel   ?? "선택되지 않음"}
+            value={draft.storage?.displayLabel ?? "선택되지 않음"}
           />
           <SummaryCard
             label="통신사"
