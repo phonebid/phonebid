@@ -8,9 +8,10 @@ import AuthCallbackPage from "pages/AuthCallbackPage";
 import ConfettiTestPage from "pages/ConfettiPage";
 import AuctionListPage from "pages/AuctionListPage";
 import WeeklyRankingPage from "pages/WeeklyRankingPage";
-// import QuoteCreatePage from "pages/QuoteCreatePage";
-import QuoteCreateWizardPage from "@/pages/QuoteCreateWizardPage";
+import QuoteCreatePage from "pages/QuoteCreatePage";
 import PhoneModelManagePage from "@/pages/admin/PhoneModelManagePage";
+import PaymentSuccessPage from "pages/PaymentSuccessPage";
+import PaymentFailPage from "pages/PaymentFailPage";
 
 export const AppRouter: React.FC = () => {
   return (
@@ -21,8 +22,10 @@ export const AppRouter: React.FC = () => {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/confetti" element={<ConfettiTestPage />} />
-        <Route path="/auctions/create" element={<QuoteCreateWizardPage />} />
-        {/* <Route path="/auctions/create" element={<QuoteCreatePage />} /> */}
+        {/* <Route path="/auctions/create" element={<QuoteCreateWizardPage />} /> */}
+        <Route path="/auctions/create" element={<QuoteCreatePage />} />
+        <Route path="/payment/success" element={<PaymentSuccessPage />} />
+        <Route path="/payment/fail" element={<PaymentFailPage />} />
 
         {/* Layout이 포함된 일반 페이지들 */}
         <Route
