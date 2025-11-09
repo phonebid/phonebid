@@ -24,8 +24,8 @@ export interface QuoteDraft {
 
 export interface QuoteCreateRequestDto {
   phoneModelId: string;
-  storageOptionId: string;
-  colorOptionId: string;
+  storageOptionId?: string;
+  colorOptionId?: string;
   carrier: Carrier;
   purchaseMethod: PurchaseMethod;
   activationMethod: ActivationMethod;
