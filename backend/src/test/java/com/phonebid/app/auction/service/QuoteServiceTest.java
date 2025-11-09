@@ -224,32 +224,32 @@ class QuoteServiceTest {
     void getAllOpenQuotes_Success() {
         // given
         List<Quote> mockQuotes = Arrays.asList(testQuote1, testQuote2);
-        when(quoteRepository.findLatestQuotesByStatus(eq(QuoteStatus.OPEN), eq(pageable)))
+        when(quoteRepository.findLatestQuotesByStatus(eq(QuoteStatus.OPEN)))
                 .thenReturn(mockQuotes);
 
         // when
-        List<QuoteResponseDto> result = quoteService.getAllOpenQuotes(pageable);
+        List<QuoteResponseDto> result = quoteService.getAllOpenQuotes();
 
         // then
         assertThat(result).hasSize(2);
         assertThat(result.get(0).getPhoneModel().getModel()).isEqualTo("iPhone 16");
         assertThat(result.get(1).getPhoneModel().getModel()).isEqualTo("Galaxy S24");
-        verify(quoteRepository).findLatestQuotesByStatus(QuoteStatus.OPEN, pageable);
+        verify(quoteRepository).findLatestQuotesByStatus(QuoteStatus.OPEN);
     }
 
     @Test
     @DisplayName("getAllOpenQuotes - 빈 목록: OPEN Quote가 없는 경우")
     void getAllOpenQuotes_EmptyList() {
         // given
-        when(quoteRepository.findLatestQuotesByStatus(eq(QuoteStatus.OPEN), eq(pageable)))
+        when(quoteRepository.findLatestQuotesByStatus(eq(QuoteStatus.OPEN)))
                 .thenReturn(Collections.emptyList());
 
         // when
-        List<QuoteResponseDto> result = quoteService.getAllOpenQuotes(pageable);
+        List<QuoteResponseDto> result = quoteService.getAllOpenQuotes();
 
         // then
         assertThat(result).isEmpty();
-        verify(quoteRepository).findLatestQuotesByStatus(QuoteStatus.OPEN, pageable);
+        verify(quoteRepository).findLatestQuotesByStatus(QuoteStatus.OPEN);
     }
 
     @Test
