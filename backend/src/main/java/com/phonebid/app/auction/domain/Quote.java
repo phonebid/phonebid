@@ -2,9 +2,9 @@ package com.phonebid.app.auction.domain;
 
 
 import com.phonebid.app.common.domain.BaseEntity;
-import com.phonebid.app.common.errorcode.AuctionErrorCode;
-import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.member.domain.User;
+import com.phonebid.app.phone.domain.PhoneModel;
+import com.phonebid.app.phone.domain.PhoneOption;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -33,23 +33,23 @@ public class Quote extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "model", nullable = false)
-    @Comment("휴대폰 모델명 (예: iPhone 16)")
-    private String model;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "phone_model_id", nullable = false)
+    private PhoneModel phoneModel;
 
-    @Column(name = "storage", nullable = false)
-    @Comment("저장 용량 (예: 128GB)")
-    private String storage;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "storage", nullable = false)
+    private PhoneOption storage;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "color", nullable = false)
+    private PhoneOption color;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "carrier", nullable = false)
     @Comment("희망 통신사 (SKT, KT, LGU)")
     private Carrier carrier;
 
-    
-    @Column(name = "color", nullable = false)
-    @Comment("색상")
-    private String color;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
@@ -76,14 +76,14 @@ public class Quote extends BaseEntity {
     private ActivationMethod activationMethod;
 
     @Builder
-    public Quote(User user, String model, String storage, Carrier carrier, String color, 
-                 LocalDateTime expiredAt, PurchaseMethod purchaseMethod, Carrier currentCarrier, 
+    public Quote(User user, PhoneModel phoneModel, PhoneOption storage,  PhoneOption color, Carrier carrier,
+                 LocalDateTime expiredAt, PurchaseMethod purchaseMethod, Carrier currentCarrier,
                  ActivationMethod activationMethod) {
         this.user = user;
-        this.model = model;
+        this.phoneModel = phoneModel;
         this.storage = storage;
-        this.carrier = carrier;
         this.color = color;
+        this.carrier = carrier;
         this.purchaseMethod = purchaseMethod;
         this.currentCarrier = currentCarrier;
         this.activationMethod = activationMethod;
@@ -104,31 +104,7 @@ public class Quote extends BaseEntity {
         return status.canSelectBid() && !isExpired();
     }
 
-    public void close() {
-        if (status != QuoteStatus.OPEN) {
-            throw new CustomException(AuctionErrorCode.INVALID_QUOTE_STATUS);
-        }
-        this.status = QuoteStatus.CLOSED;
-    }
-
-    public void contract() {
-        if (!canSelectBid()) {
-            throw new CustomException(AuctionErrorCode.INVALID_QUOTE_STATUS);
-        }
-        this.status = QuoteStatus.CONTRACTED;
-    }
-
-    public void extendExpiration(LocalDateTime newExpiredAt) {
-        if (status != QuoteStatus.OPEN) {
-            throw new CustomException(AuctionErrorCode.INVALID_QUOTE_STATUS);
-        }
-        if (newExpiredAt.isBefore(LocalDateTime.now())) {
-            throw new CustomException(AuctionErrorCode.INVALID_END_TIME);
-        }
-        this.expiredAt = newExpiredAt;
-    }
-
     public String getFullSpecification() {
-        return String.format("%s %s %s %s", model, storage, carrier.getDisplayName(), color);
+        return String.format("%s %s %s %s", phoneModel, storage, carrier.getDisplayName(), color);
     }
 }

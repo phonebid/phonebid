@@ -68,9 +68,6 @@ public class Contract extends BaseEntity {
         
         this.status = ContractStatus.SIGNED;
         this.signedAt = LocalDateTime.now();
-        
-        // 관련 엔터티 상태 변경
-        this.quote.contract();
     }
 
     public void cancel() {

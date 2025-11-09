@@ -7,6 +7,7 @@ import Button from "components/common/Button";
 import { loginWithKakao, loginWithNaver } from "services/authService";
 import { apiClient } from "services/apiClient";
 import { toast } from "react-toastify";
+import type { LoginResponse, User } from "@/types/UserTypes";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -51,14 +52,19 @@ const LoginPage = () => {
     if (!newErrors.username && !newErrors.password) {
       setIsLoading(true);
       try {
-        const response = await apiClient.post("/users/login", credentials);
-        const responseData = response as {
-          data: { accessToken: string; user: any };
-        };
-        const { accessToken, user } = responseData.data;
+        const response = await apiClient.post<LoginResponse>(
+          "/users/login",
+          credentials
+        );
 
-        // 상태 업데이트 및 토큰 저장
-        login(user, accessToken);
+        const { accessToken, username, nickname, role } = response;
+        const userData: User = {
+          username,
+          nickname,
+          role,
+        };
+
+        login(userData, accessToken);
 
         toast.success("로그인이 완료되었습니다.");
         navigate("/", { replace: true });

@@ -39,8 +39,11 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({
         }
       }}
       className={cn(
-        "relative cursor-pointer border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-        selected ? "border-primary shadow-sm bg-primary/5" : "bg-slate-50",
+        // border-none 추가
+        "relative cursor-pointer transition-colors  focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+        selected
+          ? "border-primary shadow-sm bg-primary/5"
+          : "border-none bg-gray-50",
         className
       )}
     >

@@ -14,6 +14,8 @@ public enum AuctionErrorCode implements ErrorCode {
     INVALID_PURCHASE_METHOD(HttpStatus.BAD_REQUEST, "잘못된 구매 방법입니다."),
     INVALID_ACTIVATION_METHOD(HttpStatus.BAD_REQUEST, "잘못된 개통 방법입니다."),
     MISSING_CURRENT_CARRIER(HttpStatus.BAD_REQUEST, "기존 통신사 정보가 필요합니다."),
+    QUOTE_CREATE_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "사용자 인증이 필요합니다."),
+    QUOTE_CREATE_CURRENT_REQUIRED(HttpStatus.BAD_REQUEST, "번호이동/기기변경 시 기존 통신사를 입력해야 합니다."),
     BID_MODIFICATION_NOT_ALLOWED(HttpStatus.FORBIDDEN, "수정할 수 없는 입찰입니다."),
     INVALID_PRICE_PLAN_NAME(HttpStatus.BAD_REQUEST, "요금제 이름이 유효하지 않습니다."),
     INVALID_PRICE_PLAN_PRICE(HttpStatus.BAD_REQUEST, "요금제 가격이 유효하지 않습니다."),

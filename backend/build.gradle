@@ -13,6 +13,11 @@ java {
 	}
 }
 
+// 컴파일 옵션 추가 - 파라미터 이름을 바이트코드에 보존
+tasks.withType(JavaCompile) {
+	options.compilerArgs += ['-parameters']
+}
+
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor

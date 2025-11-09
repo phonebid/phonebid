@@ -1,9 +1,6 @@
 ---
-description:
-globs:
 alwaysApply: true
 ---
-
 # Global Rules
 
 Do not modify multiple files at once; split changes into small, clear units.

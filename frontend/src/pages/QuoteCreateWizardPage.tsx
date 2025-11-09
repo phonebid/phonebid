@@ -1,7 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
+import useSWR from "swr";
 import { useNavigate } from "react-router-dom";
 import { useQuoteCreateStore } from "store/quoteCreateStore";
-import type { PurchaseMethod, Carrier } from "types/QuoteTypes";
+import type {
+  PurchaseMethod,
+  Carrier,
+  ActivationMethod,
+} from "types/QuoteTypes";
+import { getPhoneModels } from "services/phoneModelService";
+import type {
+  PhoneModelResponse,
+  PhoneOptionResponse,
+} from "types/PhoneModelTypes";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,19 +21,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { SelectionCard } from "@/components/ui/selection-card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { createQuote } from "@/services/quoteService";
+import { toast } from "react-toastify";
 
 interface PurchasePlanOption {
   title: string;
   description: string;
   value: PurchaseMethod;
-}
-
-interface PhoneOption {
-  id: string;
-  title: string;
-  price: number;
-  originalPrice: number;
-  discountText: string;
 }
 
 const purchasePlanOptions: PurchasePlanOption[] = [
@@ -39,54 +44,10 @@ const purchasePlanOptions: PurchasePlanOption[] = [
   },
 ];
 
-const phoneOptions: PhoneOption[] = [
-  {
-    id: "iphone_16_pro",
-    title: "아이폰 16프로",
-    price: 730000,
-    originalPrice: 1250000,
-    discountText: "최대 52만 원 할인",
-  },
-  {
-    id: "galaxy_25",
-    title: "갤럭시 25",
-    price: 730000,
-    originalPrice: 1250000,
-    discountText: "최대 52만 원 할인",
-  },
-  {
-    id: "iphone_16",
-    title: "아이폰 16",
-    price: 690000,
-    originalPrice: 1090000,
-    discountText: "최대 40만 원 할인",
-  },
-  {
-    id: "galaxy_fold",
-    title: "갤럭시 Z 폴드",
-    price: 1200000,
-    originalPrice: 1990000,
-    discountText: "최대 79만 원 할인",
-  },
-];
-
-const colorOptions = [
-  { id: "pink", title: "핑크" },
-  { id: "black", title: "블랙" },
-  { id: "sand", title: "샌드" },
-  { id: "no-preference", title: "컬러 상관없이 최저가를 보고싶어요" },
-];
-
-const storageOptions = [
-  { id: "64gb", title: "64GB" },
-  { id: "128gb", title: "128GB" },
-  { id: "256gb", title: "256GB" },
-];
-
 const carrierOptions: { id: Carrier; title: string }[] = [
   { id: "SKT", title: "SKT" },
   { id: "KT", title: "KT" },
-  { id: "LGU+", title: "LG U+" },
+  { id: "LGU", title: "LG U+" },
 ];
 
 const QuoteCreateWizardPage: React.FC = () => {
@@ -94,6 +55,41 @@ const QuoteCreateWizardPage: React.FC = () => {
   const { draft, updateDraft, reset, setStep } = useQuoteCreateStore();
   const [step, setLocalStep] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
+  const {
+    data: phoneModels,
+    isLoading: isLoadingPhoneModels,
+    error: phoneModelError,
+  } = useSWR<PhoneModelResponse[]>("/phone/models", () => getPhoneModels());
+
+  const selectedModel = useMemo(() => {
+    if (!phoneModels || !draft.model) {
+      return undefined;
+    }
+    return phoneModels.find((model) => model.id === draft.model);
+  }, [draft.model, phoneModels]);
+
+  const selectedModelLabel = selectedModel?.model ?? draft.model;
+
+  const colorOptions = useMemo(() => {
+    if (!selectedModel?.options) {
+      return [] as PhoneOptionResponse[];
+    }
+    return selectedModel.options.filter(
+      (option) => option.optionType === "COLOR"
+    );
+  }, [selectedModel]);
+
+  const storageOptions = useMemo(() => {
+    if (!selectedModel?.options) {
+      return [] as PhoneOptionResponse[];
+    }
+    return selectedModel.options.filter(
+      (option) => option.optionType === "STORAGE"
+    );
+  }, [selectedModel]);
+
+  const hasColorOptions = colorOptions.length > 0;
+  const hasStorageOptions = storageOptions.length > 0;
 
   useEffect(() => {
     document.title = "견적 작성 | PhoneBid";
@@ -118,10 +114,10 @@ const QuoteCreateWizardPage: React.FC = () => {
       return Boolean(draft.model);
     }
     if (step === 3) {
-      return Boolean(draft.color);
+      return hasColorOptions ? Boolean(draft.color) : true;
     }
     if (step === 4) {
-      return Boolean(draft.storage);
+      return hasStorageOptions ? Boolean(draft.storage) : true;
     }
     if (step === 5) {
       return Boolean(draft.carrier);
@@ -134,22 +130,32 @@ const QuoteCreateWizardPage: React.FC = () => {
     draft.storage,
     draft.carrier,
     step,
+    hasColorOptions,
+    hasStorageOptions,
   ]);
 
   const handleSelectPlan = (value: PurchaseMethod) => {
     updateDraft({ purchaseMethod: value });
   };
 
-  const handleSelectPhone = (option: PhoneOption) => {
-    updateDraft({ model: option.title });
+  const handleSelectPhone = (model: PhoneModelResponse) => {
+    updateDraft({
+      model: model.id,
+      color: undefined,
+      storage: undefined,
+    });
   };
 
-  const handleSelectColor = (color: string) => {
-    updateDraft({ color });
+  const handleSelectColor = (option: PhoneOptionResponse) => {
+    updateDraft({
+      color: option,
+    });
   };
 
-  const handleSelectStorage = (storage: string) => {
-    updateDraft({ storage });
+  const handleSelectStorage = (option: PhoneOptionResponse) => {
+    updateDraft({
+      storage: option,
+    });
   };
 
   const handleSelectCarrier = (carrier: Carrier) => {
@@ -169,9 +175,21 @@ const QuoteCreateWizardPage: React.FC = () => {
       return;
     }
     if (step === 6) {
-      // TODO: 생성 API 연동
-      setShowSuccess(true);
-      return;
+      createQuote({
+        phoneModelId: draft.model ?? "",
+        storageOptionId: draft.storage?.id ?? "",
+        colorOptionId: draft.color?.id ?? "",
+        carrier: draft.carrier as Carrier,
+        purchaseMethod: draft.purchaseMethod as PurchaseMethod,
+        activationMethod: draft.activationMethod as ActivationMethod,
+        currentCarrier: draft.currentCarrier as Carrier,
+      })
+        .then(() => {
+          setShowSuccess(true);
+        })
+        .catch((error) => {
+          toast.error(error.message);
+        });
     }
     setLocalStep((prev) => Math.min(6, prev + 1));
   };
@@ -207,49 +225,95 @@ const QuoteCreateWizardPage: React.FC = () => {
     }
 
     if (step === 2) {
+      if (isLoadingPhoneModels) {
+        return (
+          <section className="space-y-5">
+            <h2 className="text-2xl flex items-center font-bold tracking-tight mb-8">
+              기종을 선택하세요.
+            </h2>
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <Card key={index} className="rounded-2xl">
+                  <CardContent className="flex gap-4 py-4">
+                    <Skeleton className="h-16 w-16 rounded-xl" />
+                    <div className="flex-1 space-y-3">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-40" />
+                      <Skeleton className="h-4 w-28" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+        );
+      }
+
+      if (phoneModelError) {
+        return (
+          <section className="space-y-5">
+            <h2 className="text-2xl flex items-center font-bold tracking-tight mb-8">
+              기종을 선택하세요.
+            </h2>
+            <Card className="rounded-2xl border-destructive/40 bg-destructive/5">
+              <CardContent className="py-6 text-sm text-destructive">
+                기종 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.
+              </CardContent>
+            </Card>
+          </section>
+        );
+      }
+
+      if (!phoneModels || phoneModels.length === 0) {
+        return (
+          <section className="space-y-5">
+            <h2 className="text-2xl flex items-center font-bold tracking-tight mb-8">
+              기종을 선택하세요.
+            </h2>
+            <Card className="rounded-2xl">
+              <CardContent className="py-6 text-sm text-muted-foreground">
+                등록된 휴대폰 기종이 없습니다. 먼저 관리 페이지에서 기종을
+                추가해주세요.
+              </CardContent>
+            </Card>
+          </section>
+        );
+      }
+
       return (
         <section className="space-y-5">
           <h2 className="text-2xl flex items-center font-bold tracking-tight mb-8">
             기종을 선택하세요.
           </h2>
           <div className="space-y-3">
-            {phoneOptions.map((option) => {
-              const selected = draft.model === option.title;
+            {phoneModels.map((model) => {
+              const selected = draft.model === model.id;
               return (
                 <SelectionCard
-                  key={option.id}
+                  key={model.id}
                   selected={selected}
-                  onClick={() => handleSelectPhone(option)}
-                  className="py-2"
-                  showCheckIcon={true}
+                  onClick={() => handleSelectPhone(model)}
+                  className="py-3"
+                  showCheckIcon
                 >
                   <CardContent className="flex w-full items-center gap-4 py-2">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 via-primary/20 to-primary/10 text-sm font-medium text-primary-foreground">
-                      {option.title.slice(0, 2)}
+                    <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 via-primary/20 to-primary/10 text-xs font-medium text-primary">
+                      {model.brand}
                     </div>
-                    <div className="flex flex-1 flex-col">
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-1">
-                          <CardTitle className="text-sm font-normal mt-2">
-                            {option.title}
-                          </CardTitle>
-                          <div className="flex items-center gap-1">
-                            <div className="text-xs text-muted-foreground line-through">
-                              {option.originalPrice.toLocaleString()}원
-                            </div>
-                            <div className="text-xs text-primary">
-                              {option.discountText}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="text-lg font-semibold text-foreground">
-                        {option.price.toLocaleString()}원
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        칠십삼만 원부터
-                      </div>
+                    <div className="flex flex-1 flex-col gap-1">
+                      <CardTitle className="text-base font-semibold">
+                        {model.model}
+                      </CardTitle>
+                      {model.modelNumber ? (
+                        <span className="text-xs text-muted-foreground">
+                          모델 번호 {model.modelNumber}
+                        </span>
+                      ) : null}
+                      {model.releasedPrice ? (
+                        <span className="text-sm font-medium text-primary">
+                          출시가 {model.releasedPrice.toLocaleString()}원
+                        </span>
+                      ) : null}
                     </div>
                   </CardContent>
                 </SelectionCard>
@@ -261,92 +325,135 @@ const QuoteCreateWizardPage: React.FC = () => {
     }
 
     if (step === 3) {
+      const colorLabel = selectedModelLabel ?? "선택된 기종이 없습니다";
+      if (!selectedModel) {
+        return (
+          <section className="space-y-5">
+            <h2 className="text-2xl flex items-center font-bold tracking-tight mb-8">
+              색상을 선택하세요.
+            </h2>
+            <Card className="rounded-2xl">
+              <CardContent className="py-6 text-sm text-muted-foreground">
+                기종을 먼저 선택해주세요.
+              </CardContent>
+            </Card>
+          </section>
+        );
+      }
+
+      if (!hasColorOptions) {
+        return (
+          <section className="space-y-5">
+            <h2 className="text-2xl flex items-center font-bold tracking-tight mb-8">
+              색상을 선택하세요.
+            </h2>
+            <Card className="rounded-2xl">
+              <CardContent className="py-6 text-sm text-muted-foreground">
+                선택한 기종에 색상 옵션이 없습니다. 다음 단계로 이동해주세요.
+              </CardContent>
+            </Card>
+          </section>
+        );
+      }
+
       return (
         <section className="space-y-5">
-          <div className="space-y-5">
-            <div className="flex items-center gap-2">
-              <div className="items-center gap-2">
-                <h2 className="text-2xl font-bold tracking-tight">
-                  {draft.model}
-                </h2>
-                <p className="text-sm text-muted-foreground"></p>
-              </div>
-              <img
-                src={`https://picsum.photos/200/300`}
-                alt={draft.model}
-                className="flex h-20 w-20 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 via-primary/20 to-primary/10 text-sm font-medium text-primary-foreground ml-auto"
-              />
-            </div>
-            <p className="text-base font-semibold">색상</p>
+          <div className="space-y-3">
+            <h2 className="text-2xl font-bold tracking-tight">{colorLabel}</h2>
+            <p className="text-sm text-muted-foreground">
+              원하는 색상을 선택해주세요.
+            </p>
           </div>
           <div className="space-y-3">
-            {colorOptions.map((option) => (
-              <SelectionCard
-                key={option.id}
-                title={option.title}
-                selected={draft.color === option.title}
-                onClick={() => handleSelectColor(option.title)}
-                className="py-4"
-              />
-            ))}
+            {colorOptions.map((option) => {
+              const label = option.displayLabel ?? option.optionValue;
+              return (
+                <SelectionCard
+                  key={option.id}
+                  title={label}
+                  selected={draft.color?.id === option.id}
+                  onClick={() => handleSelectColor(option)}
+                  className="py-4"
+                />
+              );
+            })}
           </div>
         </section>
       );
     }
 
     if (step === 4) {
+      const storageTitle = selectedModelLabel ?? "선택된 기종이 없습니다";
+      if (!selectedModel) {
+        return (
+          <section className="space-y-5">
+            <h2 className="text-2xl flex items-center font-bold tracking-tight mb-8">
+              용량을 선택하세요.
+            </h2>
+            <Card className="rounded-2xl">
+              <CardContent className="py-6 text-sm text-muted-foreground">
+                기종을 먼저 선택해주세요.
+              </CardContent>
+            </Card>
+          </section>
+        );
+      }
+
+      if (!hasStorageOptions) {
+        return (
+          <section className="space-y-5">
+            <h2 className="text-2xl flex items-center font-bold tracking-tight mb-8">
+              용량을 선택하세요.
+            </h2>
+            <Card className="rounded-2xl">
+              <CardContent className="py-6 text-sm text-muted-foreground">
+                선택한 기종에 용량 옵션이 없습니다. 다음 단계로 이동해주세요.
+              </CardContent>
+            </Card>
+          </section>
+        );
+      }
+
       return (
         <section className="space-y-5">
-          <div className="space-y-5">
-            <div className="flex items-center gap-2">
-              <div className="items-center gap-2">
-                <h2 className="text-2xl font-bold tracking-tight">
-                  {draft.model}
-                </h2>
-                <p className="text-sm text-muted-foreground">{draft.color}</p>
-              </div>
-              <img
-                src={`https://picsum.photos/200/300`}
-                alt={draft.model}
-                className="flex h-20 w-20 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 via-primary/20 to-primary/10 text-sm font-medium text-primary-foreground ml-auto"
-              />
-            </div>
+          <div className="space-y-3">
+            <h2 className="text-2xl font-bold tracking-tight">
+              {storageTitle}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {draft.color?.displayLabel ?? "색상 미선택"}
+            </p>
             <p className="text-base font-semibold">용량</p>
           </div>
           <div className="space-y-3">
-            {storageOptions.map((option) => (
-              <SelectionCard
-                key={option.id}
-                title={option.title}
-                selected={draft.storage === option.title}
-                onClick={() => handleSelectStorage(option.title)}
-                className="py-4"
-              />
-            ))}
+            {storageOptions.map((option) => {
+              return (
+                <SelectionCard
+                  key={option.id}
+                  title={option.displayLabel ?? option.optionValue}
+                  selected={draft.storage?.id === option.id}
+                  onClick={() => handleSelectStorage(option)}
+                  className="py-4"
+                />
+              );
+            })}
           </div>
         </section>
       );
     }
 
     if (step === 5) {
+      const carrierTitle = selectedModelLabel ?? "통신사 선택";
       return (
         <section className="space-y-5">
-          <div className="space-y-5">
-            <div className="flex items-center gap-2">
-              <div className="items-center gap-2">
-                <h2 className="text-2xl font-bold tracking-tight">
-                  {draft.model}
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  {draft.color}, {draft.storage}
-                </p>
-              </div>
-              <img
-                src={`https://picsum.photos/200/300`}
-                alt={draft.model}
-                className="flex h-20 w-20 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 via-primary/20 to-primary/10 text-sm font-medium text-primary-foreground ml-auto"
-              />
-            </div>
+          <div className="space-y-3">
+            <h2 className="text-2xl font-bold tracking-tight">
+              {carrierTitle}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {draft.color?.displayLabel ?? "색상 미선택"},{" "}
+              {draft.storage?.displayLabel ?? "용량 미선택"}
+            </p>
             <p className="text-base font-semibold">통신사</p>
           </div>
           <div className="space-y-3">
@@ -370,19 +477,15 @@ const QuoteCreateWizardPage: React.FC = () => {
           아래 내용으로 가격을 받아올게요. <br />
           마지막으로 견적을 확인하세요.
         </h2>
-        <div className="space-y-5">
-          <div className="flex items-center gap-2">
-            <div className="items-center gap-2">
-              <h2 className="text-2xl font-bold tracking-tight">
-                {draft.model}
-              </h2>
-            </div>
-            <img
-              src={`https://picsum.photos/200/300`}
-              alt={draft.model}
-              className="flex h-20 w-20 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 via-primary/20 to-primary/10 text-sm font-medium text-primary-foreground ml-auto"
-            />
-          </div>
+        <div className="space-y-3">
+          <h2 className="text-2xl font-bold tracking-tight">
+            {selectedModelLabel ?? "기종 미선택"}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {draft.color?.displayLabel ?? "색상 미선택"},{" "}
+            {draft.storage?.displayLabel ?? "용량 미선택"},{" "}
+            {draft.carrier ?? "통신사 미선택"}
+          </p>
         </div>
         <div className="space-y-3">
           <SummaryCard
@@ -391,10 +494,16 @@ const QuoteCreateWizardPage: React.FC = () => {
           />
           <SummaryCard
             label="선택한 기종"
-            value={draft.model ?? "선택되지 않음"}
+            value={selectedModelLabel ?? "선택되지 않음"}
           />
-          <SummaryCard label="색상" value={draft.color ?? "선택되지 않음"} />
-          <SummaryCard label="용량" value={draft.storage ?? "선택되지 않음"} />
+          <SummaryCard
+            label="색상"
+            value={draft.color?.displayLabel ?? "선택되지 않음"}
+          />
+          <SummaryCard
+            label="용량"
+            value={draft.storage?.displayLabel ?? "선택되지 않음"}
+          />
           <SummaryCard
             label="통신사"
             value={draft.carrier ?? "선택되지 않음"}
