@@ -1,3 +1,4 @@
+import { toast } from "react-toastify";
 import { apiClient } from "services/apiClient";
 import type {
   PhoneModelCreateRequest,
@@ -8,22 +9,49 @@ import type {
 const BASE_URL = "/phone/models";
 
 export const getPhoneModels = async (): Promise<PhoneModelResponse[]> => {
-  return apiClient.get<PhoneModelResponse[]>(BASE_URL);
+  try {
+    return await apiClient.get<PhoneModelResponse[]>(BASE_URL);
+  } catch (err) {
+    console.error(err);
+    toast.error("휴대폰 모델 목록을 불러오는데 실패했습니다.");
+    throw err;
+  }
 };
 
 export const createPhoneModel = async (
   payload: PhoneModelCreateRequest
 ): Promise<PhoneModelResponse> => {
-  return apiClient.post<PhoneModelResponse>(BASE_URL, payload);
+  try {
+    return await apiClient.post<PhoneModelResponse>(BASE_URL, payload);
+  } catch (err) {
+    console.error(err);
+    toast.error("휴대폰 모델 생성에 실패했습니다.");
+    throw err;
+  }
 };
 
 export const updatePhoneModel = async (
   id: string,
   payload: PhoneModelUpdateRequest
 ): Promise<PhoneModelResponse> => {
-  return apiClient.put<PhoneModelResponse>(`${BASE_URL}/${id}`, payload);
+  try {
+    return await apiClient.put<PhoneModelResponse>(
+      `${BASE_URL}/${id}`,
+      payload
+    );
+  } catch (err) {
+    console.error(err);
+    toast.error("휴대폰 모델 수정에 실패했습니다.");
+    throw err;
+  }
 };
 
 export const deletePhoneModel = async (id: string): Promise<void> => {
-  return apiClient.delete<void>(`${BASE_URL}/${id}`);
+  try {
+    return await apiClient.delete<void>(`${BASE_URL}/${id}`);
+  } catch (err) {
+    console.error(err);
+    toast.error("휴대폰 모델 삭제에 실패했습니다.");
+    throw err;
+  }
 };
