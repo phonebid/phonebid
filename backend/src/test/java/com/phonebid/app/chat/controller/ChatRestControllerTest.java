@@ -16,6 +16,9 @@ import com.phonebid.app.auction.domain.ActivationMethod;
 import com.phonebid.app.auction.domain.Carrier;
 import com.phonebid.app.auction.domain.PurchaseMethod;
 import com.phonebid.app.auction.domain.Quote;
+import com.phonebid.app.phone.domain.Brand;
+import com.phonebid.app.phone.domain.PhoneModel;
+import com.phonebid.app.phone.domain.PhoneOption;
 import com.phonebid.app.chat.controller.ChatRestController;
 import com.phonebid.app.chat.domain.ChatRoom;
 import com.phonebid.app.chat.domain.MessageType;
@@ -42,6 +45,10 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -96,6 +103,45 @@ class ChatRestControllerTest {
                 .andExpect(jsonPath("$.data.quoteId").value(quoteId.toString()));
 
         verify(chatRoomService, times(1)).createChatRoom(any());
+    }
+
+    @Test
+    @DisplayName("채팅방 목록 조회 API (페이징)")
+    void getChatRooms() throws Exception {
+        UUID consumerId = UUID.randomUUID();
+        UUID quoteId1 = UUID.randomUUID();
+        UUID quoteId2 = UUID.randomUUID();
+        UUID sellerId1 = UUID.randomUUID();
+        UUID sellerId2 = UUID.randomUUID();
+        UUID chatRoomId1 = UUID.randomUUID();
+        UUID chatRoomId2 = UUID.randomUUID();
+
+        User consumer = TestFixtures.user(consumerId, Role.CONSUMER);
+        
+        ChatRoomResponse response1 = TestFixtures.chatRoomResponse(chatRoomId1, quoteId1, consumerId, sellerId1);
+        ChatRoomResponse response2 = TestFixtures.chatRoomResponse(chatRoomId2, quoteId2, consumerId, sellerId2);
+        
+        Page<ChatRoomResponse> page = new PageImpl<>(
+            List.of(response1, response2),
+            PageRequest.of(0, 20),
+            2
+        );
+        
+        when(chatRoomService.getChatRoomsByUser(eq(consumerId), any(Pageable.class))).thenReturn(page);
+
+        mockMvc.perform(get("/api/v1/chat/rooms")
+                        .param("page", "0")
+                        .param("size", "20")
+                        .with(auth(consumer)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.content[0].id").value(chatRoomId1.toString()))
+                .andExpect(jsonPath("$.data.content[1].id").value(chatRoomId2.toString()))
+                .andExpect(jsonPath("$.data.totalElements").value(2))
+                .andExpect(jsonPath("$.data.number").value(0))
+                .andExpect(jsonPath("$.data.size").value(20));
+
+        verify(chatRoomService).getChatRoomsByUser(eq(consumerId), any(Pageable.class));
     }
 
     @Test
@@ -221,12 +267,34 @@ class ChatRestControllerTest {
         }
 
         private static Quote quote(UUID id, User user) {
+            PhoneModel phoneModel = PhoneModel.builder()
+                    .brand(Brand.APPLE)
+                    .model("iPhone 16")
+                    .build();
+            ReflectionTestUtils.setField(phoneModel, "id", UUID.randomUUID());
+            
+            PhoneOption storageOption = PhoneOption.builder()
+                    .model(phoneModel)
+                    .optionType(PhoneOption.OptionType.STORAGE)
+                    .optionValue("128")
+                    .displayLabel("128GB")
+                    .build();
+            ReflectionTestUtils.setField(storageOption, "id", UUID.randomUUID());
+            
+            PhoneOption colorOption = PhoneOption.builder()
+                    .model(phoneModel)
+                    .optionType(PhoneOption.OptionType.COLOR)
+                    .optionValue("BLACK")
+                    .displayLabel("블랙")
+                    .build();
+            ReflectionTestUtils.setField(colorOption, "id", UUID.randomUUID());
+            
             Quote quote = Quote.builder()
                     .user(user)
-                    .model("iPhone")
-                    .storage("128GB")
+                    .phoneModel(phoneModel)
+                    .storage(storageOption)
                     .carrier(Carrier.SKT)
-                    .color("black")
+                    .color(colorOption)
                     .expiredAt(java.time.LocalDateTime.now().plusDays(1))
                     .purchaseMethod(PurchaseMethod.ANY)
                     .currentCarrier(Carrier.SKT)

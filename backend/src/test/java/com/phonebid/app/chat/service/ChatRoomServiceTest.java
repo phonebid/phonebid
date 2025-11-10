@@ -11,6 +11,9 @@ import com.phonebid.app.auction.domain.ActivationMethod;
 import com.phonebid.app.auction.domain.Carrier;
 import com.phonebid.app.auction.domain.PurchaseMethod;
 import com.phonebid.app.auction.domain.Quote;
+import com.phonebid.app.phone.domain.Brand;
+import com.phonebid.app.phone.domain.PhoneModel;
+import com.phonebid.app.phone.domain.PhoneOption;
 import com.phonebid.app.auction.repository.QuoteRepository;
 import com.phonebid.app.chat.domain.ChatMessage;
 import com.phonebid.app.chat.domain.ChatRoom;
@@ -253,12 +256,34 @@ class ChatRoomServiceTest {
     }
 
     private Quote createQuote(UUID id, User user) {
+        PhoneModel phoneModel = PhoneModel.builder()
+                .brand(Brand.APPLE)
+                .model("iPhone 16")
+                .build();
+        ReflectionTestUtils.setField(phoneModel, "id", UUID.randomUUID());
+        
+        PhoneOption storageOption = PhoneOption.builder()
+                .model(phoneModel)
+                .optionType(PhoneOption.OptionType.STORAGE)
+                .optionValue("128")
+                .displayLabel("128GB")
+                .build();
+        ReflectionTestUtils.setField(storageOption, "id", UUID.randomUUID());
+        
+        PhoneOption colorOption = PhoneOption.builder()
+                .model(phoneModel)
+                .optionType(PhoneOption.OptionType.COLOR)
+                .optionValue("BLACK")
+                .displayLabel("블랙")
+                .build();
+        ReflectionTestUtils.setField(colorOption, "id", UUID.randomUUID());
+        
         Quote quote = Quote.builder()
                 .user(user)
-                .model("iPhone")
-                .storage("128GB")
+                .phoneModel(phoneModel)
+                .storage(storageOption)
                 .carrier(Carrier.SKT)
-                .color("black")
+                .color(colorOption)
                 .expiredAt(LocalDateTime.now().plusDays(1))
                 .purchaseMethod(PurchaseMethod.ANY)
                 .currentCarrier(Carrier.SKT)
