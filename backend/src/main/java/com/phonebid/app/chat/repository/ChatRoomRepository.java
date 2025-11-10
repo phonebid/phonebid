@@ -10,10 +10,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, UUID> {
 
     /**
-     * 동일 견적·구매자·판매자 조합으로 이미 열린 채팅방이 있는지 확인.
+     * 견적 ID로 채팅방 조회.
+     * 한 견적당 하나의 채팅방만 존재하므로 (quote_id unique 제약) quoteId만으로 조회 가능.
      * 중복 채팅방 생성을 방지하기 위해 사용한다.
      */
-    Optional<ChatRoom> findByQuoteIdAndConsumerIdAndSellerSellerId(UUID quoteId, UUID consumerId, UUID sellerId);
+    Optional<ChatRoom> findByQuoteId(UUID quoteId);
 
     /**
      * 사용자가 참여한 채팅방 목록을 생성일 기준 내림차순으로 조회 (페이징)

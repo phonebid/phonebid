@@ -24,7 +24,6 @@ import com.phonebid.app.chat.dto.response.ChatRoomResponse;
 import com.phonebid.app.chat.errorcode.ChatErrorCode;
 import com.phonebid.app.chat.repository.ChatMessageRepository;
 import com.phonebid.app.chat.repository.ChatRoomRepository;
-import com.phonebid.app.common.errorcode.MemberErrorCode;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.member.domain.Role;
 import com.phonebid.app.member.domain.Seller;
@@ -84,7 +83,7 @@ class ChatRoomServiceTest {
         when(quoteRepository.findById(quoteId)).thenReturn(Optional.of(quote));
         when(userRepository.findById(consumerId)).thenReturn(Optional.of(consumer));
         when(sellerRepository.findById(sellerId)).thenReturn(Optional.of(seller));
-        when(chatRoomRepository.findByQuoteIdAndConsumerIdAndSellerSellerId(quoteId, consumerId, sellerId))
+        when(chatRoomRepository.findByQuoteId(quoteId))
                 .thenReturn(Optional.empty());
         when(chatRoomRepository.save(any(ChatRoom.class))).thenAnswer(invocation -> {
             ChatRoom saved = invocation.getArgument(0);
@@ -125,7 +124,7 @@ class ChatRoomServiceTest {
         when(quoteRepository.findById(quoteId)).thenReturn(Optional.of(quote));
         when(userRepository.findById(consumerId)).thenReturn(Optional.of(consumer));
         when(sellerRepository.findById(sellerId)).thenReturn(Optional.of(seller));
-        when(chatRoomRepository.findByQuoteIdAndConsumerIdAndSellerSellerId(quoteId, consumerId, sellerId))
+        when(chatRoomRepository.findByQuoteId(quoteId))
                 .thenReturn(Optional.of(existing));
 
         assertThatThrownBy(() -> chatRoomService.createChatRoom(request))
@@ -247,7 +246,7 @@ class ChatRoomServiceTest {
         when(quoteRepository.findById(quoteId)).thenReturn(Optional.of(quote));
         when(userRepository.findById(consumerId)).thenReturn(Optional.of(consumer));
         when(sellerRepository.findById(sellerId)).thenReturn(Optional.of(seller));
-        when(chatRoomRepository.findByQuoteIdAndConsumerIdAndSellerSellerId(quoteId, consumerId, sellerId))
+        when(chatRoomRepository.findByQuoteId(quoteId))
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> chatRoomService.createChatRoom(request))

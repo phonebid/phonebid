@@ -121,8 +121,7 @@ public class ChatRoomService {
     }
 
     private void validateExistingChatRoom(Quote quote, User consumer, Seller seller) {
-        chatRoomRepository.findByQuoteIdAndConsumerIdAndSellerSellerId(
-                quote.getId(), consumer.getId(), seller.getSellerId())
+        chatRoomRepository.findByQuoteId(quote.getId())
                 .ifPresent(existingRoom -> {
                     throw new CustomException(ChatErrorCode.CHAT_ROOM_ALREADY_EXISTS);
                 });
