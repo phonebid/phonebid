@@ -1,7 +1,6 @@
 package com.phonebid.app.chat.service;
 
 import com.phonebid.app.auction.domain.Quote;
-// TODO: QuoteRepository 구현이 준비되면 실제 빈으로 교체해야 합니다.
 import com.phonebid.app.auction.repository.QuoteRepository;
 import com.phonebid.app.chat.domain.ChatRoom;
 import com.phonebid.app.chat.dto.request.ChatMessageReadRequest;
@@ -18,12 +17,14 @@ import com.phonebid.app.member.domain.Seller;
 import com.phonebid.app.member.domain.User;
 import com.phonebid.app.member.repository.SellerRepository;
 import com.phonebid.app.member.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 채팅방 도메인의 비즈니스 로직을 담당하는 클래스
@@ -101,6 +102,17 @@ public class ChatRoomService {
         // 동일 채팅방 내 지정 메시지 읽음 처리
         chatMessageRepository.findByChatRoomIdAndIdIn(chatRoomId, request.getMessageIds())
                 .forEach(message -> message.markAsRead());
+    }
+
+    /**
+     * 사용자가 참여한 채팅방 목록 조회 (페이징)
+     */
+    @Transactional(readOnly = true)
+    public Page<ChatRoomResponse> getChatRoomsByUser(UUID userId, Pageable pageable) {
+        Page<ChatRoom> chatRooms = chatRoomRepository
+            .findByConsumerIdOrSellerSellerIdOrderByCreatedAtDesc(userId, userId, pageable);
+        
+        return chatRooms.map(ChatRoomResponse::from);
     }
 
     private void validateExistingChatRoom(Quote quote, User consumer, Seller seller) {
