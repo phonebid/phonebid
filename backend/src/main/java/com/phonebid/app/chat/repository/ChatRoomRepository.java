@@ -6,6 +6,8 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, UUID> {
 
@@ -18,12 +20,10 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, UUID> {
 
     /**
      * 사용자가 참여한 채팅방 목록을 생성일 기준 내림차순으로 조회 (페이징)
+     * 구매자(consumer) 또는 판매자(seller)로 참여한 채팅방을 조회한다.
      */
-    Page<ChatRoom> findByConsumerIdOrSellerSellerIdOrderByCreatedAtDesc(
-        UUID consumerId, 
-        UUID sellerId, 
-        Pageable pageable
-    );
+    @Query("SELECT c FROM ChatRoom c WHERE c.consumer.id = :userId OR c.seller.user.id = :userId ORDER BY c.createdAt DESC")
+    Page<ChatRoom> findByUserIdOrderByCreatedAtDesc(@Param("userId") UUID userId, Pageable pageable);
 }
 
 

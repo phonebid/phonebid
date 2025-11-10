@@ -114,8 +114,7 @@ public class ChatRoomService {
      */
     @Transactional(readOnly = true)
     public Page<ChatRoomResponse> getChatRoomsByUser(UUID userId, Pageable pageable) {
-        Page<ChatRoom> chatRooms = chatRoomRepository
-            .findByConsumerIdOrSellerSellerIdOrderByCreatedAtDesc(userId, userId, pageable);
+        Page<ChatRoom> chatRooms = chatRoomRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
         
         return chatRooms.map(ChatRoomResponse::from);
     }
