@@ -138,7 +138,7 @@ public class ChatRoomService {
     // 채팅방 참여 여부를 검사해 비참여자의 접근을 차단
     private void validateParticipant(ChatRoom chatRoom, UUID requesterId) {
         boolean isParticipant = chatRoom.getConsumer().getId().equals(requesterId)
-                || chatRoom.getSeller().getSellerId().equals(requesterId);
+                || chatRoom.getSeller().getUser().getId().equals(requesterId);
         if (!isParticipant) {
             throw new CustomException(ChatErrorCode.CHAT_ROOM_ACCESS_DENIED);
         }

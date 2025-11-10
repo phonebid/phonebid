@@ -52,7 +52,7 @@ public class ChatMessageService {
 
     private void validateParticipant(ChatRoom chatRoom, UUID userId) {
         boolean isParticipant = chatRoom.getConsumer().getId().equals(userId)
-                || chatRoom.getSeller().getSellerId().equals(userId);
+                || chatRoom.getSeller().getUser().getId().equals(userId);
 
         if (!isParticipant) {
             throw new CustomException(ChatErrorCode.CHAT_ROOM_ACCESS_DENIED);
