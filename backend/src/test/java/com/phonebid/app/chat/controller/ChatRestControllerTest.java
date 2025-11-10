@@ -85,6 +85,7 @@ class ChatRestControllerTest {
         UUID consumerId = UUID.randomUUID();
         UUID sellerId = UUID.randomUUID();
 
+        User consumer = TestFixtures.user(consumerId, Role.CONSUMER);
         ChatRoomResponse response = TestFixtures.chatRoomResponse(chatRoomId, quoteId, consumerId, sellerId);
 
         when(chatRoomService.createChatRoom(any())).thenReturn(response);
@@ -97,12 +98,36 @@ class ChatRestControllerTest {
 
         mockMvc.perform(post("/api/v1/chat/rooms")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
+                        .content(body)
+                        .with(auth(consumer)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.id").value(chatRoomId.toString()))
                 .andExpect(jsonPath("$.data.quoteId").value(quoteId.toString()));
 
         verify(chatRoomService, times(1)).createChatRoom(any());
+    }
+
+    @Test
+    @DisplayName("채팅방 생성 API - consumerId 불일치 시 403")
+    void createChatRoom_consumerIdMismatch() throws Exception {
+        UUID quoteId = UUID.randomUUID();
+        UUID authenticatedUserId = UUID.randomUUID();
+        UUID requestConsumerId = UUID.randomUUID(); // 다른 사용자 ID
+        UUID sellerId = UUID.randomUUID();
+
+        User authenticatedUser = TestFixtures.user(authenticatedUserId, Role.CONSUMER);
+
+        String body = "{" +
+                "\"quoteId\":\"" + quoteId + "\"," +
+                "\"consumerId\":\"" + requestConsumerId + "\"," +
+                "\"sellerId\":\"" + sellerId + "\"" +
+                "}";
+
+        mockMvc.perform(post("/api/v1/chat/rooms")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                        .with(auth(authenticatedUser)))
+                .andExpect(status().isForbidden());
     }
 
     @Test

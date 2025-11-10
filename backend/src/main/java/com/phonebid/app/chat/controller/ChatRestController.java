@@ -40,7 +40,16 @@ public class ChatRestController {
      * 채팅방 생성
      */
     @PostMapping
-    public ResponseEntity<ApiResponse<ChatRoomResponse>> createChatRoom(@Valid @RequestBody ChatRoomCreateRequest request) {
+    public ResponseEntity<ApiResponse<ChatRoomResponse>> createChatRoom(
+            @Valid @RequestBody ChatRoomCreateRequest request,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        UUID requesterId = resolveRequesterId(userDetails);
+        
+        // 요청 바디의 consumerId와 인증된 사용자 ID가 일치하는지 검증
+        if (!requesterId.equals(request.getConsumerId())) {
+            throw new CustomException(ChatErrorCode.CHAT_ROOM_ACCESS_DENIED);
+        }
+        
         ChatRoomResponse response = chatRoomService.createChatRoom(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(HttpStatus.CREATED, "채팅방이 생성되었습니다.", response));

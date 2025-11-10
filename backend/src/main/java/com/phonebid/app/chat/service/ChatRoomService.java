@@ -53,6 +53,11 @@ public class ChatRoomService {
         Seller seller = sellerRepository.findById(request.getSellerId())
                 .orElseThrow(() -> new CustomException(MemberErrorCode.SELLER_NOT_FOUND));
 
+        // Quote 소유자 검증: Quote의 user와 consumerId가 일치해야 함
+        if (!quote.getUser().getId().equals(consumer.getId())) {
+            throw new CustomException(ChatErrorCode.CHAT_ROOM_ACCESS_DENIED);
+        }
+        
         // 중복 채팅방 여부 및 역할 검증
         validateExistingChatRoom(quote, consumer, seller);
         validateParticipantRoles(consumer, seller);
