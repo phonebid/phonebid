@@ -179,14 +179,28 @@ class WebSocketService {
   sendMessage(request: ChatMessageSendRequest): void {
     if (!this.client?.connected) {
       console.error("WebSocket not connected. Cannot send message.");
+      // 연결 시도
+      this.connect();
+      // 연결 대기 후 재시도
+      setTimeout(() => {
+        if (this.client?.connected) {
+          this.sendMessage(request);
+        } else {
+          console.error("Failed to reconnect. Message not sent.");
+        }
+      }, 1000);
       return;
     }
 
-    const destination = `/app/chat/${request.chatRoomId}/send`;
-    this.client.publish({
-      destination,
-      body: JSON.stringify(request),
-    });
+    try {
+      const destination = `/app/chat/${request.chatRoomId}/send`;
+      this.client.publish({
+        destination,
+        body: JSON.stringify(request),
+      });
+    } catch (error) {
+      console.error("Failed to send message:", error);
+    }
   }
 
   /**

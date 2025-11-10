@@ -10,6 +10,7 @@ import { MessageType } from "types/ChatTypes";
 import { MessageBubble } from "components/chat/MessageBubble";
 import { DateSeparator } from "components/chat/DateSeparator";
 import { MessageInput } from "components/chat/MessageInput";
+import { ChatConnectionStatus } from "components/chat/ChatConnectionStatus";
 
 const ChatRoomPage: React.FC = () => {
   const { chatRoomId } = useParams<{ chatRoomId: string }>();
@@ -56,8 +57,16 @@ const ChatRoomPage: React.FC = () => {
     chatRoomId: chatRoomId || undefined,
     autoConnect: true,
     onMessage: (message: ChatMessage) => {
-      setMessages((prev) => [...prev, message]);
-      // 읽음 처리
+      // 메시지 중복 방지: 이미 존재하는 메시지는 추가하지 않음
+      setMessages((prev) => {
+        const exists = prev.some((msg) => msg.id === message.id);
+        if (exists) {
+          return prev;
+        }
+        return [...prev, message];
+      });
+
+      // 읽음 처리 (자신이 보낸 메시지가 아닌 경우)
       if (user && message.senderId !== user.username) {
         markMessagesAsRead({
           chatRoomId: chatRoomId!,
@@ -118,13 +127,24 @@ const ChatRoomPage: React.FC = () => {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-red-500">채팅방을 불러오는 중 오류가 발생했습니다.</p>
+          <p className="text-red-500 mb-4">
+            채팅방을 불러오는 중 오류가 발생했습니다.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
+          >
+            새로고침
+          </button>
         </div>
       </div>
     );
   }
 
   const isCurrentUser = (senderId: string): boolean => {
+    // 백엔드에서 UUID를 반환하지만, 현재는 username으로 비교
+    // TODO: 백엔드에서 사용자 ID(UUID)를 반환하도록 수정 필요
+    // 임시로 username으로 비교 (실제로는 UUID 비교가 필요)
     return user?.username === senderId;
   };
 
@@ -157,15 +177,13 @@ const ChatRoomPage: React.FC = () => {
           </div>
           <div>
             <h1 className="text-lg font-semibold">채팅방</h1>
-            <p className="text-xs text-gray-500">
-              {connectionStatus === "CONNECTED" ? "연결됨" : "연결 중..."}
-            </p>
+            <ChatConnectionStatus status={connectionStatus} />
           </div>
         </div>
       </div>
 
       {/* 메시지 영역 */}
-      <div className="flex-1 overflow-y-auto bg-gray-50 p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto bg-gray-50 p-4 space-y-4 scroll-smooth">
         {messages.length === 0 ? (
           <div className="text-center text-gray-500 py-8">
             메시지가 없습니다. 첫 메시지를 보내보세요!
