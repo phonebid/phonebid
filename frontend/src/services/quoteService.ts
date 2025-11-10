@@ -1,7 +1,11 @@
 import { apiClient } from "services/apiClient";
-import type { CreateQuoteRequest } from "types/QuoteTypes";
+import type { QuoteCreateRequestDto, QuoteDetail } from "types/QuoteTypes";
 
-export const createQuote = async (payload: CreateQuoteRequest) => {
-  return await apiClient.post("/quotes", payload);
+const BASE_URL = "/auction/quotes";
+
+export const createQuote = async (payload: QuoteCreateRequestDto) => {
+  return await apiClient.post(BASE_URL, payload);
 };
-
+export const getQuoteDetail = async (quoteId: string): Promise<QuoteDetail> => {
+  return await apiClient.get(`${BASE_URL}/${quoteId}`);
+};

@@ -1,46 +1,36 @@
-import { useEffect, useState, useMemo } from "react";
-import { useCustomSWR } from "hooks/useSWR";
+import { useEffect } from "react";
+import useSWR from "swr";
 import { Quote } from "types/AuctionTypes";
-
-interface FilterState {
-  model: string;
-  carrier: string;
-  status: string;
-  sort: string;
-}
+import { PhoneModelResponse } from "types/PhoneModelTypes";
+import { realtimeDataConfig, staticDataConfig } from "services/swrConfig";
 
 const AuctionListPage: React.FC = () => {
   useEffect(() => {
     document.title = "경매 목록 | PhoneBid";
   }, []);
 
-  const [filters, setFilters] = useState<FilterState>({
-    model: "",
-    carrier: "",
-    status: "",
-    sort: "latest",
-  });
-
-  // 쿼리 파라미터 생성
-  const queryString = useMemo(() => {
-    const params = new URLSearchParams();
-    if (filters.model) params.append("model", filters.model);
-    if (filters.carrier) params.append("carrier", filters.carrier);
-    if (filters.status) params.append("status", filters.status);
-    if (filters.sort) params.append("sort", filters.sort);
-    return params.toString();
-  }, [filters]);
+  // PhoneModel 목록 로드 (정적 데이터)
+  const { data: models } = useSWR<PhoneModelResponse[]>(
+    "/phone/models",
+    staticDataConfig
+  );
 
   // SWR을 사용한 데이터 페칭 (실시간 데이터 프리셋 사용)
   const {
     data: quotes,
     error,
     isLoading,
-  } = useCustomSWR<Quote[]>(queryString ? `/quotes?${queryString}` : "/quotes");
+  } = useSWR<Quote[]>("/auction/quotes", realtimeDataConfig);
 
-  const handleFilterChange = (key: keyof FilterState, value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
-  };
+  // 디버깅용 로그
+  useEffect(() => {
+    if (quotes) {
+      console.log("Quotes data:", quotes);
+    }
+    if (error) {
+      console.error("Quotes error:", error);
+    }
+  }, [quotes, error]);
 
   return (
     <div className="min-h-[60vh] bg-background">
@@ -56,45 +46,13 @@ const AuctionListPage: React.FC = () => {
 
         {/* 필터 영역 */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <select
-            className="border border-input rounded-md h-10 px-3 bg-white text-sm"
-            value={filters.model}
-            onChange={(e) => handleFilterChange("model", e.target.value)}
-          >
+          <select className="border border-input rounded-md h-10 px-3 bg-white text-sm">
             <option value="">기종 전체</option>
-            <option value="iPhone 16">iPhone 16</option>
-            <option value="iPhone 16 Pro">iPhone 16 Pro</option>
-            <option value="Galaxy S25">Galaxy S25</option>
-            <option value="Galaxy Z Fold7">Galaxy Z Fold7</option>
-          </select>
-          <select
-            className="border border-input rounded-md h-10 px-3 bg-white text-sm"
-            value={filters.carrier}
-            onChange={(e) => handleFilterChange("carrier", e.target.value)}
-          >
-            <option value="">통신사 전체</option>
-            <option value="SKT">SKT</option>
-            <option value="KT">KT</option>
-            <option value="LGU+">LG U+</option>
-          </select>
-          <select
-            className="border border-input rounded-md h-10 px-3 bg-white text-sm"
-            value={filters.status}
-            onChange={(e) => handleFilterChange("status", e.target.value)}
-          >
-            <option value="">상태 전체</option>
-            <option value="OPEN">진행중</option>
-            <option value="CLOSED">마감</option>
-            <option value="CONTRACTED">계약완료</option>
-          </select>
-          <select
-            className="border border-input rounded-md h-10 px-3 bg-white text-sm"
-            value={filters.sort}
-            onChange={(e) => handleFilterChange("sort", e.target.value)}
-          >
-            <option value="latest">정렬: 최신순</option>
-            <option value="expiring">마감임박순</option>
-            <option value="popular">입찰많은순</option>
+            {models?.map((model) => (
+              <option key={model.id} value={model.id}>
+                {model.model}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -132,64 +90,76 @@ const AuctionListPage: React.FC = () => {
 
         {/* 견적 리스트 */}
         {!isLoading && !error && quotes && quotes.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {quotes.map((quote) => {
-              const statusMap = {
-                OPEN: { text: "진행중", color: "bg-green-100 text-green-800" },
-                CLOSED: { text: "마감", color: "bg-gray-100 text-gray-800" },
-                CONTRACTED: {
-                  text: "계약완료",
-                  color: "bg-blue-100 text-blue-800",
-                },
-              };
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {quotes.map((quote) => {
+                const statusMap = {
+                  OPEN: {
+                    text: "진행중",
+                    color: "bg-green-100 text-green-800",
+                  },
+                  CLOSED: { text: "마감", color: "bg-gray-100 text-gray-800" },
+                  CONTRACTED: {
+                    text: "계약완료",
+                    color: "bg-blue-100 text-blue-800",
+                  },
+                };
 
-              const status = statusMap[quote.status] || statusMap.OPEN;
+                const status = statusMap[quote.status] || statusMap.OPEN;
 
-              // 마감까지 남은 시간 계산
-              const expiredAt = new Date(quote.expiredAt);
-              const now = new Date();
-              const timeDiff = expiredAt.getTime() - now.getTime();
-              const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-              const timeLeftText =
-                daysLeft > 0 ? `마감 D-${daysLeft}` : "마감됨";
+                // 마감까지 남은 시간 계산
+                const expiredAt = new Date(quote.expiredAt);
+                const now = new Date();
+                const timeDiff = expiredAt.getTime() - now.getTime();
+                const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+                const timeLeftText =
+                  daysLeft > 0 ? `마감 D-${daysLeft}` : "마감됨";
 
-              return (
-                <div
-                  key={quote.id}
-                  className="rounded-lg border border-border bg-card p-5 shadow-sm hover:shadow transition-shadow cursor-pointer"
-                  onClick={() => {
-                    // TODO: 견적 상세 페이지로 이동
-                    // open quote detail
-                  }}
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-base font-semibold text-foreground">
-                        {quote.model} · {quote.storage} · {quote.color}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {quote.carrier} · {quote.purchaseMethod || "신규"}
-                      </p>
+                return (
+                  <div
+                    key={quote.id}
+                    className="rounded-lg border border-border bg-card p-5 shadow-sm hover:shadow transition-shadow cursor-pointer"
+                    onClick={() => {
+                      // TODO: 견적 상세 페이지로 이동
+                      // open quote detail
+                    }}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="text-base font-semibold text-foreground">
+                          {quote.phoneModel?.model || "모델 정보 없음"} ·{" "}
+                          {quote.storage?.displayLabel ||
+                            quote.storage?.optionValue ||
+                            "저장용량 정보 없음"}{" "}
+                          ·{" "}
+                          {quote.color?.displayLabel ||
+                            quote.color?.optionValue ||
+                            "색상 정보 없음"}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {quote.carrier} · {quote.purchaseMethod || "신규"}
+                        </p>
+                      </div>
+                      <span
+                        className={`text-xs px-2 py-1 rounded ${status.color}`}
+                      >
+                        {status.text}
+                      </span>
                     </div>
-                    <span
-                      className={`text-xs px-2 py-1 rounded ${status.color}`}
-                    >
-                      {status.text}
-                    </span>
-                  </div>
-                  <div className="mt-4 flex items-center justify-between text-sm">
-                    <div className="text-muted-foreground">입찰 진행중</div>
-                    <div className="font-semibold text-primary-600">
-                      경매 진행중
+                    <div className="mt-4 flex items-center justify-between text-sm">
+                      <div className="text-muted-foreground">입찰 진행중</div>
+                      <div className="font-semibold text-primary-600">
+                        경매 진행중
+                      </div>
+                    </div>
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      {timeLeftText}
                     </div>
                   </div>
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    {timeLeftText}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
     </div>

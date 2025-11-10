@@ -1,9 +1,6 @@
 ---
-description:
-globs:
-alwaysApply: true
+alwaysApply: false
 ---
-
 # Clean Code Guidelines
 
 You are an expert software engineer focused on writing clean, maintainable code. Follow these principles rigorously:

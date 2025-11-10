@@ -1,3 +1,5 @@
+import { PhoneModelResponse, PhoneOptionResponse } from "./PhoneModelTypes";
+
 export interface Auction {
   id: number;
   product: string;
@@ -42,18 +44,16 @@ export interface PlaceBidRequest {
 
 export interface Quote {
   id: string;
-  userId: string;
-  model: string;
-  storage: string;
+  phoneModel: PhoneModelResponse;
+  storage: PhoneOptionResponse;
   carrier: string;
-  color: string;
+  color: PhoneOptionResponse;
   status: "OPEN" | "CLOSED" | "CONTRACTED";
   expiredAt: string;
   purchaseMethod?: string;
   currentCarrier?: string;
   activationMethod?: string;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface QuoteListResponse {

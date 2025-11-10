@@ -1,7 +1,6 @@
 ---
-alwaysApply: true
+alwaysApply: false
 ---
-
 # Database Schema Rules
 
 ## 📊 데이터베이스 스키마 구조 (정확한 실제 스키마)
