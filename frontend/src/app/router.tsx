@@ -12,6 +12,8 @@ import PhoneModelManagePage from "@/pages/admin/PhoneModelManagePage";
 import PaymentSuccessPage from "pages/PaymentSuccessPage";
 import PaymentFailPage from "pages/PaymentFailPage";
 import QuoteCreateWizardPage from "@/pages/QuoteCreateWizardPage";
+import ChatListPage from "pages/ChatListPage";
+import ChatRoomPage from "pages/ChatRoomPage";
 
 export const AppRouter: React.FC = () => {
   return (
@@ -35,6 +37,8 @@ export const AppRouter: React.FC = () => {
                 <Route path="/" element={<WeeklyRankingPage />} />
                 {/* 추후 추가될 라우트들 */}
                 <Route path="/auctions" element={<AuctionListPage />} />
+                <Route path="/chat" element={<ChatListPage />} />
+                <Route path="/chat/:chatRoomId" element={<ChatRoomPage />} />
                 <Route
                   path="/admin/phone-models"
                   element={<PhoneModelManagePage />}
