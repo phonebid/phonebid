@@ -7,6 +7,9 @@ import { useAuthStore } from "store/authStore";
 import { realtimeDataConfig } from "services/swrConfig";
 import type { ChatRoom, ChatMessage } from "types/ChatTypes";
 import { MessageType } from "types/ChatTypes";
+import { MessageBubble } from "components/chat/MessageBubble";
+import { DateSeparator } from "components/chat/DateSeparator";
+import { MessageInput } from "components/chat/MessageInput";
 
 const ChatRoomPage: React.FC = () => {
   const { chatRoomId } = useParams<{ chatRoomId: string }>();
@@ -14,7 +17,6 @@ const ChatRoomPage: React.FC = () => {
   const { user } = useAuthStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [inputMessage, setInputMessage] = useState("");
 
   // 채팅방 정보 조회
   const {
@@ -77,63 +79,23 @@ const ChatRoomPage: React.FC = () => {
   }, [messages, scrollToBottom]);
 
   // 메시지 전송
-  const handleSendMessage = useCallback(() => {
-    if (!inputMessage.trim() || !chatRoomId || !user) {
-      return;
-    }
-
-    const messageRequest = {
-      chatRoomId,
-      senderId: user.username,
-      messageType: MessageType.TEXT,
-      content: inputMessage.trim(),
-    };
-
-    sendWebSocketMessage(messageRequest);
-    setInputMessage("");
-  }, [inputMessage, chatRoomId, user, sendWebSocketMessage]);
-
-  // Enter 키로 메시지 전송 (Shift+Enter는 줄바꿈)
-  const handleKeyPress = useCallback(
-    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        handleSendMessage();
+  const handleSendMessage = useCallback(
+    (messageContent: string) => {
+      if (!chatRoomId || !user) {
+        return;
       }
+
+      const messageRequest = {
+        chatRoomId,
+        senderId: user.username,
+        messageType: MessageType.TEXT,
+        content: messageContent,
+      };
+
+      sendWebSocketMessage(messageRequest);
     },
-    [handleSendMessage]
+    [chatRoomId, user, sendWebSocketMessage]
   );
-
-  // 날짜 포맷팅
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    if (date.toDateString() === today.toDateString()) {
-      return "오늘";
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return "어제";
-    } else {
-      return date.toLocaleDateString("ko-KR", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        weekday: "long",
-      });
-    }
-  };
-
-  // 시간 포맷팅
-  const formatTime = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString("ko-KR", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-  };
 
   // 메시지가 같은 날짜인지 확인
   const isSameDate = (date1: string, date2: string): boolean => {
@@ -221,43 +183,14 @@ const ChatRoomPage: React.FC = () => {
               <div key={message.id}>
                 {/* 날짜 구분선 */}
                 {showDateSeparator && (
-                  <div className="text-center my-4">
-                    <span className="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full">
-                      {formatDate(message.createdAt)}
-                    </span>
-                  </div>
+                  <DateSeparator date={message.createdAt} />
                 )}
 
                 {/* 메시지 */}
-                <div
-                  className={`flex ${
-                    isCurrentUserMessage ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  {!isCurrentUserMessage && (
-                    <div className="w-8 h-8 bg-gray-300 rounded-full mr-2 flex-shrink-0" />
-                  )}
-                  <div
-                    className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                      isCurrentUserMessage
-                        ? "bg-indigo-500 text-white"
-                        : "bg-white text-gray-900"
-                    }`}
-                  >
-                    <p className="text-sm whitespace-pre-wrap break-words">
-                      {message.content}
-                    </p>
-                    <p
-                      className={`text-xs mt-1 ${
-                        isCurrentUserMessage
-                          ? "text-indigo-100"
-                          : "text-gray-500"
-                      }`}
-                    >
-                      {formatTime(message.createdAt)}
-                    </p>
-                  </div>
-                </div>
+                <MessageBubble
+                  message={message}
+                  isCurrentUser={isCurrentUserMessage}
+                />
               </div>
             );
           })
@@ -266,38 +199,10 @@ const ChatRoomPage: React.FC = () => {
       </div>
 
       {/* 메시지 입력 영역 */}
-      <div className="border-t bg-white p-4">
-        <div className="flex items-end space-x-2">
-          <textarea
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="메시지를 입력하세요."
-            className="flex-1 min-h-[44px] max-h-32 px-4 py-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            rows={1}
-          />
-          <button
-            onClick={handleSendMessage}
-            disabled={!inputMessage.trim() || connectionStatus !== "CONNECTED"}
-            className="bg-indigo-500 text-white rounded-full p-3 hover:bg-indigo-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-            aria-label="메시지 전송"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-              />
-            </svg>
-          </button>
-        </div>
-      </div>
+      <MessageInput
+        onSendMessage={handleSendMessage}
+        connectionStatus={connectionStatus}
+      />
     </div>
   );
 };
