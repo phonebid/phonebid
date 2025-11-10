@@ -530,7 +530,7 @@ const QuoteCreateWizardPage: React.FC = () => {
                 견적가 시작합니다!
               </h1>
               <p className="text-sm text-muted-foreground">
-                곧바 최저가를 찾아줄거에요.
+                곧바로 최저가를 찾아줄거에요.
                 <br />
                 조금만 기다려주세요.
               </p>
