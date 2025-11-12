@@ -10,7 +10,6 @@ import { MessageType } from "types/ChatTypes";
 import { MessageBubble } from "components/chat/MessageBubble";
 import { DateSeparator } from "components/chat/DateSeparator";
 import { MessageInput } from "components/chat/MessageInput";
-import { ChatConnectionStatus } from "components/chat/ChatConnectionStatus";
 
 const ChatRoomPage: React.FC = () => {
   const { chatRoomId } = useParams<{ chatRoomId: string }>();
@@ -167,10 +166,10 @@ const ChatRoomPage: React.FC = () => {
     <div className="flex flex-col h-screen bg-indigo-50">
       {/* 헤더 */}
       <div className="bg-white border-b sticky top-0 z-10">
-        <div className="flex items-center px-4 py-3">
+        <div className="flex items-center px-4 py-3 relative">
           <button
             onClick={() => navigate("/chat")}
-            className="mr-3 text-gray-600 hover:text-gray-900 p-1"
+            className="text-gray-600 hover:text-gray-900 p-1 absolute left-4"
             aria-label="뒤로가기"
           >
             <svg
@@ -187,16 +186,10 @@ const ChatRoomPage: React.FC = () => {
               />
             </svg>
           </button>
-          <div className="flex items-center gap-3 flex-1">
-            <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-gray-500 text-xs">프로필</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-base font-semibold text-gray-900 truncate">
-                채팅방
-              </h1>
-              <ChatConnectionStatus status={connectionStatus} />
-            </div>
+          <div className="flex-1 flex justify-center">
+            <h1 className="text-base font-semibold text-gray-900">
+              {chatRoom.sellerName || "채팅방"}
+            </h1>
           </div>
         </div>
       </div>

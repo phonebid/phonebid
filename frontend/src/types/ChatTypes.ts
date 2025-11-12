@@ -32,6 +32,9 @@ export interface ChatRoom {
   status: ChatRoomStatus;
   createdAt: string;
   updatedAt: string;
+  sellerName?: string;
+  lastMessage?: string;
+  totalPrice?: number;
 }
 
 // 채팅 메시지 응답 타입

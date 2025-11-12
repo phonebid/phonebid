@@ -1,7 +1,10 @@
 package com.phonebid.app.chat.service;
 
+import com.phonebid.app.auction.domain.Bid;
 import com.phonebid.app.auction.domain.Quote;
+import com.phonebid.app.auction.repository.BidRepository;
 import com.phonebid.app.auction.repository.QuoteRepository;
+import com.phonebid.app.chat.domain.ChatMessage;
 import com.phonebid.app.chat.domain.ChatRoom;
 import com.phonebid.app.chat.dto.request.ChatMessageReadRequest;
 import com.phonebid.app.chat.dto.request.ChatRoomCreateRequest;
@@ -18,6 +21,7 @@ import com.phonebid.app.member.domain.User;
 import com.phonebid.app.member.repository.SellerRepository;
 import com.phonebid.app.member.repository.UserRepository;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +44,7 @@ public class ChatRoomService {
     private final SellerRepository sellerRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final BidRepository bidRepository;
 
     @Transactional
     public ChatRoomResponse createChatRoom(ChatRoomCreateRequest request) {
@@ -80,7 +85,11 @@ public class ChatRoomService {
 
         // 채팅방 참여자 검증
         validateParticipant(chatRoom, requesterId);
-        return ChatRoomResponse.from(chatRoom);
+        
+        // 판매자 가게 이름
+        String sellerName = chatRoom.getSeller().getStoreName();
+        
+        return ChatRoomResponse.from(chatRoom, sellerName, null, null);
     }
 
     @Transactional
@@ -116,7 +125,30 @@ public class ChatRoomService {
     public Page<ChatRoomResponse> getChatRoomsByUser(UUID userId, Pageable pageable) {
         Page<ChatRoom> chatRooms = chatRoomRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
         
-        return chatRooms.map(ChatRoomResponse::from);
+        return chatRooms.map(chatRoom -> {
+            // 판매자 가게 이름
+            String sellerName = chatRoom.getSeller().getStoreName();
+            
+            // 마지막 메시지
+            Optional<ChatMessage> lastMessageOpt = chatMessageRepository
+                    .findFirstByChatRoomIdOrderByCreatedAtDesc(chatRoom.getId());
+            String lastMessage = lastMessageOpt
+                    .map(ChatMessage::getContent)
+                    .orElse(null);
+            
+            // 총 견적 가격 (해당 판매자의 입찰 가격)
+            Integer totalPrice = null;
+            Optional<Bid> bidOpt = bidRepository.findLatestByQuoteIdAndSellerId(
+                    chatRoom.getQuote().getId(),
+                    chatRoom.getSeller().getSellerId()
+            );
+            if (bidOpt.isPresent()) {
+                Bid bid = bidOpt.get();
+                totalPrice = bid.getTotalCost(); // 총 비용 (입찰가 + 요금제 + 추가지원금)
+            }
+            
+            return ChatRoomResponse.from(chatRoom, sellerName, lastMessage, totalPrice);
+        });
     }
 
     private void validateExistingChatRoom(Quote quote, User consumer, Seller seller) {

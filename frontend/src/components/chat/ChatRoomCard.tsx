@@ -3,9 +3,7 @@ import type { ChatRoom } from "types/ChatTypes";
 
 interface ChatRoomCardProps {
   room: ChatRoom;
-  lastMessage?: string;
   unreadCount?: number;
-  sellerName?: string;
   sellerAvatar?: string;
 }
 
@@ -14,9 +12,7 @@ interface ChatRoomCardProps {
  */
 export function ChatRoomCard({
   room,
-  lastMessage = "마지막 메시지 미리보기",
   unreadCount = 0,
-  sellerName,
   sellerAvatar,
 }: ChatRoomCardProps) {
   const navigate = useNavigate();
@@ -43,7 +39,16 @@ export function ChatRoomCard({
     }
   };
 
-  const displayName = sellerName || `채팅방 ${room.id.slice(0, 8)}`;
+  const formatPrice = (price?: number): string => {
+    if (price === null || price === undefined) {
+      return "0";
+    }
+    return price.toLocaleString("ko-KR");
+  };
+
+  const displayName = room.sellerName || `채팅방 ${room.id.slice(0, 8)}`;
+  const lastMessage = room.lastMessage || "메시지가 없습니다.";
+  const totalPrice = room.totalPrice || 0;
 
   return (
     <div
@@ -67,28 +72,33 @@ export function ChatRoomCard({
         </div>
 
         {/* 채팅방 정보 */}
-        <div className="flex-1 min-w-0 flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-sm font-medium text-gray-900 truncate">
-                {displayName}
-              </h3>
-              {unreadCount > 0 && (
-                <span className="bg-red-500 text-white text-xs font-medium rounded-full px-1.5 py-0.5 min-w-[18px] text-center flex-shrink-0">
-                  {unreadCount > 99 ? "99+" : unreadCount}
-                </span>
-              )}
-            </div>
-            <p className="text-sm text-gray-500 truncate mb-1">{lastMessage}</p>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400">
-                총 {0}원
+        <div className="flex-1 min-w-0">
+          {/* 업체명 영역 */}
+          <div className="flex items-center gap-2 mb-2">
+            <h3 className="text-sm font-bold text-gray-900 truncate">
+              {displayName}
+            </h3>
+            {unreadCount > 0 && (
+              <span className="bg-red-500 text-white text-xs font-medium rounded-full px-1.5 py-0.5 min-w-[18px] text-center flex-shrink-0">
+                {unreadCount > 99 ? "99+" : unreadCount}
               </span>
-              <span className="text-xs text-gray-400">·</span>
-              <span className="text-xs text-gray-400">
-                {formatDate(room.updatedAt)}
-              </span>
-            </div>
+            )}
+          </div>
+          
+          {/* 마지막 메시지 영역 */}
+          <p className="text-sm text-gray-500 truncate mb-2">{lastMessage}</p>
+          
+          {/* 구분선 */}
+          <div className="border-t border-gray-100 my-2"></div>
+          
+          {/* 하단 정보 영역 (가격 및 날짜) */}
+          <div className="flex items-center justify-between pt-1">
+            <span className="text-xs text-gray-400">
+              총 {formatPrice(totalPrice)}원
+            </span>
+            <span className="text-xs text-gray-400">
+              {formatDate(room.updatedAt)}
+            </span>
           </div>
         </div>
       </div>

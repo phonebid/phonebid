@@ -18,9 +18,14 @@ public class ChatRoomResponse {
     private ChatRoomStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    
+    private String sellerName;
+    private String lastMessage;
+    private Integer totalPrice;
 
     private ChatRoomResponse(UUID id, UUID quoteId, UUID consumerId, UUID sellerId,
-                             ChatRoomStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
+                             ChatRoomStatus status, LocalDateTime createdAt, LocalDateTime updatedAt,
+                             String sellerName, String lastMessage, Integer totalPrice) {
         this.id = id;
         this.quoteId = quoteId;
         this.consumerId = consumerId;
@@ -28,6 +33,9 @@ public class ChatRoomResponse {
         this.status = status;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.sellerName = sellerName;
+        this.lastMessage = lastMessage;
+        this.totalPrice = totalPrice;
     }
 
     public static ChatRoomResponse from(ChatRoom chatRoom) {
@@ -38,7 +46,25 @@ public class ChatRoomResponse {
                 chatRoom.getSeller().getSellerId(),
                 chatRoom.getStatus(),
                 chatRoom.getCreatedAt(),
-                chatRoom.getUpdatedAt()
+                chatRoom.getUpdatedAt(),
+                null, // sellerName은 서비스에서 설정
+                null, // lastMessage는 서비스에서 설정
+                null  // totalPrice는 서비스에서 설정
+        );
+    }
+    
+    public static ChatRoomResponse from(ChatRoom chatRoom, String sellerName, String lastMessage, Integer totalPrice) {
+        return new ChatRoomResponse(
+                chatRoom.getId(),
+                chatRoom.getQuote().getId(),
+                chatRoom.getConsumer().getId(),
+                chatRoom.getSeller().getSellerId(),
+                chatRoom.getStatus(),
+                chatRoom.getCreatedAt(),
+                chatRoom.getUpdatedAt(),
+                sellerName,
+                lastMessage,
+                totalPrice
         );
     }
 }

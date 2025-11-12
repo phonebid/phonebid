@@ -54,13 +54,13 @@ export function MessageInput({
           onKeyPress={handleKeyPress}
           placeholder={placeholder}
           disabled={isDisabled}
-          className="flex-1 min-h-[44px] max-h-32 px-4 py-2.5 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
+          className="flex-1 min-h-[44px] max-h-32 px-4 py-2.5 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#615FFF] focus:border-[#615FFF] disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
           rows={1}
         />
         <button
           onClick={handleSend}
           disabled={!inputMessage.trim() || isDisabled}
-          className="bg-purple-500 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-purple-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+          className="bg-[#615FFF] text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-[#615FFF]/90 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex-shrink-0"
           aria-label="메시지 전송"
         >
           <svg
