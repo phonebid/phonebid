@@ -42,20 +42,25 @@ export function MessageInput({
 
   return (
     <div className="border-t bg-white p-4">
-      <div className="flex items-end space-x-2">
+      <div className="flex items-end gap-2">
+        {/* 프로필 이미지 (선택사항) */}
+        <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+          <span className="text-gray-400 text-xs">나</span>
+        </div>
+        
         <textarea
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyPress={handleKeyPress}
           placeholder={placeholder}
           disabled={isDisabled}
-          className="flex-1 min-h-[44px] max-h-32 px-4 py-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+          className="flex-1 min-h-[44px] max-h-32 px-4 py-2.5 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
           rows={1}
         />
         <button
           onClick={handleSend}
           disabled={!inputMessage.trim() || isDisabled}
-          className="bg-indigo-500 text-white rounded-full p-3 hover:bg-indigo-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+          className="bg-purple-500 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-purple-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex-shrink-0"
           aria-label="메시지 전송"
         >
           <svg
@@ -68,7 +73,7 @@ export function MessageInput({
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+              d="M5 10l7-7m0 0l7 7m-7-7v18"
             />
           </svg>
         </button>

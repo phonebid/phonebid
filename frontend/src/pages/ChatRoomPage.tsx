@@ -142,51 +142,70 @@ const ChatRoomPage: React.FC = () => {
   }
 
   const isCurrentUser = (senderId: string): boolean => {
-    // 백엔드에서 UUID를 반환하지만, 현재는 username으로 비교
-    // TODO: 백엔드에서 사용자 ID(UUID)를 반환하도록 수정 필요
-    // 임시로 username으로 비교 (실제로는 UUID 비교가 필요)
-    return user?.username === senderId;
+    // 채팅방 정보가 없으면 비교 불가
+    if (!chatRoom) {
+      return false;
+    }
+
+    // 채팅방의 consumerId 또는 sellerId와 비교
+    // 현재 사용자가 consumer인지 seller인지 role로 판단
+    const userRole = user?.role;
+    
+    if (userRole === "CONSUMER") {
+      // 구매자인 경우 consumerId와 비교
+      return chatRoom.consumerId === senderId;
+    } else if (userRole === "SELLER") {
+      // 판매자인 경우 sellerId와 비교
+      return chatRoom.sellerId === senderId;
+    }
+
+    // role이 없거나 알 수 없는 경우, 둘 다 확인
+    return chatRoom.consumerId === senderId || chatRoom.sellerId === senderId;
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="flex flex-col h-screen bg-indigo-50">
       {/* 헤더 */}
-      <div className="flex items-center py-4 border-b bg-white">
-        <button
-          onClick={() => navigate("/chat")}
-          className="mr-4 text-gray-600 hover:text-gray-900"
-          aria-label="뒤로가기"
-        >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+      <div className="bg-white border-b sticky top-0 z-10">
+        <div className="flex items-center px-4 py-3">
+          <button
+            onClick={() => navigate("/chat")}
+            className="mr-3 text-gray-600 hover:text-gray-900 p-1"
+            aria-label="뒤로가기"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-        </button>
-        <div className="flex items-center space-x-3 flex-1">
-          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-            <span className="text-gray-500 text-sm">프로필</span>
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold">채팅방</h1>
-            <ChatConnectionStatus status={connectionStatus} />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+          <div className="flex items-center gap-3 flex-1">
+            <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-gray-500 text-xs">프로필</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-base font-semibold text-gray-900 truncate">
+                채팅방
+              </h1>
+              <ChatConnectionStatus status={connectionStatus} />
+            </div>
           </div>
         </div>
       </div>
 
       {/* 메시지 영역 */}
-      <div className="flex-1 overflow-y-auto bg-gray-50 p-4 space-y-4 scroll-smooth">
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 scroll-smooth bg-indigo-50">
         {messages.length === 0 ? (
-          <div className="text-center text-gray-500 py-8">
-            메시지가 없습니다. 첫 메시지를 보내보세요!
+          <div className="text-center text-gray-500 py-12">
+            <p className="text-sm">메시지가 없습니다. 첫 메시지를 보내보세요!</p>
           </div>
         ) : (
           messages.map((message, index) => {

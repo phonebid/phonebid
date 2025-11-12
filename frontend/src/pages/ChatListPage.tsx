@@ -1,10 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import useSWR from "swr";
 import { getChatRooms } from "services/chatService";
 import { realtimeDataConfig } from "services/swrConfig";
 import type { PaginatedChatRooms } from "types/ChatTypes";
 import { ChatRoomCard } from "components/chat/ChatRoomCard";
-import { UnreadBadge } from "components/chat/UnreadBadge";
 
 const ChatListPage: React.FC = () => {
   useEffect(() => {
@@ -24,12 +23,36 @@ const ChatListPage: React.FC = () => {
     }
   );
 
+  const chatRooms = chatRoomsData?.content || [];
+
+  // 각 채팅방의 읽지 않은 메시지 수 계산
+  const unreadCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    // TODO: 백엔드에서 unreadCount를 제공하도록 수정 필요
+    // 현재는 임시로 0으로 설정
+    chatRooms.forEach((room) => {
+      counts[room.id] = 0;
+    });
+    return counts;
+  }, [chatRooms]);
+
+  // 전체 읽지 않은 메시지 수
+  const totalUnreadCount = useMemo(() => {
+    return Object.values(unreadCounts).reduce((sum, count) => sum + count, 0);
+  }, [unreadCounts]);
+
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-2xl font-bold mb-6">채팅 목록</h1>
-        <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-gray-500">로딩 중...</p>
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white border-b">
+          <div className="max-w-2xl mx-auto px-4 py-4">
+            <h1 className="text-lg font-semibold text-gray-900">채팅</h1>
+          </div>
+        </div>
+        <div className="max-w-2xl mx-auto px-4 py-4">
+          <div className="bg-white rounded-lg p-4">
+            <p className="text-gray-500 text-sm">로딩 중...</p>
+          </div>
         </div>
       </div>
     );
@@ -37,48 +60,55 @@ const ChatListPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-2xl font-bold mb-6">채팅 목록</h1>
-        <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-red-500">채팅방 목록을 불러오는 중 오류가 발생했습니다.</p>
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white border-b">
+          <div className="max-w-2xl mx-auto px-4 py-4">
+            <h1 className="text-lg font-semibold text-gray-900">채팅</h1>
+          </div>
+        </div>
+        <div className="max-w-2xl mx-auto px-4 py-4">
+          <div className="bg-white rounded-lg p-4">
+            <p className="text-red-500 text-sm">채팅방 목록을 불러오는 중 오류가 발생했습니다.</p>
+          </div>
         </div>
       </div>
     );
   }
 
-  const chatRooms = chatRoomsData?.content || [];
-
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-2xl font-bold mb-6">채팅 목록</h1>
-
-      {/* 읽지 않은 메시지 배지 (상단) */}
-      <div className="mb-4">
-        <div className="inline-flex items-center px-3 py-1 rounded-full bg-red-100 text-red-800 text-sm font-medium">
-          <span className="mr-2">읽지 않은 메시지</span>
-          {/* TODO: 실제 읽지 않은 메시지 수 계산 */}
-          <UnreadBadge count={0} />
+    <div className="min-h-screen bg-gray-50">
+      {/* 헤더 */}
+      <div className="bg-white border-b sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-lg font-semibold text-gray-900">채팅</h1>
+            {totalUnreadCount > 0 && (
+              <span className="bg-red-500 text-white text-xs font-medium rounded-full px-2 py-0.5 min-w-[20px] text-center">
+                {totalUnreadCount > 99 ? "99+" : totalUnreadCount}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
       {/* 채팅방 목록 */}
-      <div className="space-y-4">
+      <div className="max-w-2xl mx-auto">
         {chatRooms.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <p className="text-gray-500">채팅방이 없습니다.</p>
+          <div className="px-4 py-8">
+            <div className="bg-white rounded-lg p-6 text-center">
+              <p className="text-gray-500 text-sm">채팅방이 없습니다.</p>
+            </div>
           </div>
         ) : (
-          chatRooms.map((room) => (
-            <ChatRoomCard
-              key={room.id}
-              room={room}
-              unreadCount={0}
-              // TODO: 실제 데이터로 교체 필요
-              // lastMessage={room.lastMessage}
-              // sellerName={room.sellerName}
-              // sellerAvatar={room.sellerAvatar}
-            />
-          ))
+          <div className="divide-y divide-gray-100 bg-white">
+            {chatRooms.map((room) => (
+              <ChatRoomCard
+                key={room.id}
+                room={room}
+                unreadCount={unreadCounts[room.id] || 0}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>
