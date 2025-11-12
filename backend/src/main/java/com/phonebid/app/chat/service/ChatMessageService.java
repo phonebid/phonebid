@@ -34,7 +34,8 @@ public class ChatMessageService {
         ChatRoom chatRoom = chatRoomRepository.findById(request.getChatRoomId())
                 .orElseThrow(() -> new CustomException(ChatErrorCode.CHAT_ROOM_NOT_FOUND));
 
-        User sender = userRepository.findById(request.getSenderId())
+        // username으로 사용자 조회 (username은 unique 제약조건이 있음)
+        User sender = userRepository.findByUsername(request.getSenderId())
                 .orElseThrow(() -> new CustomException(MemberErrorCode.USER_NOT_FOUND));
 
         validateParticipant(chatRoom, sender.getId());
