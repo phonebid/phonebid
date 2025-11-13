@@ -14,5 +14,11 @@ public interface BidRepository extends JpaRepository<Bid, UUID> {
      */
     @Query("SELECT b FROM Bid b WHERE b.quote.id = :quoteId AND b.seller.sellerId = :sellerId ORDER BY b.createdAt DESC")
     Optional<Bid> findLatestByQuoteIdAndSellerId(@Param("quoteId") UUID quoteId, @Param("sellerId") UUID sellerId);
+
+    /**
+     * 특정 견적에 대한 입찰 개수 조회
+     */
+    @Query("SELECT COUNT(b) FROM Bid b WHERE b.quote.id = :quoteId AND (b.isDelete = false OR b.isDelete IS NULL)")
+    long countByQuoteId(@Param("quoteId") UUID quoteId);
 }
 
