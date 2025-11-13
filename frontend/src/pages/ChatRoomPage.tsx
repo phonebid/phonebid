@@ -2,14 +2,17 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import useSWR from "swr";
 import { getChatRoom, getChatMessages, markMessagesAsRead } from "services/chatService";
+import { getQuoteDetail } from "services/quoteService";
 import { useWebSocket } from "hooks/useWebSocket";
 import { useAuthStore } from "store/authStore";
 import { realtimeDataConfig } from "services/swrConfig";
 import type { ChatRoom, ChatMessage } from "types/ChatTypes";
 import { MessageType } from "types/ChatTypes";
+import type { QuoteDetail } from "types/QuoteTypes";
 import { MessageBubble } from "components/chat/MessageBubble";
 import { DateSeparator } from "components/chat/DateSeparator";
 import { MessageInput } from "components/chat/MessageInput";
+import { BidQuoteCard } from "components/chat/BidQuoteCard";
 
 const ChatRoomPage: React.FC = () => {
   const { chatRoomId } = useParams<{ chatRoomId: string }>();
@@ -28,6 +31,18 @@ const ChatRoomPage: React.FC = () => {
     {
       ...realtimeDataConfig,
       fetcher: () => getChatRoom(chatRoomId!),
+    }
+  );
+
+  // 견적 정보 조회
+  const {
+    data: quote,
+    isLoading: quoteLoading,
+  } = useSWR<QuoteDetail>(
+    chatRoom?.quoteId ? `/auction/quotes/${chatRoom.quoteId}` : null,
+    {
+      ...realtimeDataConfig,
+      fetcher: () => getQuoteDetail(chatRoom!.quoteId),
     }
   );
 
@@ -112,7 +127,7 @@ const ChatRoomPage: React.FC = () => {
     return d1 === d2;
   };
 
-  if (roomLoading || messagesLoading) {
+  if (roomLoading || messagesLoading || quoteLoading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow p-6">
@@ -197,9 +212,23 @@ const ChatRoomPage: React.FC = () => {
       {/* 메시지 영역 */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 scroll-smooth bg-indigo-50">
         {messages.length === 0 ? (
-          <div className="text-center text-gray-500 py-12">
-            <p className="text-sm">메시지가 없습니다. 첫 메시지를 보내보세요!</p>
-          </div>
+          <>
+            {/* 채팅방 생성일 날짜 구분선 */}
+            {chatRoom && (
+              <DateSeparator date={chatRoom.createdAt} />
+            )}
+            {/* 견적 정보 카드 (채팅방 시작일 아래) */}
+            {quote && (
+              <BidQuoteCard
+                quote={quote}
+                bidPrice={chatRoom.totalPrice}
+                sellerName={chatRoom.sellerName}
+              />
+            )}
+            <div className="text-center text-gray-500 py-12">
+              <p className="text-sm">메시지가 없습니다. 첫 메시지를 보내보세요!</p>
+            </div>
+          </>
         ) : (
           messages.map((message, index) => {
             const prevMessage = index > 0 ? messages[index - 1] : undefined;
@@ -208,12 +237,28 @@ const ChatRoomPage: React.FC = () => {
               !prevMessage ||
               !isSameDate(message.createdAt, prevMessage.createdAt);
             const isCurrentUserMessage = isCurrentUser(message.senderId);
+            
+            // 첫 번째 메시지이고 채팅방 생성일과 같은 날짜인 경우, 날짜 구분선 아래에 견적 카드 표시
+            const showBidCard = 
+              index === 0 && 
+              quote && 
+              chatRoom &&
+              isSameDate(message.createdAt, chatRoom.createdAt);
 
             return (
               <div key={message.id}>
                 {/* 날짜 구분선 */}
                 {showDateSeparator && (
                   <DateSeparator date={message.createdAt} />
+                )}
+
+                {/* 견적 정보 카드 (채팅방 시작일 아래) */}
+                {showBidCard && (
+                  <BidQuoteCard
+                    quote={quote}
+                    bidPrice={chatRoom.totalPrice}
+                    sellerName={chatRoom.sellerName}
+                  />
                 )}
 
                 {/* 메시지 */}

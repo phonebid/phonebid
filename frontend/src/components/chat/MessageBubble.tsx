@@ -1,4 +1,5 @@
 import type { ChatMessage } from "types/ChatTypes";
+import { ChatAvatar } from "components/chat/ChatAvatar";
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -39,19 +40,7 @@ export function MessageBubble({
     >
       {/* 상대방 메시지: 왼쪽 정렬, 프로필 이미지 표시 */}
       {!isCurrentUser && showAvatar && (
-        <div className="flex-shrink-0">
-          {senderAvatar ? (
-            <img
-              src={senderAvatar}
-              alt={senderName || "상대방"}
-              className="w-8 h-8 rounded-full object-cover"
-            />
-          ) : (
-            <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-              <span className="text-gray-500 text-xs">상대</span>
-            </div>
-          )}
-        </div>
+        <ChatAvatar avatar={senderAvatar} name={senderName} alt={senderName || "상대방"} />
       )}
 
       <div className={`flex flex-col max-w-[70%] ${isCurrentUser ? "items-end" : "items-start"}`}>
