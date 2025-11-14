@@ -48,6 +48,13 @@ export interface ChatMessage {
   createdAt: string;
 }
 
+// 타이핑 이벤트 타입
+export interface TypingEvent {
+  type: "TYPING";
+  senderId: string;
+  isTyping: boolean;
+}
+
 // 채팅방 생성 요청 타입
 export interface ChatRoomCreateRequest {
   quoteId: string;

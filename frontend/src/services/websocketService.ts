@@ -1,7 +1,7 @@
 import { Client, IMessage, StompSubscription } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { getApiBaseUrl } from "utils/apiUtils";
-import type { ChatMessage, ChatMessageSendRequest } from "types/ChatTypes";
+import type { ChatMessage, ChatMessageSendRequest, TypingEvent } from "types/ChatTypes";
 import { WebSocketConnectionStatus } from "types/ChatTypes";
 
 /**
@@ -31,6 +31,32 @@ class WebSocketService {
     string,
     Array<(message: ChatMessage) => void>
   > = new Map();
+
+  /**
+   * 타이핑 이벤트 수신 콜백 (채팅방 ID별)
+   */
+  private typingCallbacks: Map<
+    string,
+    Array<(event: TypingEvent) => void>
+  > = new Map();
+
+  /**
+   * 타이핑 구독 (채팅방 ID별)
+   */
+  private typingSubscriptions: Map<string, StompSubscription> = new Map();
+
+  /**
+   * 읽음 상태 업데이트 콜백 (채팅방 ID별)
+   */
+  private readStatusCallbacks: Map<
+    string,
+    Array<(message: ChatMessage) => void>
+  > = new Map();
+
+  /**
+   * 읽음 상태 구독 (채팅방 ID별)
+   */
+  private readStatusSubscriptions: Map<string, StompSubscription> = new Map();
 
   /**
    * WebSocket 연결 초기화
@@ -94,6 +120,20 @@ class WebSocketService {
         subscription.unsubscribe();
       });
       this.subscriptions.clear();
+
+      // 타이핑 구독 해제
+      this.typingSubscriptions.forEach((subscription) => {
+        subscription.unsubscribe();
+      });
+      this.typingSubscriptions.clear();
+      this.typingCallbacks.clear();
+
+      // 읽음 상태 구독 해제
+      this.readStatusSubscriptions.forEach((subscription) => {
+        subscription.unsubscribe();
+      });
+      this.readStatusSubscriptions.clear();
+      this.readStatusCallbacks.clear();
 
       // 연결 해제
       this.client.deactivate();
@@ -170,6 +210,163 @@ class WebSocketService {
       this.subscriptions.delete(chatRoomId);
       this.messageCallbacks.delete(chatRoomId);
       console.log(`Unsubscribed from chat room: ${chatRoomId}`);
+    }
+
+    // 타이핑 구독도 해제
+    const typingSubscription = this.typingSubscriptions.get(chatRoomId);
+    if (typingSubscription) {
+      typingSubscription.unsubscribe();
+      this.typingSubscriptions.delete(chatRoomId);
+      this.typingCallbacks.delete(chatRoomId);
+      console.log(`Unsubscribed from typing events: ${chatRoomId}`);
+    }
+
+    // 읽음 상태 구독도 해제
+    const readStatusSubscription = this.readStatusSubscriptions.get(chatRoomId);
+    if (readStatusSubscription) {
+      readStatusSubscription.unsubscribe();
+      this.readStatusSubscriptions.delete(chatRoomId);
+      this.readStatusCallbacks.delete(chatRoomId);
+      console.log(`Unsubscribed from read status events: ${chatRoomId}`);
+    }
+  }
+
+  /**
+   * 읽음 상태 업데이트 구독
+   */
+  subscribeToReadStatus(
+    chatRoomId: string,
+    onReadStatus: (message: ChatMessage) => void
+  ): () => void {
+    if (!this.client?.connected) {
+      console.warn("WebSocket not connected. Attempting to connect...");
+      this.connect();
+      setTimeout(() => {
+        this.subscribeToReadStatus(chatRoomId, onReadStatus);
+      }, 1000);
+      return () => {};
+    }
+
+    // 이미 구독 중이면 기존 구독 해제
+    if (this.readStatusSubscriptions.has(chatRoomId)) {
+      const existing = this.readStatusSubscriptions.get(chatRoomId);
+      existing?.unsubscribe();
+    }
+
+    const topic = `/topic/chat/${chatRoomId}/read`;
+
+    // 읽음 상태 콜백 등록
+    if (!this.readStatusCallbacks.has(chatRoomId)) {
+      this.readStatusCallbacks.set(chatRoomId, []);
+    }
+    this.readStatusCallbacks.get(chatRoomId)?.push(onReadStatus);
+
+    // STOMP 구독
+    const subscription = this.client.subscribe(topic, (message: IMessage) => {
+      try {
+        const chatMessage: ChatMessage = JSON.parse(message.body);
+        const callbacks = this.readStatusCallbacks.get(chatRoomId);
+        callbacks?.forEach((callback) => callback(chatMessage));
+      } catch (error) {
+        console.error("Failed to parse read status update:", error);
+      }
+    });
+
+    this.readStatusSubscriptions.set(chatRoomId, subscription);
+    console.log(`Subscribed to read status updates: ${chatRoomId}`);
+
+    // 구독 해제 함수 반환
+    return () => {
+      subscription.unsubscribe();
+      this.readStatusSubscriptions.delete(chatRoomId);
+      const callbacks = this.readStatusCallbacks.get(chatRoomId);
+      if (callbacks) {
+        const index = callbacks.indexOf(onReadStatus);
+        if (index > -1) {
+          callbacks.splice(index, 1);
+        }
+      }
+    };
+  }
+
+  /**
+   * 타이핑 이벤트 구독
+   */
+  subscribeToTyping(
+    chatRoomId: string,
+    onTyping: (event: TypingEvent) => void
+  ): () => void {
+    if (!this.client?.connected) {
+      console.warn("WebSocket not connected. Attempting to connect...");
+      this.connect();
+      setTimeout(() => {
+        this.subscribeToTyping(chatRoomId, onTyping);
+      }, 1000);
+      return () => {};
+    }
+
+    // 이미 구독 중이면 기존 구독 해제
+    if (this.typingSubscriptions.has(chatRoomId)) {
+      const existing = this.typingSubscriptions.get(chatRoomId);
+      existing?.unsubscribe();
+    }
+
+    const topic = `/topic/chat/${chatRoomId}/typing`;
+
+    // 타이핑 콜백 등록
+    if (!this.typingCallbacks.has(chatRoomId)) {
+      this.typingCallbacks.set(chatRoomId, []);
+    }
+    this.typingCallbacks.get(chatRoomId)?.push(onTyping);
+
+    // STOMP 구독
+    const subscription = this.client.subscribe(topic, (message: IMessage) => {
+      try {
+        const typingEvent: TypingEvent = JSON.parse(message.body);
+        const callbacks = this.typingCallbacks.get(chatRoomId);
+        callbacks?.forEach((callback) => callback(typingEvent));
+      } catch (error) {
+        console.error("Failed to parse typing event:", error);
+      }
+    });
+
+    this.typingSubscriptions.set(chatRoomId, subscription);
+    console.log(`Subscribed to typing events: ${chatRoomId}`);
+
+    // 구독 해제 함수 반환
+    return () => {
+      subscription.unsubscribe();
+      this.typingSubscriptions.delete(chatRoomId);
+      const callbacks = this.typingCallbacks.get(chatRoomId);
+      if (callbacks) {
+        const index = callbacks.indexOf(onTyping);
+        if (index > -1) {
+          callbacks.splice(index, 1);
+        }
+      }
+    };
+  }
+
+  /**
+   * 타이핑 이벤트 전송
+   */
+  sendTyping(chatRoomId: string, senderId: string, isTyping: boolean): void {
+    if (!this.client?.connected) {
+      console.error("WebSocket not connected. Cannot send typing event.");
+      return;
+    }
+
+    try {
+      const destination = `/app/chat/${chatRoomId}/typing`;
+      this.client.publish({
+        destination,
+        body: JSON.stringify({
+          senderId,
+          isTyping,
+        }),
+      });
+    } catch (error) {
+      console.error("Failed to send typing event:", error);
     }
   }
 
