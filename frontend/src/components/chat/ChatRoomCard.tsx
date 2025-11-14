@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import type { ChatRoom } from "types/ChatTypes";
+import { ChatAvatar } from "components/chat/ChatAvatar";
 
 interface ChatRoomCardProps {
   room: ChatRoom;
@@ -57,19 +58,12 @@ export function ChatRoomCard({
     >
       <div className="flex items-start gap-3">
         {/* 프로필 이미지 영역 */}
-        <div className="flex-shrink-0">
-          {sellerAvatar ? (
-            <img
-              src={sellerAvatar}
-              alt={displayName}
-              className="w-12 h-12 rounded-full object-cover"
-            />
-          ) : (
-            <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-              <span className="text-gray-400 text-xs">프로필</span>
-            </div>
-          )}
-        </div>
+        <ChatAvatar
+          avatar={sellerAvatar}
+          name={displayName}
+          size="lg"
+          alt={displayName}
+        />
 
         {/* 채팅방 정보 */}
         <div className="flex-1 min-w-0">
