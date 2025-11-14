@@ -1,8 +1,9 @@
-import { useState, useCallback, KeyboardEvent } from "react";
+import { useState, useCallback, KeyboardEvent, useEffect, useRef } from "react";
 import type { WebSocketConnectionStatus } from "types/ChatTypes";
 
 interface MessageInputProps {
   onSendMessage: (message: string) => void;
+  onTyping?: (isTyping: boolean) => void;
   connectionStatus: WebSocketConnectionStatus;
   disabled?: boolean;
   placeholder?: string;
@@ -13,20 +14,71 @@ interface MessageInputProps {
  */
 export function MessageInput({
   onSendMessage,
+  onTyping,
   connectionStatus,
   disabled = false,
   placeholder = "메시지를 입력하세요.",
 }: MessageInputProps) {
   const [inputMessage, setInputMessage] = useState("");
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isTypingRef = useRef(false);
+
+  // 타이핑 이벤트 전송 (디바운싱)
+  const handleTyping = useCallback(() => {
+    if (!onTyping || connectionStatus !== "CONNECTED" || disabled) {
+      return;
+    }
+
+    // 타이핑 시작
+    if (!isTypingRef.current) {
+      isTypingRef.current = true;
+      onTyping(true);
+    }
+
+    // 기존 타이머 클리어
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // 3초 후 타이핑 종료 이벤트 전송
+    typingTimeoutRef.current = setTimeout(() => {
+      if (isTypingRef.current) {
+        isTypingRef.current = false;
+        onTyping(false);
+      }
+    }, 3000);
+  }, [onTyping, connectionStatus, disabled]);
+
+  // 컴포넌트 언마운트 시 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      // 언마운트 시 타이핑 종료 이벤트 전송
+      if (isTypingRef.current && onTyping) {
+        onTyping(false);
+      }
+    };
+  }, [onTyping]);
 
   const handleSend = useCallback(() => {
     if (!inputMessage.trim() || connectionStatus !== "CONNECTED" || disabled) {
       return;
     }
 
+    // 타이핑 종료 이벤트 전송
+    if (isTypingRef.current && onTyping) {
+      isTypingRef.current = false;
+      onTyping(false);
+    }
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
     onSendMessage(inputMessage.trim());
     setInputMessage("");
-  }, [inputMessage, connectionStatus, disabled, onSendMessage]);
+  }, [inputMessage, connectionStatus, disabled, onSendMessage, onTyping]);
 
   const handleKeyPress = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -43,14 +95,12 @@ export function MessageInput({
   return (
     <div className="border-t bg-white p-4">
       <div className="flex items-end gap-2">
-        {/* 프로필 이미지 (선택사항) */}
-        <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
-          <span className="text-gray-400 text-xs">나</span>
-        </div>
-        
         <textarea
           value={inputMessage}
-          onChange={(e) => setInputMessage(e.target.value)}
+          onChange={(e) => {
+            setInputMessage(e.target.value);
+            handleTyping();
+          }}
           onKeyPress={handleKeyPress}
           placeholder={placeholder}
           disabled={isDisabled}
