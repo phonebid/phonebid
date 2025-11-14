@@ -43,7 +43,7 @@ public class ChatRoomResponse {
                 chatRoom.getId(),
                 chatRoom.getQuote().getId(),
                 chatRoom.getConsumer().getId(),
-                chatRoom.getSeller().getSellerId(),
+                chatRoom.getSeller().getUser().getId(), // Seller의 User ID 사용 (메시지 senderId와 일치)
                 chatRoom.getStatus(),
                 chatRoom.getCreatedAt(),
                 chatRoom.getUpdatedAt(),
@@ -58,7 +58,7 @@ public class ChatRoomResponse {
                 chatRoom.getId(),
                 chatRoom.getQuote().getId(),
                 chatRoom.getConsumer().getId(),
-                chatRoom.getSeller().getSellerId(),
+                chatRoom.getSeller().getUser().getId(), // Seller의 User ID 사용 (메시지 senderId와 일치)
                 chatRoom.getStatus(),
                 chatRoom.getCreatedAt(),
                 chatRoom.getUpdatedAt(),

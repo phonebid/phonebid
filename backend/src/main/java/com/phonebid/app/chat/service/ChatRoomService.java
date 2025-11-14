@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +46,7 @@ public class ChatRoomService {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final BidRepository bidRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
     public ChatRoomResponse createChatRoom(ChatRoomCreateRequest request) {
@@ -114,8 +116,19 @@ public class ChatRoomService {
         validateParticipant(chatRoom, requesterId);
 
         // 동일 채팅방 내 지정 메시지 읽음 처리
-        chatMessageRepository.findByChatRoomIdAndIdIn(chatRoomId, request.getMessageIds())
-                .forEach(message -> message.markAsRead());
+        List<ChatMessage> readMessages = chatMessageRepository.findByChatRoomIdAndIdIn(chatRoomId, request.getMessageIds());
+        readMessages.forEach(message -> message.markAsRead());
+        
+        // 읽음 처리된 메시지들을 DB에 저장 (명시적으로 저장하여 확실하게 반영)
+        chatMessageRepository.saveAll(readMessages);
+
+        // 읽음 처리된 메시지들을 WebSocket으로 브로드캐스트하여 상대방에게 알림
+        // 읽음 상태 업데이트만을 위한 별도 토픽 사용 (무한 루프 방지)
+        readMessages.forEach(message -> {
+            ChatMessageResponse response = ChatMessageResponse.from(message);
+            // 읽음 상태 업데이트 이벤트를 별도 토픽으로 전송
+            messagingTemplate.convertAndSend("/topic/chat/" + chatRoomId + "/read", response);
+        });
     }
 
     /**
