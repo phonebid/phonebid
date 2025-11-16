@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -26,6 +27,19 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, UUID> 
      * 채팅방의 마지막 메시지 조회 (작성 시각 기준 내림차순 첫 번째)
      */
     Optional<ChatMessage> findFirstByChatRoomIdOrderByCreatedAtDesc(UUID chatRoomId);
+
+    /**
+     * 특정 채팅방의 메시지 수 조회
+     */
+    @Query("SELECT COUNT(cm) FROM ChatMessage cm WHERE cm.chatRoom.id = :chatRoomId")
+    int countByChatRoomId(@Param("chatRoomId") UUID chatRoomId);
+
+    /**
+     * 채팅방의 모든 메시지 삭제 (hard delete), 배치 처리용
+     */
+    @Modifying
+    @Query("DELETE FROM ChatMessage cm WHERE cm.chatRoom.id = :chatRoomId")
+    void deleteByChatRoomId(@Param("chatRoomId") UUID chatRoomId);
 }
 
 

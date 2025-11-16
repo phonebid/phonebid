@@ -9,6 +9,7 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -50,5 +51,19 @@ public interface UserChatRoomRepository extends JpaRepository<UserChatRoom, UUID
            "WHERE ucr.user.id = :userId AND ucr.chatRoom.id = :chatRoomId AND ucr.deletedAt IS NULL")
     boolean existsActiveByUserIdAndChatRoomId(@Param("userId") UUID userId, 
                                                @Param("chatRoomId") UUID chatRoomId);
+
+    /**
+     * 채팅방의 활성 멤버 수 조회 (deletedAt이 null인 사용자 수)
+     */
+    @Query("SELECT COUNT(ucr) FROM UserChatRoom ucr " +
+           "WHERE ucr.chatRoom.id = :chatRoomId AND ucr.deletedAt IS NULL")
+    long countActiveMembersByChatRoomId(@Param("chatRoomId") UUID chatRoomId);
+
+    /**
+     * 채팅방의 모든 UserChatRoom 삭제 (hard delete)
+     */
+    @Modifying
+    @Query("DELETE FROM UserChatRoom ucr WHERE ucr.chatRoom.id = :chatRoomId")
+    void deleteByChatRoomId(@Param("chatRoomId") UUID chatRoomId);
 }
 
