@@ -70,3 +70,10 @@ export const markMessagesAsRead = async (
   );
 };
 
+/**
+ * 채팅방 나가기
+ */
+export const leaveChatRoom = async (chatRoomId: string): Promise<void> => {
+  return await apiClient.delete<void>(`${BASE_URL}/${chatRoomId}`);
+};
+

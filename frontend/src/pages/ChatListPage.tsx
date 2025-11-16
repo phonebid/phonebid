@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import { getChatRooms } from "services/chatService";
 import { realtimeDataConfig } from "services/swrConfig";
 import type { PaginatedChatRooms } from "types/ChatTypes";
