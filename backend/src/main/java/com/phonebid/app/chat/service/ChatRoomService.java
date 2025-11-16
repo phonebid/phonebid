@@ -6,6 +6,7 @@ import com.phonebid.app.auction.repository.BidRepository;
 import com.phonebid.app.auction.repository.QuoteRepository;
 import com.phonebid.app.chat.domain.ChatMessage;
 import com.phonebid.app.chat.domain.ChatRoom;
+import com.phonebid.app.chat.domain.UserChatRoom;
 import com.phonebid.app.chat.dto.request.ChatMessageReadRequest;
 import com.phonebid.app.chat.dto.request.ChatRoomCreateRequest;
 import com.phonebid.app.chat.dto.response.ChatMessageResponse;
@@ -13,6 +14,7 @@ import com.phonebid.app.chat.dto.response.ChatRoomResponse;
 import com.phonebid.app.chat.errorcode.ChatErrorCode;
 import com.phonebid.app.chat.repository.ChatMessageRepository;
 import com.phonebid.app.chat.repository.ChatRoomRepository;
+import com.phonebid.app.chat.repository.UserChatRoomRepository;
 import com.phonebid.app.common.errorcode.AuctionErrorCode;
 import com.phonebid.app.common.errorcode.MemberErrorCode;
 import com.phonebid.app.common.exception.CustomException;
@@ -45,6 +47,7 @@ public class ChatRoomService {
     private final SellerRepository sellerRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final UserChatRoomRepository userChatRoomRepository;
     private final BidRepository bidRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
@@ -77,6 +80,21 @@ public class ChatRoomService {
                 .build();
 
         ChatRoom savedRoom = chatRoomRepository.save(chatRoom);
+
+        // UserChatRoom 생성: 구매자와 판매자 모두 채팅방에 참여
+        UserChatRoom consumerUserChatRoom = UserChatRoom.builder()
+                .user(consumer)
+                .chatRoom(savedRoom)
+                .build();
+        
+        UserChatRoom sellerUserChatRoom = UserChatRoom.builder()
+                .user(seller.getUser())
+                .chatRoom(savedRoom)
+                .build();
+
+        userChatRoomRepository.save(consumerUserChatRoom);
+        userChatRoomRepository.save(sellerUserChatRoom);
+
         return ChatRoomResponse.from(savedRoom);
     }
 
@@ -85,8 +103,8 @@ public class ChatRoomService {
         ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
                 .orElseThrow(() -> new CustomException(ChatErrorCode.CHAT_ROOM_NOT_FOUND));
 
-        // 채팅방 참여자 검증
-        validateParticipant(chatRoom, requesterId);
+        // 채팅방 참여자 검증 (UserChatRoom 기반)
+        validateParticipantByUserChatRoom(chatRoomId, requesterId);
         
         // 판매자 가게 이름
         String sellerName = chatRoom.getSeller().getStoreName();
@@ -96,11 +114,12 @@ public class ChatRoomService {
 
     @Transactional
     public List<ChatMessageResponse> getChatMessages(UUID chatRoomId, UUID requesterId) {
-        ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
+        // 채팅방 존재 여부 확인
+        chatRoomRepository.findById(chatRoomId)
                 .orElseThrow(() -> new CustomException(ChatErrorCode.CHAT_ROOM_NOT_FOUND));
 
-        // 채팅방 참여자만 메시지 조회 가능
-        validateParticipant(chatRoom, requesterId);
+        // 채팅방 참여자만 메시지 조회 가능 (UserChatRoom 기반)
+        validateParticipantByUserChatRoom(chatRoomId, requesterId);
 
         return chatMessageRepository.findByChatRoomIdOrderByCreatedAtAsc(chatRoomId).stream()
                 .map(ChatMessageResponse::from)
@@ -109,11 +128,12 @@ public class ChatRoomService {
 
     @Transactional
     public void markMessagesAsRead(UUID chatRoomId, UUID requesterId, ChatMessageReadRequest request) {
-        ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
+        // 채팅방 존재 여부 확인
+        chatRoomRepository.findById(chatRoomId)
                 .orElseThrow(() -> new CustomException(ChatErrorCode.CHAT_ROOM_NOT_FOUND));
 
-        // 읽음 처리 요청자 검증
-        validateParticipant(chatRoom, requesterId);
+        // 읽음 처리 요청자 검증 (UserChatRoom 기반)
+        validateParticipantByUserChatRoom(chatRoomId, requesterId);
 
         // 동일 채팅방 내 지정 메시지 읽음 처리
         List<ChatMessage> readMessages = chatMessageRepository.findByChatRoomIdAndIdIn(chatRoomId, request.getMessageIds());
@@ -132,13 +152,44 @@ public class ChatRoomService {
     }
 
     /**
-     * 사용자가 참여한 채팅방 목록 조회 (페이징)
+     * 채팅방 나가기 (UserChatRoom의 deletedAt 설정)
+     */
+    @Transactional
+    public void leaveChatRoom(UUID chatRoomId, UUID requesterId) {
+        // 채팅방 존재 여부 확인
+        chatRoomRepository.findById(chatRoomId)
+                .orElseThrow(() -> new CustomException(ChatErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        // UserChatRoom 조회
+        UserChatRoom userChatRoom = userChatRoomRepository
+                .findActiveByUserIdAndChatRoomId(requesterId, chatRoomId)
+                .orElseThrow(() -> new CustomException(ChatErrorCode.CHAT_ROOM_ACCESS_DENIED));
+
+        // 이미 나간 채팅방인지 확인
+        if (userChatRoom.isDeleted()) {
+            throw new CustomException(ChatErrorCode.CHAT_ROOM_ALREADY_LEFT);
+        }
+
+        // 삭제자 정보 조회 (사용자 ID를 문자열로 변환)
+        User requester = userRepository.findById(requesterId)
+                .orElseThrow(() -> new CustomException(MemberErrorCode.USER_NOT_FOUND));
+        String deletedBy = requester.getId().toString();
+
+        // 채팅방 나가기 (soft delete) - deletedAt, deletedBy, isDelete 모두 설정
+        userChatRoom.leave(deletedBy);
+        userChatRoomRepository.save(userChatRoom);
+    }
+
+    /**
+     * 사용자가 참여한 채팅방 목록 조회 (페이징) - UserChatRoom 기반
      */
     @Transactional(readOnly = true)
     public Page<ChatRoomResponse> getChatRoomsByUser(UUID userId, Pageable pageable) {
-        Page<ChatRoom> chatRooms = chatRoomRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
+        Page<UserChatRoom> userChatRooms = userChatRoomRepository.findActiveChatRoomsByUserId(userId, pageable);
         
-        return chatRooms.map(chatRoom -> {
+        return userChatRooms.map(userChatRoom -> {
+            ChatRoom chatRoom = userChatRoom.getChatRoom();
+            
             // 판매자 가게 이름
             String sellerName = chatRoom.getSeller().getStoreName();
             
@@ -180,7 +231,15 @@ public class ChatRoomService {
         }
     }
 
-    // 채팅방 참여 여부를 검사해 비참여자의 접근을 차단
+    // 채팅방 참여 여부를 검사해 비참여자의 접근을 차단 (UserChatRoom 기반)
+    private void validateParticipantByUserChatRoom(UUID chatRoomId, UUID requesterId) {
+        boolean isActiveParticipant = userChatRoomRepository.existsActiveByUserIdAndChatRoomId(requesterId, chatRoomId);
+        if (!isActiveParticipant) {
+            throw new CustomException(ChatErrorCode.CHAT_ROOM_ACCESS_DENIED);
+        }
+    }
+
+    // 채팅방 참여 여부를 검사해 비참여자의 접근을 차단 (기존 방식 - 하위 호환성)
     private void validateParticipant(ChatRoom chatRoom, UUID requesterId) {
         boolean isParticipant = chatRoom.getConsumer().getId().equals(requesterId)
                 || chatRoom.getSeller().getUser().getId().equals(requesterId);

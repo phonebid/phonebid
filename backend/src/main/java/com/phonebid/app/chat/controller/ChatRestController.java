@@ -20,6 +20,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -104,6 +105,18 @@ public class ChatRestController {
         UUID requesterId = resolveRequesterId(userDetails);
         chatRoomService.markMessagesAsRead(chatRoomId, requesterId, request);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "채팅 메시지를 읽음으로 처리했습니다.", null));
+    }
+
+    /**
+     * 채팅방 나가기
+     * DELETE /api/v1/chat/rooms/{chatRoomId}
+     */
+    @DeleteMapping("/{chatRoomId}")
+    public ResponseEntity<ApiResponse<Void>> leaveChatRoom(@PathVariable UUID chatRoomId,
+                                                           @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        UUID requesterId = resolveRequesterId(userDetails);
+        chatRoomService.leaveChatRoom(chatRoomId, requesterId);
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "채팅방을 나갔습니다.", null));
     }
 
     // 요청자 ID 추출 (UserDetailsImpl 사용할 때 null 여부 확인)
