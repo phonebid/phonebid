@@ -31,7 +31,7 @@ public class ChatRoomBatchService {
      * 양쪽 사용자 모두 삭제한 채팅방을 정리하는 배치 작업
      * 매일 새벽 3시에 실행
      */
-    @Scheduled(cron = "0 0 3 * * ?")
+    @Scheduled(cron = "0 0 3 ? * SUN") // 매주 일요일 새벽 3시에 실행
     public void cleanupDeletedChatRooms() {
         LocalDateTime startTime = LocalDateTime.now();
         log.info("=== 채팅방 정리 배치 작업 시작 ===");
