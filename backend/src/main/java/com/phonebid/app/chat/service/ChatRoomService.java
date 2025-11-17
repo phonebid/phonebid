@@ -109,7 +109,11 @@ public class ChatRoomService {
         // 판매자 가게 이름
         String sellerName = chatRoom.getSeller().getStoreName();
         
-        return ChatRoomResponse.from(chatRoom, sellerName, null, null);
+        // 읽지 않은 메시지 수
+        long unreadCount = chatMessageRepository.countUnreadMessagesByChatRoomIdAndUserId(
+                chatRoomId, requesterId);
+        
+        return ChatRoomResponse.from(chatRoom, sellerName, null, null, unreadCount);
     }
 
     @Transactional
@@ -211,7 +215,10 @@ public class ChatRoomService {
                 totalPrice = bid.getTotalCost(); // 총 비용 (입찰가 + 요금제 + 추가지원금)
             }
             
-            return ChatRoomResponse.from(chatRoom, sellerName, lastMessage, totalPrice);
+            // 읽지 않은 메시지 수 (상대방이 보낸 메시지 중 읽지 않은 메시지)
+            long unreadCount = chatMessageRepository.countUnreadMessagesByChatRoomIdAndUserId(chatRoom.getId(), userId);
+            
+            return ChatRoomResponse.from(chatRoom, sellerName, lastMessage, totalPrice, unreadCount);
         });
     }
 

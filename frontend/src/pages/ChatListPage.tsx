@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import useSWR, { mutate } from "swr";
+import useSWR from "swr";
 import { getChatRooms } from "services/chatService";
 import { realtimeDataConfig } from "services/swrConfig";
 import type { PaginatedChatRooms } from "types/ChatTypes";
@@ -28,10 +28,9 @@ const ChatListPage: React.FC = () => {
   // 각 채팅방의 읽지 않은 메시지 수 계산
   const unreadCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    // TODO: 백엔드에서 unreadCount를 제공하도록 수정 필요
-    // 현재는 임시로 0으로 설정
     chatRooms.forEach((room) => {
-      counts[room.id] = 0;
+      // 백엔드에서 unreadCount를 제공하면 사용하고, 없으면 0으로 설정
+      counts[room.id] = room.unreadCount ?? 0;
     });
     return counts;
   }, [chatRooms]);
@@ -83,7 +82,7 @@ const ChatListPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <h1 className="text-lg font-semibold text-gray-900">채팅</h1>
             {totalUnreadCount > 0 && (
-              <span className="bg-red-500 text-white text-xs font-medium rounded-full px-2 py-0.5 min-w-[20px] text-center">
+              <span className="bg-red-500 text-white text-[9px] font-medium rounded-md px-1 py-0.5 min-w-[16px] h-[16px] flex items-center justify-center leading-none">
                 {totalUnreadCount > 99 ? "99+" : totalUnreadCount}
               </span>
             )}

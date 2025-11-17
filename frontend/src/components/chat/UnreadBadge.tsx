@@ -5,6 +5,7 @@ interface UnreadBadgeProps {
 
 /**
  * 읽지 않은 메시지 수를 표시하는 배지 컴포넌트
+ * 99개까지는 숫자로 표시, 99개 이상이면 "99+"로 표시
  */
 export function UnreadBadge({ count, className = "" }: UnreadBadgeProps) {
   if (count === 0) {
@@ -14,12 +15,12 @@ export function UnreadBadge({ count, className = "" }: UnreadBadgeProps) {
   const displayCount = count > 99 ? "99+" : String(count);
 
   return (
-    <div
-      className={`bg-red-500 text-white rounded-full flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-medium ${className}`}
+    <span
+      className={`bg-red-500 text-white rounded-md flex items-center justify-center min-w-[16px] h-[16px] px-1 text-[9px] font-medium leading-none ${className}`}
       aria-label={`읽지 않은 메시지 ${count}개`}
     >
       {displayCount}
-    </div>
+    </span>
   );
 }
 

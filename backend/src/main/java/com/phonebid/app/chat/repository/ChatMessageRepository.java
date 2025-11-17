@@ -40,6 +40,17 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, UUID> 
     @Modifying
     @Query("DELETE FROM ChatMessage cm WHERE cm.chatRoom.id = :chatRoomId")
     void deleteByChatRoomId(@Param("chatRoomId") UUID chatRoomId);
+
+    /**
+     * 특정 채팅방에서 특정 사용자가 읽지 않은 메시지 수 조회
+     * (상대방이 보낸 메시지 중 읽지 않은 메시지)
+     */
+    @Query("SELECT COUNT(cm) FROM ChatMessage cm " +
+           "WHERE cm.chatRoom.id = :chatRoomId " +
+           "AND cm.sender.id != :userId " +
+           "AND cm.isRead = false")
+    long countUnreadMessagesByChatRoomIdAndUserId(@Param("chatRoomId") UUID chatRoomId, 
+                                                   @Param("userId") UUID userId);
 }
 
 

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import type { ChatRoom } from "types/ChatTypes";
 import { ChatAvatar } from "components/chat/ChatAvatar";
+import { UnreadBadge } from "components/chat/UnreadBadge";
 import { leaveChatRoom } from "services/chatService";
 import { mutate } from "swr";
 
@@ -223,15 +224,11 @@ export function ChatRoomCard({
         {/* 채팅방 정보 */}
         <div className="flex-1 min-w-0">
           {/* 업체명 영역 */}
-          <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-sm font-bold text-gray-900 truncate">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <h3 className="text-sm font-bold text-gray-900 truncate flex-1 min-w-0">
               {displayName}
             </h3>
-            {unreadCount > 0 && (
-              <span className="bg-red-500 text-white text-xs font-medium rounded-full px-1.5 py-0.5 min-w-[18px] text-center flex-shrink-0">
-                {unreadCount > 99 ? "99+" : unreadCount}
-              </span>
-            )}
+            <UnreadBadge count={unreadCount} className="flex-shrink-0" />
           </div>
           
           {/* 마지막 메시지 영역 */}

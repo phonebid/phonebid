@@ -35,6 +35,7 @@ export interface ChatRoom {
   sellerName?: string;
   lastMessage?: string;
   totalPrice?: number;
+  unreadCount?: number; // 읽지 않은 메시지 수
 }
 
 // 채팅 메시지 응답 타입
