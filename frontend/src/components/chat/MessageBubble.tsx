@@ -44,13 +44,6 @@ export function MessageBubble({
       )}
 
       <div className={`flex flex-col max-w-[70%] ${isCurrentUser ? "items-end" : "items-start"} relative`}>
-        {/* 발신자명 표시 (상대방 메시지일 때만) */}
-        {!isCurrentUser && senderName && (
-          <span className="text-xs text-gray-500 mb-1 px-1">
-            {senderName}
-          </span>
-        )}
-
         <div className="flex items-end gap-2">
           {/* 읽음 표시 (내 메시지이고 읽지 않았을 때만, 말풍선 밖 왼쪽 하단) */}
           {isCurrentUser && !message.isRead && (
