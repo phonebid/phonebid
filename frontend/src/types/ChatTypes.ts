@@ -33,6 +33,7 @@ export interface ChatRoom {
   createdAt: string;
   updatedAt: string;
   sellerName?: string;
+  consumerName?: string;
   lastMessage?: string;
   totalPrice?: number;
   unreadCount?: number; // 읽지 않은 메시지 수

@@ -109,11 +109,14 @@ public class ChatRoomService {
         // 판매자 가게 이름
         String sellerName = chatRoom.getSeller().getStoreName();
         
+        // 구매자 이름 (닉네임 사용)
+        String consumerName = chatRoom.getConsumer().getNickname();
+        
         // 읽지 않은 메시지 수
         long unreadCount = chatMessageRepository.countUnreadMessagesByChatRoomIdAndUserId(
                 chatRoomId, requesterId);
         
-        return ChatRoomResponse.from(chatRoom, sellerName, null, null, unreadCount);
+        return ChatRoomResponse.from(chatRoom, sellerName, consumerName, null, null, unreadCount);
     }
 
     /**
@@ -228,6 +231,9 @@ public class ChatRoomService {
             // 판매자 가게 이름
             String sellerName = chatRoom.getSeller().getStoreName();
             
+            // 구매자 이름 (닉네임 사용)
+            String consumerName = chatRoom.getConsumer().getNickname();
+            
             // 마지막 메시지
             Optional<ChatMessage> lastMessageOpt = chatMessageRepository
                     .findFirstByChatRoomIdOrderByCreatedAtDesc(chatRoom.getId());
@@ -249,7 +255,7 @@ public class ChatRoomService {
             // 읽지 않은 메시지 수 (상대방이 보낸 메시지 중 읽지 않은 메시지)
             long unreadCount = chatMessageRepository.countUnreadMessagesByChatRoomIdAndUserId(chatRoom.getId(), userId);
             
-            return ChatRoomResponse.from(chatRoom, sellerName, lastMessage, totalPrice, unreadCount);
+            return ChatRoomResponse.from(chatRoom, sellerName, consumerName, lastMessage, totalPrice, unreadCount);
         });
     }
 

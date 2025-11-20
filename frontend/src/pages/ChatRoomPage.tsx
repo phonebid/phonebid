@@ -694,7 +694,9 @@ const ChatRoomPage: React.FC = () => {
           </button>
           <div className="flex-1 flex justify-center">
             <h1 className="text-base font-semibold text-gray-900">
-              {chatRoom.sellerName || "채팅방"}
+              {user?.role === "CONSUMER" 
+                ? (chatRoom.sellerName || "채팅방")
+                : (chatRoom.consumerName || "채팅방")}
             </h1>
           </div>
         </div>
@@ -771,6 +773,13 @@ const ChatRoomPage: React.FC = () => {
                 <MessageBubble
                   message={message}
                   isCurrentUser={isCurrentUserMessage}
+                  senderName={
+                    !isCurrentUserMessage
+                      ? (user?.role === "CONSUMER"
+                          ? chatRoom.sellerName
+                          : chatRoom.consumerName)
+                      : undefined
+                  }
                 />
               </div>
             );
@@ -779,12 +788,12 @@ const ChatRoomPage: React.FC = () => {
         )}
 
         {/* 타이핑 인디케이터 */}
-        {isOtherUserTyping && typingUserId && (
+        {isOtherUserTyping && typingUserId && chatRoom && (
           <TypingIndicator
             senderName={
-              chatRoom?.sellerId === typingUserId
+              user?.role === "CONSUMER"
                 ? chatRoom.sellerName
-                : undefined
+                : chatRoom.consumerName
             }
             senderAvatar={undefined}
           />
