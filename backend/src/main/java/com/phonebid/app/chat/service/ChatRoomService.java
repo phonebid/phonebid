@@ -116,6 +116,13 @@ public class ChatRoomService {
         return ChatRoomResponse.from(chatRoom, sellerName, null, null, unreadCount);
     }
 
+    /**
+     * 채팅 메시지 목록 전체 조회 (오름차순).
+     * 
+     * @deprecated 역순 페이징 API 사용을 권장합니다. 전체 메시지를 한 번에 조회하므로 성능 이슈가 있을 수 있습니다.
+     *             대신 {@link #getChatMessagesPaginated(UUID, UUID, Pageable)}를 사용하세요.
+     */
+    @Deprecated
     @Transactional
     public List<ChatMessageResponse> getChatMessages(UUID chatRoomId, UUID requesterId) {
         // 채팅방 존재 여부 확인
@@ -128,6 +135,30 @@ public class ChatRoomService {
         return chatMessageRepository.findByChatRoomIdOrderByCreatedAtAsc(chatRoomId).stream()
                 .map(ChatMessageResponse::from)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 채팅 메시지 목록 역순 페이징 조회 (최신 메시지부터).
+     * 역순 무한스크롤을 위해 사용합니다.
+     * 
+     * @param chatRoomId 채팅방 ID
+     * @param requesterId 요청자 ID
+     * @param pageable 페이징 정보 (페이지 번호, 크기)
+     * @return 최신 메시지부터 정렬된 페이징된 메시지 목록
+     */
+    @Transactional(readOnly = true)
+    public Page<ChatMessageResponse> getChatMessagesPaginated(UUID chatRoomId, UUID requesterId, Pageable pageable) {
+        // 채팅방 존재 여부 확인
+        chatRoomRepository.findById(chatRoomId)
+                .orElseThrow(() -> new CustomException(ChatErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        // 채팅방 참여자만 메시지 조회 가능 (UserChatRoom 기반)
+        validateParticipantByUserChatRoom(chatRoomId, requesterId);
+
+        // 최신 메시지부터 페이징 조회 (내림차순)
+        Page<ChatMessage> messagePage = chatMessageRepository.findByChatRoomIdOrderByCreatedAtDesc(chatRoomId, pageable);
+        
+        return messagePage.map(ChatMessageResponse::from);
     }
 
     @Transactional

@@ -94,3 +94,20 @@ export interface ChatRoomsQueryParams {
   size?: number;
 }
 
+// 페이징된 채팅 메시지 목록 응답 타입
+export interface PaginatedChatMessages {
+  content: ChatMessage[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+}
+
+// 채팅 메시지 페이징 조회 파라미터
+export interface ChatMessagesQueryParams {
+  page?: number;
+  size?: number;
+}
+

@@ -4,6 +4,8 @@ import com.phonebid.app.chat.domain.ChatMessage;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -14,8 +16,22 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, UUID> 
     /**
      * 채팅방 내 메시지를 작성 시각 기준 오름차순으로 조회.
      * UI에서 시간순 정렬된 메시지 목록을 제공하기 위해 사용한다.
+     * 
+     * @deprecated 역순 페이징 API 사용을 권장, 전체 메시지를 한 번에 조회하므로 성능 이슈가 있을 수 있음.
+     *             대신 {@link #findByChatRoomIdOrderByCreatedAtDesc(UUID, Pageable)}를 사용
      */
+    @Deprecated
     List<ChatMessage> findByChatRoomIdOrderByCreatedAtAsc(UUID chatRoomId);
+
+    /**
+     * 채팅방 내 메시지를 작성 시각 기준 내림차순으로 페이징 조회 (최신 메시지부터).
+     * 역순 무한스크롤을 위해 사용한다.
+     * 
+     * @param chatRoomId 채팅방 ID
+     * @param pageable 페이징 정보 (페이지 번호, 크기)
+     * @return 최신 메시지부터 정렬된 페이징된 메시지 목록
+     */
+    Page<ChatMessage> findByChatRoomIdOrderByCreatedAtDesc(UUID chatRoomId, Pageable pageable);
 
     /**
      * 특정 채팅방의 지정된 메시지들만 조회.

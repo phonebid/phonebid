@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import useSWR from "swr";
-import { getChatRoom, getChatMessages, markMessagesAsRead } from "services/chatService";
+import { getChatRoom, getChatMessagesPaginated, markMessagesAsRead } from "services/chatService";
+import type { PaginatedChatMessages } from "types/ChatTypes";
 import { getQuoteDetail } from "services/quoteService";
 import { useWebSocket } from "hooks/useWebSocket";
 import { useAuthStore } from "store/authStore";
@@ -20,11 +21,17 @@ const ChatRoomPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isOtherUserTyping, setIsOtherUserTyping] = useState(false);
   const [typingUserId, setTypingUserId] = useState<string | null>(null);
   const isInitialLoadRef = useRef<boolean>(true);
   const prevChatRoomIdRef = useRef<string | undefined>(undefined);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const isUserAtBottomRef = useRef<boolean>(true);
+  const PAGE_SIZE = 20;
   
   // 읽음 처리된 메시지 ID를 로컬 스토리지에 저장하는 헬퍼 함수
   const getReadMessageIds = useCallback((roomId: string): Set<string> => {
@@ -73,25 +80,27 @@ const ChatRoomPage: React.FC = () => {
     }
   );
 
-  // 메시지 목록 조회
+  // 초기 메시지 목록 조회 (첫 페이지만)
   const {
-    data: initialMessages,
+    data: initialMessagesPage,
     error: messagesError,
     isLoading: messagesLoading,
-  } = useSWR<ChatMessage[]>(
-    chatRoomId ? `/chat/rooms/${chatRoomId}/messages` : null,
+  } = useSWR<PaginatedChatMessages>(
+    chatRoomId ? `/chat/rooms/${chatRoomId}/messages/paginated?page=0&size=${PAGE_SIZE}` : null,
     {
       ...realtimeDataConfig,
-      fetcher: () => getChatMessages(chatRoomId!),
+      fetcher: () => getChatMessagesPaginated(chatRoomId!, { page: 0, size: PAGE_SIZE }),
     }
   );
 
   // 초기 메시지 설정 및 읽음 상태 보존
   useEffect(() => {
-    if (initialMessages && chatRoomId && user && chatRoom) {
+    if (initialMessagesPage && chatRoomId && user && chatRoom) {
       const currentUserId = user.role === "CONSUMER" 
         ? chatRoom.consumerId 
         : chatRoom.sellerId;
+      
+      const initialMessages = initialMessagesPage.content;
       
       setMessages((prevMessages) => {
         // 로컬 스토리지에서 읽음 처리된 메시지 ID 가져오기
@@ -100,12 +109,27 @@ const ChatRoomPage: React.FC = () => {
         // 채팅방이 변경되었거나 기존 메시지가 없으면 (채팅방 진입 시)
         const isNewChatRoom = prevChatRoomIdRef.current !== chatRoomId;
         if (isNewChatRoom || prevMessages.length === 0) {
-          // 내가 보낸 메시지 중 로컬 스토리지에 읽음 처리된 메시지는 읽음 상태로 설정
-          const messagesWithReadStatus = initialMessages.map((msg) => {
-            // 내가 보낸 메시지이고 로컬 스토리지에 읽음 처리되어 있으면 읽음 상태로 설정
+          // 페이징 정보 설정
+          setHasMoreMessages(!initialMessagesPage.last);
+          setCurrentPage(0);
+          
+          // 메시지를 시간순으로 정렬
+          const sortedMessages = [...initialMessages].sort((a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+          
+          // 읽음 상태 설정 (서버에서 받은 읽음 상태를 우선 사용)
+          const messagesWithReadStatus = sortedMessages.map((msg) => {
+            // 서버에서 받은 읽음 상태를 우선 사용
+            if (msg.isRead) {
+              return msg;
+            }
+            
+            // 내가 보낸 메시지의 경우, 로컬 스토리지에 읽음 처리되어 있으면 읽음 상태로 설정
             if (msg.senderId === currentUserId && readMessageIds.has(msg.id)) {
               return { ...msg, isRead: true };
             }
+            
             return msg;
           });
           
@@ -120,8 +144,6 @@ const ChatRoomPage: React.FC = () => {
             
             // 읽음 처리 API 호출 (중복 호출 방지를 위해 한 번만 실행)
             if (isInitialLoadRef.current) {
-              isInitialLoadRef.current = false;
-              
               markMessagesAsRead({
                 chatRoomId: chatRoomId,
                 messageIds: messageIds,
@@ -146,9 +168,6 @@ const ChatRoomPage: React.FC = () => {
           }
           
           // 읽지 않은 메시지가 없으면 로컬 스토리지 상태 반영한 메시지 반환
-          if (isInitialLoadRef.current) {
-            isInitialLoadRef.current = false;
-          }
           return messagesWithReadStatus;
         }
         
@@ -176,13 +195,91 @@ const ChatRoomPage: React.FC = () => {
         return mergedMessages;
       });
     }
-  }, [initialMessages, chatRoomId, user, chatRoom, getReadMessageIds, saveReadMessageIds]);
+  }, [initialMessagesPage, chatRoomId, user, chatRoom, getReadMessageIds, saveReadMessageIds]);
+
+  // 이전 페이지 로드 함수
+  const loadPreviousPage = useCallback(async () => {
+    if (!chatRoomId || isLoadingMore || !hasMoreMessages || !user || !chatRoom) return;
+
+    setIsLoadingMore(true);
+    try {
+      const nextPage = currentPage + 1;
+      const response = await getChatMessagesPaginated(chatRoomId, {
+        page: nextPage,
+        size: PAGE_SIZE,
+      });
+
+      if (response.content.length > 0) {
+        setMessages((prev) => {
+          // 기존 메시지와 새 메시지 병합 (중복 제거)
+          const existingIds = new Set(prev.map((msg) => msg.id));
+          const newMessages = response.content.filter(
+            (msg) => !existingIds.has(msg.id)
+          );
+          
+          // 현재 사용자 ID 확인
+          const currentUserId = user.role === "CONSUMER" 
+            ? chatRoom.consumerId 
+            : chatRoom.sellerId;
+          
+          // 로컬 스토리지에서 읽음 처리된 메시지 ID 가져오기
+          const readMessageIds = getReadMessageIds(chatRoomId);
+          
+          // 기존 메시지의 읽음 상태 맵 생성
+          const existingReadStatusMap = new Map<string, boolean>();
+          prev.forEach((msg) => {
+            existingReadStatusMap.set(msg.id, msg.isRead);
+          });
+          
+          // 새 메시지에 읽음 상태 적용
+          const newMessagesWithReadStatus = newMessages.map((msg) => {
+            // 기존 메시지에 이미 읽음 상태가 있으면 사용
+            const existingReadStatus = existingReadStatusMap.get(msg.id);
+            if (existingReadStatus !== undefined) {
+              return { ...msg, isRead: existingReadStatus };
+            }
+            
+            // 서버에서 받은 읽음 상태를 우선 사용
+            if (msg.isRead) {
+              return msg;
+            }
+            
+            // 내가 보낸 메시지이고 로컬 스토리지에 읽음 처리되어 있으면 읽음 상태로 설정
+            if (msg.senderId === currentUserId && readMessageIds.has(msg.id)) {
+              return { ...msg, isRead: true };
+            }
+            
+            // 서버 상태 사용
+            return msg;
+          });
+          
+          // 백엔드에서 내림차순(최신→오래된)으로 반환하므로,
+          // 이전 페이지 메시지는 기존 메시지 앞에 추가해야 함
+          // 전체를 시간순으로 정렬 (오래된 것부터)
+          return [...newMessagesWithReadStatus, ...prev].sort(
+            (a, b) =>
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+        });
+        setCurrentPage(nextPage);
+        setHasMoreMessages(!response.last);
+      } else {
+        setHasMoreMessages(false);
+      }
+    } catch (error) {
+      console.error("Failed to load previous page:", error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [chatRoomId, currentPage, hasMoreMessages, isLoadingMore, user, chatRoom, getReadMessageIds]);
 
   // 채팅방 진입 시 읽지 않은 메시지 자동 읽음 처리
   useEffect(() => {
-    if (!chatRoomId || !initialMessages || !user || !chatRoom) {
+    if (!chatRoomId || !initialMessagesPage || !user || !chatRoom) {
       return;
     }
+
+    const initialMessages = initialMessagesPage.content;
 
     // 역할에 따라 현재 사용자 ID 결정
     let currentUserId: string | undefined;
@@ -224,14 +321,17 @@ const ChatRoomPage: React.FC = () => {
           console.error("Failed to mark messages as read:", error);
         });
     }
-  }, [chatRoomId, initialMessages, user, chatRoom, saveReadMessageIds]);
+  }, [chatRoomId, initialMessagesPage, user, chatRoom, saveReadMessageIds]);
 
   // 채팅방 변경 시 초기 로드 플래그 리셋 및 메시지 초기화
   useEffect(() => {
-    // chatRoomId가 변경되었을 때만 메시지 초기화
-    if (prevChatRoomIdRef.current !== undefined && prevChatRoomIdRef.current !== chatRoomId) {
+    // chatRoomId가 변경되었을 때 또는 처음 진입할 때 메시지 초기화
+    if (prevChatRoomIdRef.current !== chatRoomId) {
       setMessages([]);
-      isInitialLoadRef.current = true;
+      isInitialLoadRef.current = true; // 채팅방 진입 시 스크롤을 맨 아래로 이동하기 위한 플래그
+      setHasMoreMessages(true);
+      setCurrentPage(0);
+      isUserAtBottomRef.current = true;
     }
     prevChatRoomIdRef.current = chatRoomId;
   }, [chatRoomId]);
@@ -327,15 +427,14 @@ const ChatRoomPage: React.FC = () => {
       }
       
       setMessages((prev) => {
-        const messageIndex = prev.findIndex((msg) => msg.id === message.id);
-        if (messageIndex === -1) {
-          // 메시지가 없으면 추가하지 않음 (읽음 상태 업데이트만)
-          return prev;
-        }
-        // 읽음 상태 업데이트 (서버에서 받은 읽음 상태로 업데이트)
-        return prev.map((msg) =>
+        // 해당 메시지의 읽음 상태를 true로 업데이트
+        // 같은 ID를 가진 모든 메시지의 읽음 상태를 업데이트 (중복 방지)
+        const updated = prev.map((msg) =>
           msg.id === message.id ? { ...msg, isRead: true } : msg
         );
+        
+        // 메시지가 없으면 추가하지 않음 (읽음 상태 업데이트만)
+        return updated;
       });
     },
     onTyping: (event) => {
@@ -353,21 +452,115 @@ const ChatRoomPage: React.FC = () => {
     },
   });
 
-  // 자동 스크롤
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  // 사용자가 맨 아래에 있는지 확인
+  const checkIfUserAtBottom = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return false;
+    
+    const threshold = 100; // 100px 이내면 맨 아래로 간주
+    const isAtBottom = 
+      container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
+    
+    isUserAtBottomRef.current = isAtBottom;
+    return isAtBottom;
   }, []);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
+  // 맨 아래로 스크롤 (초기 로드 시 또는 새 메시지 수신 시)
+  const scrollToBottom = useCallback(() => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+  }, []);
 
-  // 타이핑 인디케이터 표시 시에도 스크롤
-  useEffect(() => {
-    if (isOtherUserTyping) {
+  // 초기 로드 시 맨 아래로 스크롤 (채팅방 진입 시 최신 메시지부터 보이도록)
+  // 애니메이션 없이 즉시 최신 메시지 위치로 이동
+  useLayoutEffect(() => {
+    if (messages.length > 0 && isInitialLoadRef.current) {
+      const container = messagesContainerRef.current;
+      if (!container) return;
+
+      // scroll-smooth를 일시적으로 제거하여 애니메이션 없이 즉시 이동
+      const originalScrollBehavior = container.style.scrollBehavior;
+      container.style.scrollBehavior = 'auto';
+      
+      // 스크롤을 맨 아래로 (최신 메시지가 맨 아래에 있음)
+      const scrollToBottom = () => {
+        container.scrollTop = container.scrollHeight;
+        isUserAtBottomRef.current = true;
+      };
+      
+      // 즉시 스크롤
       scrollToBottom();
+      
+      // DOM 업데이트 후 한 번 더 확인 (이미지 로딩 등으로 인한 높이 변경 대응)
+      requestAnimationFrame(() => {
+        scrollToBottom();
+        // 스크롤
+        container.style.scrollBehavior = originalScrollBehavior;
+        isInitialLoadRef.current = false;
+      });
+    }
+  }, [messages.length]);
+
+  // 새 메시지 수신 시 사용자가 맨 아래에 있을 때만 자동 스크롤
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container || messages.length === 0) return;
+
+    // 이전 스크롤 높이 저장
+    const prevScrollHeight = container.scrollHeight;
+    
+    // DOM 업데이트 후 스크롤 처리
+    setTimeout(() => {
+      const isAtBottom = checkIfUserAtBottom();
+      
+      if (isAtBottom) {
+        // 사용자가 맨 아래에 있으면 새 메시지로 스크롤
+        scrollToBottom();
+      } else {
+        // 사용자가 위에 있으면 스크롤 위치 유지
+        const newScrollHeight = container.scrollHeight;
+        const scrollDiff = newScrollHeight - prevScrollHeight;
+        container.scrollTop += scrollDiff;
+      }
+    }, 50);
+  }, [messages.length, scrollToBottom, checkIfUserAtBottom]);
+
+  // 타이핑 인디케이터 표시 시에도 스크롤 (사용자가 맨 아래에 있을 때만)
+  useEffect(() => {
+    if (isOtherUserTyping && isUserAtBottomRef.current) {
+      setTimeout(() => {
+        scrollToBottom();
+      }, 50);
     }
   }, [isOtherUserTyping, scrollToBottom]);
+
+  // 스크롤 이벤트 핸들러 (무한스크롤)
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      checkIfUserAtBottom();
+      
+      // 맨 위에 도달하면 이전 페이지 로드 (무한스크롤)
+      // 스크롤 위치가 50px 이내면 로드 (더 부드러운 UX)
+      if (container.scrollTop <= 50 && hasMoreMessages && !isLoadingMore) {
+        const prevScrollHeight = container.scrollHeight;
+        loadPreviousPage().then(() => {
+          // 스크롤 위치 유지 (새 메시지가 위에 추가되므로)
+          setTimeout(() => {
+            const newScrollHeight = container.scrollHeight;
+            const scrollDiff = newScrollHeight - prevScrollHeight;
+            container.scrollTop = scrollDiff + container.scrollTop;
+          }, 50);
+        });
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [checkIfUserAtBottom, hasMoreMessages, isLoadingMore, loadPreviousPage]);
 
   // 메시지 전송
   const handleSendMessage = useCallback(
@@ -508,7 +701,17 @@ const ChatRoomPage: React.FC = () => {
       </div>
 
       {/* 메시지 영역 - 스크롤 가능 */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 scroll-smooth bg-indigo-50 min-h-0">
+      <div 
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto px-4 py-4 space-y-3 scroll-smooth bg-indigo-50 min-h-0"
+      >
+        {/* 이전 페이지 로딩 인디케이터 */}
+        {isLoadingMore && (
+          <div className="text-center text-gray-500 py-4">
+            <p className="text-sm">이전 메시지를 불러오는 중...</p>
+          </div>
+        )}
+        
         {messages.length === 0 ? (
           <>
             {/* 채팅방 생성일 날짜 구분선 */}
@@ -528,8 +731,13 @@ const ChatRoomPage: React.FC = () => {
             </div>
           </>
         ) : (
-          messages.map((message, index) => {
-            const prevMessage = index > 0 ? messages[index - 1] : undefined;
+          // 메시지를 시간순으로 정렬 (오래된 것부터 최신 순서)
+          (() => {
+            const sortedMessages = [...messages].sort((a, b) => 
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            );
+            return sortedMessages.map((message, index) => {
+              const prevMessage = index > 0 ? sortedMessages[index - 1] : undefined;
             const showDateSeparator =
               index === 0 ||
               !prevMessage ||
@@ -566,7 +774,8 @@ const ChatRoomPage: React.FC = () => {
                 />
               </div>
             );
-          })
+          });
+          })()
         )}
 
         {/* 타이핑 인디케이터 */}

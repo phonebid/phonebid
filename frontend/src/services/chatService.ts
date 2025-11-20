@@ -6,6 +6,8 @@ import type {
   ChatMessageReadRequest,
   PaginatedChatRooms,
   ChatRoomsQueryParams,
+  PaginatedChatMessages,
+  ChatMessagesQueryParams,
 } from "types/ChatTypes";
 
 const BASE_URL = "/chat/rooms";
@@ -48,7 +50,8 @@ export const createChatRoom = async (
 };
 
 /**
- * 채팅 메시지 목록 조회
+ * 채팅 메시지 목록 조회 (전체)
+ * @deprecated 역순 페이징 API 사용을 권장합니다. 대신 getChatMessagesPaginated를 사용하세요.
  */
 export const getChatMessages = async (
   chatRoomId: string
@@ -56,6 +59,29 @@ export const getChatMessages = async (
   return await apiClient.get<ChatMessage[]>(
     `${BASE_URL}/${chatRoomId}/messages`
   );
+};
+
+/**
+ * 채팅 메시지 목록 역순 페이징 조회 (최신 메시지부터)
+ * 역순 무한스크롤을 위해 사용합니다.
+ */
+export const getChatMessagesPaginated = async (
+  chatRoomId: string,
+  params?: ChatMessagesQueryParams
+): Promise<PaginatedChatMessages> => {
+  const queryParams = new URLSearchParams();
+  if (params?.page !== undefined) {
+    queryParams.append("page", String(params.page));
+  }
+  if (params?.size !== undefined) {
+    queryParams.append("size", String(params.size));
+  }
+
+  const url = queryParams.toString()
+    ? `${BASE_URL}/${chatRoomId}/messages/paginated?${queryParams.toString()}`
+    : `${BASE_URL}/${chatRoomId}/messages/paginated`;
+
+  return await apiClient.get<PaginatedChatMessages>(url);
 };
 
 /**

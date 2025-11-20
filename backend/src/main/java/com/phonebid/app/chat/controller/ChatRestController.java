@@ -85,14 +85,39 @@ public class ChatRestController {
     }
 
     /**
-     * 채팅 메시지 목록 조회
+     * 채팅 메시지 목록 전체 조회 (오름차순).
+     * 
+     * @deprecated 역순 페이징 API 사용을 권장합니다. 전체 메시지를 한 번에 조회하므로 성능 이슈가 있을 수 있습니다.
+     *             대신 {@link #getMessagesPaginated(UUID, int, int, UserDetailsImpl)}를 사용하세요.
      */
+    @Deprecated
     @GetMapping("/{chatRoomId}/messages")
     public ResponseEntity<ApiResponse<List<ChatMessageResponse>>> getMessages(@PathVariable UUID chatRoomId,
                                                                               @AuthenticationPrincipal UserDetailsImpl userDetails) {
         UUID requesterId = resolveRequesterId(userDetails);
         List<ChatMessageResponse> responses = chatRoomService.getChatMessages(chatRoomId, requesterId);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "채팅 메시지를 조회했습니다.", responses));
+    }
+
+    /**
+     * 채팅 메시지 목록 역순 페이징 조회 (최신 메시지부터).
+     * 역순 무한스크롤을 위해 사용합니다.
+     * 
+     * @param chatRoomId 채팅방 ID
+     * @param page 페이지 번호 (0부터 시작, 기본값: 0)
+     * @param size 페이지 크기 (기본값: 20)
+     * @param userDetails 인증된 사용자 정보
+     * @return 최신 메시지부터 정렬된 페이징된 메시지 목록
+     */
+    @GetMapping("/{chatRoomId}/messages/paginated")
+    public ResponseEntity<ApiResponse<Page<ChatMessageResponse>>> getMessagesPaginated(@PathVariable UUID chatRoomId, 
+                                                                                       @RequestParam(defaultValue = "0") int page,
+                                                                                       @RequestParam(defaultValue = "20") int size,
+                                                                                       @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        UUID requesterId = resolveRequesterId(userDetails);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ChatMessageResponse> responses = chatRoomService.getChatMessagesPaginated(chatRoomId, requesterId, pageable);
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "채팅 메시지를 페이징 조회했습니다.", responses));
     }
 
     /**
