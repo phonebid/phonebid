@@ -6,6 +6,7 @@ import { ChatAvatar } from "components/chat/ChatAvatar";
 import { UnreadBadge } from "components/chat/UnreadBadge";
 import { leaveChatRoom } from "services/chatService";
 import { mutate } from "swr";
+import { useAuthStore } from "store/authStore";
 
 interface ChatRoomCardProps {
   room: ChatRoom;
@@ -25,6 +26,7 @@ export function ChatRoomCard({
   onLeave,
 }: ChatRoomCardProps) {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
@@ -172,7 +174,10 @@ export function ChatRoomCard({
     return price.toLocaleString("ko-KR");
   };
 
-  const displayName = room.sellerName || `채팅방 ${room.id.slice(0, 8)}`;
+  // 현재 사용자 역할에 따라 상대방 이름 표시
+  const displayName = user?.role === "CONSUMER"
+    ? (room.sellerName || `채팅방 ${room.id.slice(0, 8)}`)
+    : (room.consumerName || `채팅방 ${room.id.slice(0, 8)}`);
   const lastMessage = room.lastMessage || "메시지가 없습니다.";
   const totalPrice = room.totalPrice || 0;
 
