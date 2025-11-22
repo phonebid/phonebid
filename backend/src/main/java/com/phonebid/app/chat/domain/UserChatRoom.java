@@ -50,16 +50,11 @@ public class UserChatRoom extends BaseEntity {
     @Comment("채팅방 참여 시각")
     private LocalDateTime joinedAt;
 
-    @Column(name = "deleted_at")
-    @Comment("채팅방 나가기 시각 (null이면 접근 가능)")
-    private LocalDateTime deletedAt;
-
     @Builder
     public UserChatRoom(User user, ChatRoom chatRoom) {
         this.user = user;
         this.chatRoom = chatRoom;
         this.joinedAt = LocalDateTime.now();
-        this.deletedAt = null;
     }
 
     /**
