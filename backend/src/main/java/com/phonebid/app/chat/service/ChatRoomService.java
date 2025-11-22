@@ -243,7 +243,7 @@ public class ChatRoomService {
             
             // 총 견적 가격 (해당 판매자의 입찰 가격)
             Integer totalPrice = null;
-            Optional<Bid> bidOpt = bidRepository.findLatestByQuoteIdAndSellerId(
+            Optional<Bid> bidOpt = bidRepository.findFirstByQuote_IdAndSeller_SellerIdOrderByCreatedAtDesc(
                     chatRoom.getQuote().getId(),
                     chatRoom.getSeller().getSellerId()
             );

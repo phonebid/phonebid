@@ -10,10 +10,15 @@ import org.springframework.data.repository.query.Param;
 public interface BidRepository extends JpaRepository<Bid, UUID> {
 
     /**
-     * 특정 견적과 판매자에 대한 입찰 정보 조회
+     * 특정 견적과 판매자에 대한 최신 입찰 정보 조회
+     * 
+     * 수정 이유:
+     * - 기존 @Query 방식은 ORDER BY만 있고 LIMIT 1 제약이 없어서,
+     *   동일 견적·동일 판매자에 대해 여러 입찰이 존재할 경우 NonUniqueResultException 발생 가능
+     * - Spring Data 메서드 이름 규칙의 findFirst를 사용하여 자동으로 첫 번째 결과만 반환하도록 개선
+     * - findFirst + OrderByCreatedAtDesc 조합으로 최신 입찰 1건만 안전하게 조회
      */
-    @Query("SELECT b FROM Bid b WHERE b.quote.id = :quoteId AND b.seller.sellerId = :sellerId ORDER BY b.createdAt DESC")
-    Optional<Bid> findLatestByQuoteIdAndSellerId(@Param("quoteId") UUID quoteId, @Param("sellerId") UUID sellerId);
+    Optional<Bid> findFirstByQuote_IdAndSeller_SellerIdOrderByCreatedAtDesc(UUID quoteId, UUID sellerId);
 
     /**
      * 특정 견적에 대한 입찰 개수 조회
