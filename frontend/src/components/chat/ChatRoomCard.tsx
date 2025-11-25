@@ -16,7 +16,7 @@ interface ChatRoomCardProps {
 }
 
 /**
- * 채팅방 목록의 개별 카드 컴포넌트 (토스 스타일)
+ * 채팅방 목록의 개별 카드 컴포넌트
  * 스와이프 액션으로 채팅방 나가기 기능 제공
  */
 export function ChatRoomCard({
