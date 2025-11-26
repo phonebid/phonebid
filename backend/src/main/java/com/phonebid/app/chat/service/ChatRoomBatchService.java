@@ -1,9 +1,7 @@
 package com.phonebid.app.chat.service;
 
 import com.phonebid.app.chat.domain.ChatRoom;
-import com.phonebid.app.chat.repository.ChatMessageRepository;
 import com.phonebid.app.chat.repository.ChatRoomRepository;
-import com.phonebid.app.chat.repository.UserChatRoomRepository;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -11,8 +9,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 채팅방 관련 배치 작업을 처리하는 서비스
@@ -24,8 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ChatRoomBatchService {
 
     private final ChatRoomRepository chatRoomRepository;
-    private final UserChatRoomRepository userChatRoomRepository;
-    private final ChatMessageRepository chatMessageRepository;
+    private final ChatRoomDeletionService chatRoomDeletionService;
 
     /**
      * 양쪽 사용자 모두 삭제한 채팅방을 정리하는 배치 작업
@@ -54,7 +49,7 @@ public class ChatRoomBatchService {
             // 각 채팅방별로 별도 트랜잭션으로 삭제
             for (ChatRoom room : fullyDeletedRooms) {
                 try {
-                    int messageCount = deleteChatRoomInTransaction(room);
+                    int messageCount = chatRoomDeletionService.deleteChatRoomInTransaction(room);
                     deletedChatRoomCount++;
                     deletedMessageCount += messageCount;
                     
@@ -78,30 +73,6 @@ public class ChatRoomBatchService {
             log.error("채팅방 정리 배치 작업 중 예외 발생", e);
             throw e;
         }
-    }
-
-    /**
-     * 단일 채팅방을 삭제하는 트랜잭션 메서드
-     * 각 채팅방 삭제는 독립적인 트랜잭션으로 처리
-     * 
-     * @param room 삭제할 채팅방
-     * @return 삭제된 메시지 수
-     */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public int deleteChatRoomInTransaction(ChatRoom room) {
-        // 1. 메시지 수 확인 (삭제 전)
-        int messageCount = chatMessageRepository.countByChatRoomId(room.getId());
-        
-        // 2. 메시지 삭제
-        chatMessageRepository.deleteByChatRoomId(room.getId());
-        
-        // 3. UserChatRoom 삭제
-        userChatRoomRepository.deleteByChatRoomId(room.getId());
-        
-        // 4. ChatRoom 삭제
-        chatRoomRepository.delete(room);
-        
-        return messageCount;
     }
 }
 
