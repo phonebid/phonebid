@@ -13,9 +13,7 @@ import com.phonebid.app.auction.domain.Carrier;
 import com.phonebid.app.auction.domain.PurchaseMethod;
 import com.phonebid.app.auction.domain.Quote;
 import com.phonebid.app.chat.domain.ChatRoom;
-import com.phonebid.app.chat.repository.ChatMessageRepository;
 import com.phonebid.app.chat.repository.ChatRoomRepository;
-import com.phonebid.app.chat.repository.UserChatRoomRepository;
 import com.phonebid.app.member.domain.Role;
 import com.phonebid.app.member.domain.Seller;
 import com.phonebid.app.member.domain.User;
@@ -42,10 +40,7 @@ class ChatRoomBatchServiceTest {
     private ChatRoomRepository chatRoomRepository;
 
     @Mock
-    private UserChatRoomRepository userChatRoomRepository;
-
-    @Mock
-    private ChatMessageRepository chatMessageRepository;
+    private ChatRoomDeletionService chatRoomDeletionService;
 
     @InjectMocks
     private ChatRoomBatchService chatRoomBatchService;
@@ -63,24 +58,16 @@ class ChatRoomBatchServiceTest {
         List<ChatRoom> fullyDeletedRooms = Arrays.asList(room1, room2);
 
         when(chatRoomRepository.findFullyDeletedChatRooms()).thenReturn(fullyDeletedRooms);
-        when(chatMessageRepository.countByChatRoomId(chatRoomId1)).thenReturn(5);
-        when(chatMessageRepository.countByChatRoomId(chatRoomId2)).thenReturn(3);
+        when(chatRoomDeletionService.deleteChatRoomInTransaction(room1)).thenReturn(5);
+        when(chatRoomDeletionService.deleteChatRoomInTransaction(room2)).thenReturn(3);
 
         // when
         chatRoomBatchService.cleanupDeletedChatRooms();
 
         // then
-        verify(chatMessageRepository, times(2)).deleteByChatRoomId(any(UUID.class));
-        verify(chatMessageRepository).deleteByChatRoomId(chatRoomId1);
-        verify(chatMessageRepository).deleteByChatRoomId(chatRoomId2);
-        
-        verify(userChatRoomRepository, times(2)).deleteByChatRoomId(any(UUID.class));
-        verify(userChatRoomRepository).deleteByChatRoomId(chatRoomId1);
-        verify(userChatRoomRepository).deleteByChatRoomId(chatRoomId2);
-        
-        verify(chatRoomRepository, times(2)).delete(any(ChatRoom.class));
-        verify(chatRoomRepository).delete(room1);
-        verify(chatRoomRepository).delete(room2);
+        verify(chatRoomDeletionService, times(2)).deleteChatRoomInTransaction(any(ChatRoom.class));
+        verify(chatRoomDeletionService).deleteChatRoomInTransaction(room1);
+        verify(chatRoomDeletionService).deleteChatRoomInTransaction(room2);
     }
 
     @Test
@@ -93,9 +80,7 @@ class ChatRoomBatchServiceTest {
         chatRoomBatchService.cleanupDeletedChatRooms();
 
         // then
-        verify(chatMessageRepository, never()).deleteByChatRoomId(any(UUID.class));
-        verify(userChatRoomRepository, never()).deleteByChatRoomId(any(UUID.class));
-        verify(chatRoomRepository, never()).delete(any(ChatRoom.class));
+        verify(chatRoomDeletionService, never()).deleteChatRoomInTransaction(any(ChatRoom.class));
     }
 
     @Test
@@ -111,49 +96,36 @@ class ChatRoomBatchServiceTest {
         List<ChatRoom> fullyDeletedRooms = Arrays.asList(room1, room2);
 
         when(chatRoomRepository.findFullyDeletedChatRooms()).thenReturn(fullyDeletedRooms);
-        when(chatMessageRepository.countByChatRoomId(chatRoomId1)).thenReturn(2);
-        when(chatMessageRepository.countByChatRoomId(chatRoomId2)).thenReturn(1);
         
         // room1 삭제 시 예외 발생
-        doThrow(new RuntimeException("DB 오류")).when(chatMessageRepository).deleteByChatRoomId(chatRoomId1);
+        doThrow(new RuntimeException("DB 오류")).when(chatRoomDeletionService).deleteChatRoomInTransaction(room1);
+        when(chatRoomDeletionService.deleteChatRoomInTransaction(room2)).thenReturn(1);
 
         // when
         chatRoomBatchService.cleanupDeletedChatRooms();
 
         // then
         // room1은 실패했지만 room2는 성공해야 함
-        verify(chatMessageRepository).deleteByChatRoomId(chatRoomId1);
-        verify(chatMessageRepository).deleteByChatRoomId(chatRoomId2);
-        
-        verify(userChatRoomRepository).deleteByChatRoomId(chatRoomId2);
-        verify(chatRoomRepository).delete(room2);
-        
-        // room1은 메시지 삭제에서 실패했으므로 UserChatRoom과 ChatRoom 삭제는 호출되지 않음
-        verify(userChatRoomRepository, never()).deleteByChatRoomId(chatRoomId1);
-        verify(chatRoomRepository, never()).delete(room1);
+        verify(chatRoomDeletionService).deleteChatRoomInTransaction(room1);
+        verify(chatRoomDeletionService).deleteChatRoomInTransaction(room2);
     }
 
     @Test
-    @DisplayName("deleteChatRoomInTransaction은 메시지, UserChatRoom, ChatRoom을 순서대로 삭제해야 함")
-    void deleteChatRoomInTransaction_shouldDeleteInCorrectOrder() {
+    @DisplayName("cleanupDeletedChatRooms는 ChatRoomDeletionService를 통해 채팅방을 삭제해야 함")
+    void cleanupDeletedChatRooms_shouldCallDeletionService() {
         // given
         UUID chatRoomId = UUID.randomUUID();
         ChatRoom room = createChatRoom(chatRoomId);
         int messageCount = 10;
 
-        when(chatMessageRepository.countByChatRoomId(chatRoomId)).thenReturn(messageCount);
+        when(chatRoomRepository.findFullyDeletedChatRooms()).thenReturn(List.of(room));
+        when(chatRoomDeletionService.deleteChatRoomInTransaction(room)).thenReturn(messageCount);
 
         // when
-        int result = chatRoomBatchService.deleteChatRoomInTransaction(room);
+        chatRoomBatchService.cleanupDeletedChatRooms();
 
         // then
-        assertThat(result).isEqualTo(messageCount);
-        
-        // 순서 확인
-        verify(chatMessageRepository).countByChatRoomId(chatRoomId);
-        verify(chatMessageRepository).deleteByChatRoomId(chatRoomId);
-        verify(userChatRoomRepository).deleteByChatRoomId(chatRoomId);
-        verify(chatRoomRepository).delete(room);
+        verify(chatRoomDeletionService).deleteChatRoomInTransaction(room);
     }
 
     @Test
@@ -164,15 +136,13 @@ class ChatRoomBatchServiceTest {
         ChatRoom room = createChatRoom(chatRoomId);
         
         when(chatRoomRepository.findFullyDeletedChatRooms()).thenReturn(List.of(room));
-        when(chatMessageRepository.countByChatRoomId(chatRoomId)).thenReturn(0);
+        when(chatRoomDeletionService.deleteChatRoomInTransaction(room)).thenReturn(0);
 
         // when
         chatRoomBatchService.cleanupDeletedChatRooms();
 
         // then
-        verify(chatMessageRepository).deleteByChatRoomId(chatRoomId);
-        verify(userChatRoomRepository).deleteByChatRoomId(chatRoomId);
-        verify(chatRoomRepository).delete(room);
+        verify(chatRoomDeletionService).deleteChatRoomInTransaction(room);
     }
 
 
@@ -190,9 +160,7 @@ class ChatRoomBatchServiceTest {
             assertThat(e.getMessage()).contains("DB 연결 오류");
         }
 
-        verify(chatMessageRepository, never()).deleteByChatRoomId(any(UUID.class));
-        verify(userChatRoomRepository, never()).deleteByChatRoomId(any(UUID.class));
-        verify(chatRoomRepository, never()).delete(any(ChatRoom.class));
+        verify(chatRoomDeletionService, never()).deleteChatRoomInTransaction(any(ChatRoom.class));
     }
 
     @Test
@@ -204,15 +172,13 @@ class ChatRoomBatchServiceTest {
                 .toList();
 
         when(chatRoomRepository.findFullyDeletedChatRooms()).thenReturn(largeBatch);
-        when(chatMessageRepository.countByChatRoomId(any(UUID.class))).thenReturn(5);
+        when(chatRoomDeletionService.deleteChatRoomInTransaction(any(ChatRoom.class))).thenReturn(5);
 
         // when
         chatRoomBatchService.cleanupDeletedChatRooms();
 
         // then
-        verify(chatMessageRepository, times(150)).deleteByChatRoomId(any(UUID.class));
-        verify(userChatRoomRepository, times(150)).deleteByChatRoomId(any(UUID.class));
-        verify(chatRoomRepository, times(150)).delete(any(ChatRoom.class));
+        verify(chatRoomDeletionService, times(150)).deleteChatRoomInTransaction(any(ChatRoom.class));
     }
 
     @Test
@@ -224,62 +190,30 @@ class ChatRoomBatchServiceTest {
         int largeMessageCount = 1500;
 
         when(chatRoomRepository.findFullyDeletedChatRooms()).thenReturn(List.of(room));
-        when(chatMessageRepository.countByChatRoomId(chatRoomId)).thenReturn(largeMessageCount);
+        when(chatRoomDeletionService.deleteChatRoomInTransaction(room)).thenReturn(largeMessageCount);
 
         // when
         chatRoomBatchService.cleanupDeletedChatRooms();
 
         // then
-        verify(chatMessageRepository).countByChatRoomId(chatRoomId);
-        verify(chatMessageRepository).deleteByChatRoomId(chatRoomId);
-        verify(userChatRoomRepository).deleteByChatRoomId(chatRoomId);
-        verify(chatRoomRepository).delete(room);
+        verify(chatRoomDeletionService).deleteChatRoomInTransaction(room);
     }
 
     @Test
-    @DisplayName("deleteChatRoomInTransaction에서 ChatRoom 삭제 단계에서 실패해도 예외가 전파되어야 함")
-    void deleteChatRoomInTransaction_shouldPropagateExceptionOnChatRoomDelete() {
+    @DisplayName("ChatRoomDeletionService에서 예외 발생 시 cleanupDeletedChatRooms가 예외를 처리해야 함")
+    void cleanupDeletedChatRooms_shouldHandleExceptionFromDeletionService() {
         // given
         UUID chatRoomId = UUID.randomUUID();
         ChatRoom room = createChatRoom(chatRoomId);
 
-        when(chatMessageRepository.countByChatRoomId(chatRoomId)).thenReturn(5);
-        doThrow(new RuntimeException("ChatRoom 삭제 실패")).when(chatRoomRepository).delete(room);
+        when(chatRoomRepository.findFullyDeletedChatRooms()).thenReturn(List.of(room));
+        doThrow(new RuntimeException("ChatRoom 삭제 실패")).when(chatRoomDeletionService).deleteChatRoomInTransaction(room);
 
-        // when & then
-        try {
-            chatRoomBatchService.deleteChatRoomInTransaction(room);
-        } catch (RuntimeException e) {
-            assertThat(e.getMessage()).contains("ChatRoom 삭제 실패");
-        }
+        // when - 예외가 발생하지 않아야 함 (내부에서 처리)
+        chatRoomBatchService.cleanupDeletedChatRooms();
 
-        verify(chatMessageRepository).countByChatRoomId(chatRoomId);
-        verify(chatMessageRepository).deleteByChatRoomId(chatRoomId);
-        verify(userChatRoomRepository).deleteByChatRoomId(chatRoomId);
-        verify(chatRoomRepository).delete(room);
-    }
-
-    @Test
-    @DisplayName("deleteChatRoomInTransaction에서 UserChatRoom 삭제 단계에서 실패해도 예외가 전파되어야 함")
-    void deleteChatRoomInTransaction_shouldPropagateExceptionOnUserChatRoomDelete() {
-        // given
-        UUID chatRoomId = UUID.randomUUID();
-        ChatRoom room = createChatRoom(chatRoomId);
-
-        when(chatMessageRepository.countByChatRoomId(chatRoomId)).thenReturn(5);
-        doThrow(new RuntimeException("UserChatRoom 삭제 실패")).when(userChatRoomRepository).deleteByChatRoomId(chatRoomId);
-
-        // when & then
-        try {
-            chatRoomBatchService.deleteChatRoomInTransaction(room);
-        } catch (RuntimeException e) {
-            assertThat(e.getMessage()).contains("UserChatRoom 삭제 실패");
-        }
-
-        verify(chatMessageRepository).countByChatRoomId(chatRoomId);
-        verify(chatMessageRepository).deleteByChatRoomId(chatRoomId);
-        verify(userChatRoomRepository).deleteByChatRoomId(chatRoomId);
-        verify(chatRoomRepository, never()).delete(room);
+        // then
+        verify(chatRoomDeletionService).deleteChatRoomInTransaction(room);
     }
 
     @Test
@@ -295,38 +229,33 @@ class ChatRoomBatchServiceTest {
         List<ChatRoom> fullyDeletedRooms = Arrays.asList(room1, room2);
 
         when(chatRoomRepository.findFullyDeletedChatRooms()).thenReturn(fullyDeletedRooms);
-        when(chatMessageRepository.countByChatRoomId(chatRoomId1)).thenReturn(2);
-        when(chatMessageRepository.countByChatRoomId(chatRoomId2)).thenReturn(1);
         
         // 모든 채팅방 삭제 시 예외 발생
-        doThrow(new RuntimeException("메시지 삭제 실패")).when(chatMessageRepository).deleteByChatRoomId(any(UUID.class));
+        doThrow(new RuntimeException("메시지 삭제 실패")).when(chatRoomDeletionService).deleteChatRoomInTransaction(any(ChatRoom.class));
 
         // when - 예외가 발생하지 않아야 함
         chatRoomBatchService.cleanupDeletedChatRooms();
 
         // then
-        verify(chatMessageRepository, times(2)).deleteByChatRoomId(any(UUID.class));
-        verify(userChatRoomRepository, never()).deleteByChatRoomId(any(UUID.class));
-        verify(chatRoomRepository, never()).delete(any(ChatRoom.class));
+        verify(chatRoomDeletionService, times(2)).deleteChatRoomInTransaction(any(ChatRoom.class));
     }
 
     @Test
-    @DisplayName("deleteChatRoomInTransaction은 정확한 메시지 수를 반환해야 함")
-    void deleteChatRoomInTransaction_shouldReturnCorrectMessageCount() {
+    @DisplayName("cleanupDeletedChatRooms는 ChatRoomDeletionService로부터 정확한 메시지 수를 받아야 함")
+    void cleanupDeletedChatRooms_shouldReceiveCorrectMessageCount() {
         // given
         UUID chatRoomId = UUID.randomUUID();
         ChatRoom room = createChatRoom(chatRoomId);
-        int[] messageCounts = {0, 1, 10, 100, 1000};
+        int expectedMessageCount = 100;
 
-        for (int expectedCount : messageCounts) {
-            when(chatMessageRepository.countByChatRoomId(chatRoomId)).thenReturn(expectedCount);
+        when(chatRoomRepository.findFullyDeletedChatRooms()).thenReturn(List.of(room));
+        when(chatRoomDeletionService.deleteChatRoomInTransaction(room)).thenReturn(expectedMessageCount);
 
-            // when
-            int result = chatRoomBatchService.deleteChatRoomInTransaction(room);
+        // when
+        chatRoomBatchService.cleanupDeletedChatRooms();
 
-            // then
-            assertThat(result).isEqualTo(expectedCount);
-        }
+        // then
+        verify(chatRoomDeletionService).deleteChatRoomInTransaction(room);
     }
 
     private ChatRoom createChatRoom(UUID id) {
