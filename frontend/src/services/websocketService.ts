@@ -59,6 +59,17 @@ class WebSocketService {
   private readStatusSubscriptions: Map<string, StompSubscription> = new Map();
 
   /**
+   * 지연된 구독 요청 추적 (setTimeout ID 및 취소 함수)
+   */
+  private pendingSubscriptions: Map<
+    string,
+    {
+      timeoutId: NodeJS.Timeout;
+      cleanup: () => void;
+    }
+  > = new Map();
+
+  /**
    * WebSocket 연결 초기화
    */
   connect(): void {
@@ -152,6 +163,13 @@ class WebSocketService {
       this.readStatusSubscriptions.clear();
       this.readStatusCallbacks.clear();
 
+      // 지연된 구독 요청 취소
+      this.pendingSubscriptions.forEach(({ timeoutId, cleanup }) => {
+        clearTimeout(timeoutId);
+        cleanup();
+      });
+      this.pendingSubscriptions.clear();
+
       // 연결 해제
       this.client.deactivate();
       this.client = null;
@@ -167,18 +185,52 @@ class WebSocketService {
     chatRoomId: string,
     onMessage: (message: ChatMessage) => void
   ): () => void {
+    const subscriptionKey = `chat-${chatRoomId}`;
+    
     if (!this.client?.connected) {
       // 연결 중이면 연결 완료를 기다림
       if (this.connectionStatus === WebSocketConnectionStatus.CONNECTING) {
+        let timeoutId: NodeJS.Timeout | null = null;
+        let isCancelled = false;
+        
         const checkConnection = () => {
+          if (isCancelled) return;
+          
           if (this.client?.connected) {
-            this.subscribeToChatRoom(chatRoomId, onMessage);
+            const actualUnsubscribe = this.subscribeToChatRoom(chatRoomId, onMessage);
+            this.pendingSubscriptions.delete(subscriptionKey);
+            return actualUnsubscribe;
           } else if (this.connectionStatus === WebSocketConnectionStatus.CONNECTING) {
-            setTimeout(checkConnection, 500);
+            timeoutId = setTimeout(checkConnection, 500);
           }
         };
-        setTimeout(checkConnection, 500);
-        return () => {};
+        
+        timeoutId = setTimeout(checkConnection, 500);
+        
+        const cleanup = () => {
+          isCancelled = true;
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+          }
+          this.pendingSubscriptions.delete(subscriptionKey);
+          if (this.subscriptions.has(chatRoomId)) {
+            this.unsubscribeFromChatRoom(chatRoomId);
+          }
+          const callbacks = this.messageCallbacks.get(chatRoomId);
+          if (callbacks) {
+            const index = callbacks.indexOf(onMessage);
+            if (index > -1) {
+              callbacks.splice(index, 1);
+            }
+          }
+        };
+        
+        this.pendingSubscriptions.set(subscriptionKey, {
+          timeoutId: timeoutId!,
+          cleanup,
+        });
+        
+        return cleanup;
       }
       
       // 연결되지 않았으면 연결 시도
@@ -188,18 +240,51 @@ class WebSocketService {
       // 연결 대기 후 재시도 (최대 5초)
       let attempts = 0;
       const maxAttempts = 10;
+      let timeoutId: NodeJS.Timeout | null = null;
+      let isCancelled = false;
+      
       const checkAndSubscribe = () => {
+        if (isCancelled) return;
+        
         attempts++;
         if (this.client?.connected) {
-          this.subscribeToChatRoom(chatRoomId, onMessage);
+          const actualUnsubscribe = this.subscribeToChatRoom(chatRoomId, onMessage);
+          this.pendingSubscriptions.delete(subscriptionKey);
+          return actualUnsubscribe;
         } else if (attempts < maxAttempts && this.connectionStatus !== WebSocketConnectionStatus.ERROR) {
-          setTimeout(checkAndSubscribe, 500);
+          timeoutId = setTimeout(checkAndSubscribe, 500);
         } else {
           console.error("Failed to subscribe: WebSocket connection failed");
+          this.pendingSubscriptions.delete(subscriptionKey);
         }
       };
-      setTimeout(checkAndSubscribe, 500);
-      return () => {};
+      
+      timeoutId = setTimeout(checkAndSubscribe, 500);
+      
+      const cleanup = () => {
+        isCancelled = true;
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+        this.pendingSubscriptions.delete(subscriptionKey);
+        if (this.subscriptions.has(chatRoomId)) {
+          this.unsubscribeFromChatRoom(chatRoomId);
+        }
+        const callbacks = this.messageCallbacks.get(chatRoomId);
+        if (callbacks) {
+          const index = callbacks.indexOf(onMessage);
+          if (index > -1) {
+            callbacks.splice(index, 1);
+          }
+        }
+      };
+      
+      this.pendingSubscriptions.set(subscriptionKey, {
+        timeoutId: timeoutId!,
+        cleanup,
+      });
+      
+      return cleanup;
     }
 
     // 이미 구독 중이면 기존 구독 해제
@@ -280,18 +365,54 @@ class WebSocketService {
     chatRoomId: string,
     onReadStatus: (message: ChatMessage) => void
   ): () => void {
+    const subscriptionKey = `read-${chatRoomId}`;
+    
     if (!this.client?.connected) {
       // 연결 중이면 연결 완료를 기다림
       if (this.connectionStatus === WebSocketConnectionStatus.CONNECTING) {
+        let timeoutId: NodeJS.Timeout | null = null;
+        let isCancelled = false;
+        
         const checkConnection = () => {
+          if (isCancelled) return;
+          
           if (this.client?.connected) {
-            this.subscribeToReadStatus(chatRoomId, onReadStatus);
+            const actualUnsubscribe = this.subscribeToReadStatus(chatRoomId, onReadStatus);
+            this.pendingSubscriptions.delete(subscriptionKey);
+            return actualUnsubscribe;
           } else if (this.connectionStatus === WebSocketConnectionStatus.CONNECTING) {
-            setTimeout(checkConnection, 500);
+            timeoutId = setTimeout(checkConnection, 500);
           }
         };
-        setTimeout(checkConnection, 500);
-        return () => {};
+        
+        timeoutId = setTimeout(checkConnection, 500);
+        
+        const cleanup = () => {
+          isCancelled = true;
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+          }
+          this.pendingSubscriptions.delete(subscriptionKey);
+          if (this.readStatusSubscriptions.has(chatRoomId)) {
+            const subscription = this.readStatusSubscriptions.get(chatRoomId);
+            subscription?.unsubscribe();
+            this.readStatusSubscriptions.delete(chatRoomId);
+          }
+          const callbacks = this.readStatusCallbacks.get(chatRoomId);
+          if (callbacks) {
+            const index = callbacks.indexOf(onReadStatus);
+            if (index > -1) {
+              callbacks.splice(index, 1);
+            }
+          }
+        };
+        
+        this.pendingSubscriptions.set(subscriptionKey, {
+          timeoutId: timeoutId!,
+          cleanup,
+        });
+        
+        return cleanup;
       }
       
       // 연결되지 않았으면 연결 시도
@@ -301,18 +422,53 @@ class WebSocketService {
       // 연결 대기 후 재시도 (최대 5초)
       let attempts = 0;
       const maxAttempts = 10;
+      let timeoutId: NodeJS.Timeout | null = null;
+      let isCancelled = false;
+      
       const checkAndSubscribe = () => {
+        if (isCancelled) return;
+        
         attempts++;
         if (this.client?.connected) {
-          this.subscribeToReadStatus(chatRoomId, onReadStatus);
+          const actualUnsubscribe = this.subscribeToReadStatus(chatRoomId, onReadStatus);
+          this.pendingSubscriptions.delete(subscriptionKey);
+          return actualUnsubscribe;
         } else if (attempts < maxAttempts && this.connectionStatus !== WebSocketConnectionStatus.ERROR) {
-          setTimeout(checkAndSubscribe, 500);
+          timeoutId = setTimeout(checkAndSubscribe, 500);
         } else {
           console.error("Failed to subscribe: WebSocket connection failed");
+          this.pendingSubscriptions.delete(subscriptionKey);
         }
       };
-      setTimeout(checkAndSubscribe, 500);
-      return () => {};
+      
+      timeoutId = setTimeout(checkAndSubscribe, 500);
+      
+      const cleanup = () => {
+        isCancelled = true;
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+        this.pendingSubscriptions.delete(subscriptionKey);
+        if (this.readStatusSubscriptions.has(chatRoomId)) {
+          const subscription = this.readStatusSubscriptions.get(chatRoomId);
+          subscription?.unsubscribe();
+          this.readStatusSubscriptions.delete(chatRoomId);
+        }
+        const callbacks = this.readStatusCallbacks.get(chatRoomId);
+        if (callbacks) {
+          const index = callbacks.indexOf(onReadStatus);
+          if (index > -1) {
+            callbacks.splice(index, 1);
+          }
+        }
+      };
+      
+      this.pendingSubscriptions.set(subscriptionKey, {
+        timeoutId: timeoutId!,
+        cleanup,
+      });
+      
+      return cleanup;
     }
 
     // 이미 구독 중이면 기존 구독 해제
@@ -364,18 +520,54 @@ class WebSocketService {
     chatRoomId: string,
     onTyping: (event: TypingEvent) => void
   ): () => void {
+    const subscriptionKey = `typing-${chatRoomId}`;
+    
     if (!this.client?.connected) {
       // 연결 중이면 연결 완료를 기다림
       if (this.connectionStatus === WebSocketConnectionStatus.CONNECTING) {
+        let timeoutId: NodeJS.Timeout | null = null;
+        let isCancelled = false;
+        
         const checkConnection = () => {
+          if (isCancelled) return;
+          
           if (this.client?.connected) {
-            this.subscribeToTyping(chatRoomId, onTyping);
+            const actualUnsubscribe = this.subscribeToTyping(chatRoomId, onTyping);
+            this.pendingSubscriptions.delete(subscriptionKey);
+            return actualUnsubscribe;
           } else if (this.connectionStatus === WebSocketConnectionStatus.CONNECTING) {
-            setTimeout(checkConnection, 500);
+            timeoutId = setTimeout(checkConnection, 500);
           }
         };
-        setTimeout(checkConnection, 500);
-        return () => {};
+        
+        timeoutId = setTimeout(checkConnection, 500);
+        
+        const cleanup = () => {
+          isCancelled = true;
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+          }
+          this.pendingSubscriptions.delete(subscriptionKey);
+          if (this.typingSubscriptions.has(chatRoomId)) {
+            const subscription = this.typingSubscriptions.get(chatRoomId);
+            subscription?.unsubscribe();
+            this.typingSubscriptions.delete(chatRoomId);
+          }
+          const callbacks = this.typingCallbacks.get(chatRoomId);
+          if (callbacks) {
+            const index = callbacks.indexOf(onTyping);
+            if (index > -1) {
+              callbacks.splice(index, 1);
+            }
+          }
+        };
+        
+        this.pendingSubscriptions.set(subscriptionKey, {
+          timeoutId: timeoutId!,
+          cleanup,
+        });
+        
+        return cleanup;
       }
       
       // 연결되지 않았으면 연결 시도
@@ -385,18 +577,53 @@ class WebSocketService {
       // 연결 대기 후 재시도 (최대 5초)
       let attempts = 0;
       const maxAttempts = 10;
+      let timeoutId: NodeJS.Timeout | null = null;
+      let isCancelled = false;
+      
       const checkAndSubscribe = () => {
+        if (isCancelled) return;
+        
         attempts++;
         if (this.client?.connected) {
-          this.subscribeToTyping(chatRoomId, onTyping);
+          const actualUnsubscribe = this.subscribeToTyping(chatRoomId, onTyping);
+          this.pendingSubscriptions.delete(subscriptionKey);
+          return actualUnsubscribe;
         } else if (attempts < maxAttempts && this.connectionStatus !== WebSocketConnectionStatus.ERROR) {
-          setTimeout(checkAndSubscribe, 500);
+          timeoutId = setTimeout(checkAndSubscribe, 500);
         } else {
           console.error("Failed to subscribe: WebSocket connection failed");
+          this.pendingSubscriptions.delete(subscriptionKey);
         }
       };
-      setTimeout(checkAndSubscribe, 500);
-      return () => {};
+      
+      timeoutId = setTimeout(checkAndSubscribe, 500);
+      
+      const cleanup = () => {
+        isCancelled = true;
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+        this.pendingSubscriptions.delete(subscriptionKey);
+        if (this.typingSubscriptions.has(chatRoomId)) {
+          const subscription = this.typingSubscriptions.get(chatRoomId);
+          subscription?.unsubscribe();
+          this.typingSubscriptions.delete(chatRoomId);
+        }
+        const callbacks = this.typingCallbacks.get(chatRoomId);
+        if (callbacks) {
+          const index = callbacks.indexOf(onTyping);
+          if (index > -1) {
+            callbacks.splice(index, 1);
+          }
+        }
+      };
+      
+      this.pendingSubscriptions.set(subscriptionKey, {
+        timeoutId: timeoutId!,
+        cleanup,
+      });
+      
+      return cleanup;
     }
 
     // 이미 구독 중이면 기존 구독 해제
