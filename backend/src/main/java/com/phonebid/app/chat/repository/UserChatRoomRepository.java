@@ -24,16 +24,18 @@ public interface UserChatRoomRepository extends JpaRepository<UserChatRoom, UUID
      * 사용자 ID와 채팅방 ID로 활성 상태의 UserChatRoom 조회 (나가지 않은 채팅방)
      */
     @Query("SELECT ucr FROM UserChatRoom ucr " +
-           "WHERE ucr.user.id = :userId AND ucr.chatRoom.id = :chatRoomId AND ucr.deletedAt IS NULL")
+           "WHERE ucr.user.id = :userId AND ucr.chatRoom.id = :chatRoomId " +
+           "AND ucr.deletedAt IS NULL AND (ucr.isDelete = false OR ucr.isDelete IS NULL)")
     Optional<UserChatRoom> findActiveByUserIdAndChatRoomId(@Param("userId") UUID userId, 
                                                              @Param("chatRoomId") UUID chatRoomId);
 
     /**
      * 사용자가 참여한 활성 채팅방 목록 조회 (페이징)
-     * deletedAt이 null인 것만 조회
+     * deletedAt이 null이고 isDelete가 false인 것만 조회
      */
     @Query("SELECT ucr FROM UserChatRoom ucr " +
            "WHERE ucr.user.id = :userId AND ucr.deletedAt IS NULL " +
+           "AND (ucr.isDelete = false OR ucr.isDelete IS NULL) " +
            "ORDER BY ucr.chatRoom.createdAt DESC")
     Page<UserChatRoom> findActiveChatRoomsByUserId(@Param("userId") UUID userId, Pageable pageable);
 
@@ -41,22 +43,25 @@ public interface UserChatRoomRepository extends JpaRepository<UserChatRoom, UUID
      * 채팅방에 참여한 모든 활성 사용자 조회
      */
     @Query("SELECT ucr FROM UserChatRoom ucr " +
-           "WHERE ucr.chatRoom.id = :chatRoomId AND ucr.deletedAt IS NULL")
+           "WHERE ucr.chatRoom.id = :chatRoomId AND ucr.deletedAt IS NULL " +
+           "AND (ucr.isDelete = false OR ucr.isDelete IS NULL)")
     List<UserChatRoom> findActiveUsersByChatRoomId(@Param("chatRoomId") UUID chatRoomId);
 
     /**
      * 채팅방에 특정 사용자가 참여 중인지 확인
      */
     @Query("SELECT COUNT(ucr) > 0 FROM UserChatRoom ucr " +
-           "WHERE ucr.user.id = :userId AND ucr.chatRoom.id = :chatRoomId AND ucr.deletedAt IS NULL")
+           "WHERE ucr.user.id = :userId AND ucr.chatRoom.id = :chatRoomId " +
+           "AND ucr.deletedAt IS NULL AND (ucr.isDelete = false OR ucr.isDelete IS NULL)")
     boolean existsActiveByUserIdAndChatRoomId(@Param("userId") UUID userId, 
                                                @Param("chatRoomId") UUID chatRoomId);
 
     /**
-     * 채팅방의 활성 멤버 수 조회 (deletedAt이 null인 사용자 수)
+     * 채팅방의 활성 멤버 수 조회 (deletedAt이 null이고 isDelete가 false인 사용자 수)
      */
     @Query("SELECT COUNT(ucr) FROM UserChatRoom ucr " +
-           "WHERE ucr.chatRoom.id = :chatRoomId AND ucr.deletedAt IS NULL")
+           "WHERE ucr.chatRoom.id = :chatRoomId AND ucr.deletedAt IS NULL " +
+           "AND (ucr.isDelete = false OR ucr.isDelete IS NULL)")
     long countActiveMembersByChatRoomId(@Param("chatRoomId") UUID chatRoomId);
 
     /**

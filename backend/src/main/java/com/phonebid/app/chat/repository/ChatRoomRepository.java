@@ -33,7 +33,8 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, UUID> {
      */
     @Query("SELECT DISTINCT cr FROM ChatRoom cr " +
            "WHERE (SELECT COUNT(ucr) FROM UserChatRoom ucr " +
-           "WHERE ucr.chatRoom.id = cr.id AND ucr.deletedAt IS NULL) = 0")
+           "WHERE ucr.chatRoom.id = cr.id AND ucr.deletedAt IS NULL " +
+           "AND (ucr.isDelete = false OR ucr.isDelete IS NULL)) = 0")
     List<ChatRoom> findFullyDeletedChatRooms();
 }
 
