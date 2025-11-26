@@ -273,56 +273,6 @@ const ChatRoomPage: React.FC = () => {
     }
   }, [chatRoomId, currentPage, hasMoreMessages, isLoadingMore, user, chatRoom, getReadMessageIds]);
 
-  // 채팅방 진입 시 읽지 않은 메시지 자동 읽음 처리
-  useEffect(() => {
-    if (!chatRoomId || !initialMessagesPage || !user || !chatRoom) {
-      return;
-    }
-
-    const initialMessages = initialMessagesPage.content;
-
-    // 역할에 따라 현재 사용자 ID 결정
-    let currentUserId: string | undefined;
-    if (user.role === "CONSUMER") {
-      currentUserId = chatRoom.consumerId;
-    } else if (user.role === "SELLER") {
-      currentUserId = chatRoom.sellerId;
-    } else {
-      // 알 수 없는 역할인 경우 처리하지 않음
-      console.warn(`[ChatRoomPage] 알 수 없는 사용자 역할: ${user.role}`);
-      return;
-    }
-
-    // currentUserId가 없으면 처리하지 않음
-    if (!currentUserId) {
-      console.warn(`[ChatRoomPage] currentUserId를 찾을 수 없습니다. role: ${user.role}, consumerId: ${chatRoom.consumerId}, sellerId: ${chatRoom.sellerId}`);
-      return;
-    }
-    
-    // 읽지 않은 메시지 필터링 (상대방이 보낸 메시지 중 읽지 않은 메시지)
-    const unreadMessages = initialMessages.filter(
-      (msg) => msg.senderId !== currentUserId && !msg.isRead
-    );
-    
-    // 읽지 않은 메시지가 있으면 읽음 처리
-    if (unreadMessages.length > 0) {
-      const messageIds = unreadMessages.map((msg) => msg.id);
-      
-      // 읽음 처리 API 호출
-      markMessagesAsRead({
-        chatRoomId: chatRoomId,
-        messageIds: messageIds,
-      })
-        .then(() => {
-          // 읽음 처리 성공 시 로컬 스토리지에 저장
-          saveReadMessageIds(chatRoomId, messageIds);
-        })
-        .catch((error) => {
-          console.error("Failed to mark messages as read:", error);
-        });
-    }
-  }, [chatRoomId, initialMessagesPage, user, chatRoom, saveReadMessageIds]);
-
   // 채팅방 변경 시 초기 로드 플래그 리셋 및 메시지 초기화
   useEffect(() => {
     // chatRoomId가 변경되었을 때 또는 처음 진입할 때 메시지 초기화
