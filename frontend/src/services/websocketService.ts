@@ -62,13 +62,30 @@ class WebSocketService {
    * WebSocket 연결 초기화
    */
   connect(): void {
+    // 이미 연결되어 있으면 중복 연결 방지
     if (this.client?.connected) {
       console.log("WebSocket already connected");
       return;
     }
 
+    // 이미 연결 중이면 중복 연결 방지
+    if (this.connectionStatus === WebSocketConnectionStatus.CONNECTING) {
+      console.log("WebSocket connection already in progress");
+      return;
+    }
+
     const baseUrl = getApiBaseUrl();
-    const wsUrl = `${baseUrl}/ws/chat`;
+    const token = localStorage.getItem("accessToken");
+    
+    if (!token) {
+      console.error("JWT 토큰이 없습니다. WebSocket 연결을 중단합니다.");
+      this.connectionStatus = WebSocketConnectionStatus.ERROR;
+      this.notifyStatusChange();
+      return;
+    }
+
+    // JWT 토큰을 쿼리 파라미터로 전달 (SockJS는 헤더 설정이 제한적이므로)
+    const wsUrl = `${baseUrl}/ws/chat?token=${encodeURIComponent(token)}`;
 
     this.client = new Client({
       webSocketFactory: () => new SockJS(wsUrl) as unknown as WebSocket,
@@ -151,12 +168,37 @@ class WebSocketService {
     onMessage: (message: ChatMessage) => void
   ): () => void {
     if (!this.client?.connected) {
+      // 연결 중이면 연결 완료를 기다림
+      if (this.connectionStatus === WebSocketConnectionStatus.CONNECTING) {
+        const checkConnection = () => {
+          if (this.client?.connected) {
+            this.subscribeToChatRoom(chatRoomId, onMessage);
+          } else if (this.connectionStatus === WebSocketConnectionStatus.CONNECTING) {
+            setTimeout(checkConnection, 500);
+          }
+        };
+        setTimeout(checkConnection, 500);
+        return () => {};
+      }
+      
+      // 연결되지 않았으면 연결 시도
       console.warn("WebSocket not connected. Attempting to connect...");
       this.connect();
-      // 연결 대기 후 재시도
-      setTimeout(() => {
-        this.subscribeToChatRoom(chatRoomId, onMessage);
-      }, 1000);
+      
+      // 연결 대기 후 재시도 (최대 5초)
+      let attempts = 0;
+      const maxAttempts = 10;
+      const checkAndSubscribe = () => {
+        attempts++;
+        if (this.client?.connected) {
+          this.subscribeToChatRoom(chatRoomId, onMessage);
+        } else if (attempts < maxAttempts && this.connectionStatus !== WebSocketConnectionStatus.ERROR) {
+          setTimeout(checkAndSubscribe, 500);
+        } else {
+          console.error("Failed to subscribe: WebSocket connection failed");
+        }
+      };
+      setTimeout(checkAndSubscribe, 500);
       return () => {};
     }
 
@@ -239,11 +281,37 @@ class WebSocketService {
     onReadStatus: (message: ChatMessage) => void
   ): () => void {
     if (!this.client?.connected) {
+      // 연결 중이면 연결 완료를 기다림
+      if (this.connectionStatus === WebSocketConnectionStatus.CONNECTING) {
+        const checkConnection = () => {
+          if (this.client?.connected) {
+            this.subscribeToReadStatus(chatRoomId, onReadStatus);
+          } else if (this.connectionStatus === WebSocketConnectionStatus.CONNECTING) {
+            setTimeout(checkConnection, 500);
+          }
+        };
+        setTimeout(checkConnection, 500);
+        return () => {};
+      }
+      
+      // 연결되지 않았으면 연결 시도
       console.warn("WebSocket not connected. Attempting to connect...");
       this.connect();
-      setTimeout(() => {
-        this.subscribeToReadStatus(chatRoomId, onReadStatus);
-      }, 1000);
+      
+      // 연결 대기 후 재시도 (최대 5초)
+      let attempts = 0;
+      const maxAttempts = 10;
+      const checkAndSubscribe = () => {
+        attempts++;
+        if (this.client?.connected) {
+          this.subscribeToReadStatus(chatRoomId, onReadStatus);
+        } else if (attempts < maxAttempts && this.connectionStatus !== WebSocketConnectionStatus.ERROR) {
+          setTimeout(checkAndSubscribe, 500);
+        } else {
+          console.error("Failed to subscribe: WebSocket connection failed");
+        }
+      };
+      setTimeout(checkAndSubscribe, 500);
       return () => {};
     }
 
@@ -297,11 +365,37 @@ class WebSocketService {
     onTyping: (event: TypingEvent) => void
   ): () => void {
     if (!this.client?.connected) {
+      // 연결 중이면 연결 완료를 기다림
+      if (this.connectionStatus === WebSocketConnectionStatus.CONNECTING) {
+        const checkConnection = () => {
+          if (this.client?.connected) {
+            this.subscribeToTyping(chatRoomId, onTyping);
+          } else if (this.connectionStatus === WebSocketConnectionStatus.CONNECTING) {
+            setTimeout(checkConnection, 500);
+          }
+        };
+        setTimeout(checkConnection, 500);
+        return () => {};
+      }
+      
+      // 연결되지 않았으면 연결 시도
       console.warn("WebSocket not connected. Attempting to connect...");
       this.connect();
-      setTimeout(() => {
-        this.subscribeToTyping(chatRoomId, onTyping);
-      }, 1000);
+      
+      // 연결 대기 후 재시도 (최대 5초)
+      let attempts = 0;
+      const maxAttempts = 10;
+      const checkAndSubscribe = () => {
+        attempts++;
+        if (this.client?.connected) {
+          this.subscribeToTyping(chatRoomId, onTyping);
+        } else if (attempts < maxAttempts && this.connectionStatus !== WebSocketConnectionStatus.ERROR) {
+          setTimeout(checkAndSubscribe, 500);
+        } else {
+          console.error("Failed to subscribe: WebSocket connection failed");
+        }
+      };
+      setTimeout(checkAndSubscribe, 500);
       return () => {};
     }
 
@@ -437,8 +531,16 @@ class WebSocketService {
    * 재연결 처리
    */
   private handleReconnect(): void {
+    // 이미 연결 중이거나 연결되어 있으면 재연결 시도하지 않음
+    if (this.connectionStatus === WebSocketConnectionStatus.CONNECTING ||
+        this.connectionStatus === WebSocketConnectionStatus.CONNECTED) {
+      return;
+    }
+
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error("Max reconnect attempts reached");
+      console.error("Max reconnect attempts reached. Stopping reconnection attempts.");
+      this.connectionStatus = WebSocketConnectionStatus.ERROR;
+      this.notifyStatusChange();
       return;
     }
 
@@ -450,7 +552,9 @@ class WebSocketService {
     );
 
     setTimeout(() => {
-      if (this.connectionStatus !== WebSocketConnectionStatus.CONNECTED) {
+      // 재연결 시도 전에 상태 확인
+      if (this.connectionStatus !== WebSocketConnectionStatus.CONNECTED &&
+          this.connectionStatus !== WebSocketConnectionStatus.CONNECTING) {
         this.connect();
       }
     }, delay);
