@@ -50,6 +50,7 @@ class ChatMessageServiceTest {
     void sendMessage_success() {
         UUID chatRoomId = UUID.randomUUID();
         UUID senderId = UUID.randomUUID();
+        String username = "testuser";
 
         User consumer = createUser(senderId, Role.CONSUMER);
         Seller seller = createSeller();
@@ -62,12 +63,12 @@ class ChatMessageServiceTest {
 
         ChatMessageSendRequest request = new ChatMessageSendRequest();
         ReflectionTestUtils.setField(request, "chatRoomId", chatRoomId);
-        ReflectionTestUtils.setField(request, "senderId", senderId);
+        ReflectionTestUtils.setField(request, "senderId", username);
         ReflectionTestUtils.setField(request, "messageType", MessageType.TEXT);
         ReflectionTestUtils.setField(request, "content", "hello");
 
         when(chatRoomRepository.findById(chatRoomId)).thenReturn(Optional.of(chatRoom));
-        when(userRepository.findById(senderId)).thenReturn(Optional.of(consumer));
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(consumer));
         when(chatMessageRepository.save(any(ChatMessage.class))).thenAnswer(invocation -> {
             ChatMessage saved = invocation.getArgument(0);
             ReflectionTestUtils.setField(saved, "id", UUID.randomUUID());
@@ -86,6 +87,7 @@ class ChatMessageServiceTest {
     void sendMessage_notParticipant() {
         UUID chatRoomId = UUID.randomUUID();
         UUID senderId = UUID.randomUUID();
+        String username = "testuser";
 
         User consumer = createUser(UUID.randomUUID(), Role.CONSUMER);
         Seller seller = createSeller();
@@ -97,12 +99,12 @@ class ChatMessageServiceTest {
 
         ChatMessageSendRequest request = new ChatMessageSendRequest();
         ReflectionTestUtils.setField(request, "chatRoomId", chatRoomId);
-        ReflectionTestUtils.setField(request, "senderId", senderId);
+        ReflectionTestUtils.setField(request, "senderId", username);
         ReflectionTestUtils.setField(request, "messageType", MessageType.TEXT);
         ReflectionTestUtils.setField(request, "content", "hi");
 
         when(chatRoomRepository.findById(chatRoomId)).thenReturn(Optional.of(chatRoom));
-        when(userRepository.findById(senderId)).thenReturn(Optional.of(createUser(senderId, Role.CONSUMER)));
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(createUser(senderId, Role.CONSUMER)));
 
         assertThatThrownBy(() -> chatMessageService.sendMessage(request))
                 .isInstanceOf(CustomException.class)
@@ -113,7 +115,7 @@ class ChatMessageServiceTest {
     @DisplayName("존재하지 않는 발신자이면 예외")
     void sendMessage_userNotFound() {
         UUID chatRoomId = UUID.randomUUID();
-        UUID senderId = UUID.randomUUID();
+        String username = "nonexistent";
 
         User consumer = createUser(UUID.randomUUID(), Role.CONSUMER);
         Seller seller = createSeller();
@@ -125,12 +127,12 @@ class ChatMessageServiceTest {
 
         ChatMessageSendRequest request = new ChatMessageSendRequest();
         ReflectionTestUtils.setField(request, "chatRoomId", chatRoomId);
-        ReflectionTestUtils.setField(request, "senderId", senderId);
+        ReflectionTestUtils.setField(request, "senderId", username);
         ReflectionTestUtils.setField(request, "messageType", MessageType.TEXT);
         ReflectionTestUtils.setField(request, "content", "hi");
 
         when(chatRoomRepository.findById(chatRoomId)).thenReturn(Optional.of(chatRoom));
-        when(userRepository.findById(senderId)).thenReturn(Optional.empty());
+        when(userRepository.findByUsername(username)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> chatMessageService.sendMessage(request))
                 .isInstanceOf(CustomException.class)
