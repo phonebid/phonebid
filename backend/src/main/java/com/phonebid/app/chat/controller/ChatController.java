@@ -43,6 +43,11 @@ public class ChatController {
             throw new CustomException(ChatErrorCode.CHAT_ROOM_ACCESS_DENIED);
         }
 
+        if (!chatRoomId.equals(request.getChatRoomId().toString())) {
+            log.warn("채팅방 ID 불일치로 메시지 전송이 거부되었습니다");
+            throw new CustomException(ChatErrorCode.CHAT_ROOM_ACCESS_DENIED);
+        }
+
         ChatMessageResponse response = chatMessageService.sendMessage(request);
         messagingTemplate.convertAndSend("/topic/chat/" + chatRoomId, response);
     }
