@@ -16,6 +16,7 @@ class WebSocketService {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 3000; // 3초
+  private reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   /**
    * WebSocket 연결 상태 변경 콜백
@@ -142,6 +143,12 @@ class WebSocketService {
    * WebSocket 연결 해제
    */
   disconnect(): void {
+    // 예약된 재연결 타이머가 있으면 취소
+    if (this.reconnectTimeoutId) {
+      clearTimeout(this.reconnectTimeoutId);
+      this.reconnectTimeoutId = null;
+    }
+
     if (this.client) {
       // 모든 구독 해제
       this.subscriptions.forEach((subscription) => {
@@ -174,6 +181,7 @@ class WebSocketService {
       this.client.deactivate();
       this.client = null;
       this.connectionStatus = WebSocketConnectionStatus.DISCONNECTED;
+      this.reconnectAttempts = 0;
       this.notifyStatusChange();
     }
   }
@@ -778,12 +786,18 @@ class WebSocketService {
       `Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${delay}ms`
     );
 
-    setTimeout(() => {
+    // 기존 재연결 타이머가 있으면 취소
+    if (this.reconnectTimeoutId) {
+      clearTimeout(this.reconnectTimeoutId);
+    }
+
+    this.reconnectTimeoutId = setTimeout(() => {
       // 재연결 시도 전에 상태 확인
       if (this.connectionStatus !== WebSocketConnectionStatus.CONNECTED &&
           this.connectionStatus !== WebSocketConnectionStatus.CONNECTING) {
         this.connect();
       }
+      this.reconnectTimeoutId = null;
     }, delay);
   }
 }
