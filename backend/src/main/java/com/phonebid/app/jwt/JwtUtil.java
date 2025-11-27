@@ -61,6 +61,26 @@ public class JwtUtil {
         }
         return null;
     }
+    
+    /**
+     * 쿠키에서 JWT 토큰을 가져오는 메서드
+     * @param request HTTP 요청 객체
+     * @return JWT 토큰 (없으면 null)
+     */
+    public String getJwtFromCookie(HttpServletRequest request) {
+        jakarta.servlet.http.Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (jakarta.servlet.http.Cookie cookie : cookies) {
+                if (AUTHORIZATION_HEADER.equals(cookie.getName())) {
+                    String tokenValue = cookie.getValue();
+                    if (StringUtils.hasText(tokenValue)) {
+                        return tokenValue;
+                    }
+                }
+            }
+        }
+        return null;
+    }
 
     public boolean validateToken(String token) {
         try {

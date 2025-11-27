@@ -7,12 +7,10 @@ import { useAuthStore } from "store/authStore";
 import SWRProvider from "app/providers/SWRProvider";
 
 function App() {
-  const { initializeAuth } = useAuthStore();
-
-  // 앱 시작 시 인증 상태 복원
+  // 앱 시작 시 인증 상태 복원 (마운트 시 한 번만 실행)
   useEffect(() => {
-    initializeAuth();
-  }, [initializeAuth]);
+    useAuthStore.getState().initializeAuth();
+  }, []);
 
   return (
     <SWRProvider>

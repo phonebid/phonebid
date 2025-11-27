@@ -1,6 +1,5 @@
 package com.phonebid.app.member.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.phonebid.app.common.dto.ApiResponse;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.common.errorcode.KakaoErrorCode;
@@ -72,7 +71,8 @@ public class KakaoController {
             
             response.addHeader("Set-Cookie", cookie.toString());
             
-            // 프론트엔드 메인 페이지로 리다이렉트
+            // 프론트엔드 홈 페이지로 리다이렉트 (쿠키에 토큰이 이미 설정됨)
+            // 홈 페이지에서 initializeAuth()가 자동으로 실행되어 사용자 정보 조회
             response.sendRedirect(frontendUrl + "/");
 
         } catch (CustomException e) {

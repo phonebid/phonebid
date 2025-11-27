@@ -44,8 +44,13 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain filterChain) throws ServletException, IOException {
-        // 헤더에서 토큰 값 가져오기
+        // 헤더에서 토큰 값 가져오기 (우선순위 1)
         String tokenValue = jwtUtil.getJwtFromHeader(req);
+        
+        // 헤더에 토큰이 없으면 쿠키에서 토큰 가져오기 (우선순위 2)
+        if (!StringUtils.hasText(tokenValue)) {
+            tokenValue = jwtUtil.getJwtFromCookie(req);
+        }
 
         if (StringUtils.hasText(tokenValue)) {
 
