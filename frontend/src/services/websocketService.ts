@@ -94,11 +94,15 @@ class WebSocketService {
       return;
     }
 
-    // JWT 토큰을 쿼리 파라미터로 전달 (SockJS는 헤더 설정이 제한적이므로)
-    const wsUrl = `${baseUrl}/ws/chat?token=${encodeURIComponent(token)}`;
+    // URL에서 토큰 제거 (보안 강화: 로그/히스토리/Referrer 노출 방지)
+    const wsUrl = `${baseUrl}/ws/chat`;
 
     this.client = new Client({
       webSocketFactory: () => new SockJS(wsUrl) as unknown as WebSocket,
+      // STOMP CONNECT 프레임 헤더에 토큰 포함 (URL 노출 방지)
+      connectHeaders: {
+        Authorization: `Bearer ${token}`,
+      },
       reconnectDelay: this.reconnectDelay,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,

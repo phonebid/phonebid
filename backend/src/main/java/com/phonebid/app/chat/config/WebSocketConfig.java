@@ -63,7 +63,57 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             @Override
             public Message<?> preSend(Message<?> message, MessageChannel channel) {
                 StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-                if (accessor != null && StompCommand.MESSAGE.equals(accessor.getCommand())) {
+                if (accessor == null) {
+                    return message;
+                }
+
+                // STOMP CONNECT 프레임에서 토큰 추출 및 인증 처리
+                if (StompCommand.CONNECT.equals(accessor.getCommand())) {
+                    try {
+                        // CONNECT 프레임의 헤더에서 Authorization 추출
+                        String authHeader = accessor.getFirstNativeHeader("Authorization");
+                        String token = null;
+                        
+                        if (authHeader != null && StringUtils.hasText(authHeader) && authHeader.startsWith(JwtUtil.BEARER_PREFIX)) {
+                            token = authHeader.substring(JwtUtil.BEARER_PREFIX.length());
+                        }
+
+                        if (StringUtils.hasText(token) && jwtUtil.validateToken(token)) {
+                            Claims claims = jwtUtil.getUserInfoFromToken(token);
+                            String username = claims.getSubject();
+
+                            UserDetailsImpl userDetails = (UserDetailsImpl) userDetailsService.loadUserByUsername(username);
+                            Authentication authentication = new UsernamePasswordAuthenticationToken(
+                                    userDetails, null, userDetails.getAuthorities());
+
+                            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                            // 세션 속성에 사용자 정보 저장
+                            Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
+                            if (sessionAttributes != null) {
+                                sessionAttributes.put("username", username);
+                                sessionAttributes.put("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
+                                sessionAttributes.put(Principal.class.getName(), userDetails);
+                            }
+
+                            StompHeaderAccessor mutableAccessor = StompHeaderAccessor.wrap(message);
+                            mutableAccessor.setUser(authentication);
+                            
+                            log.info("STOMP CONNECT 인증 성공: username={}", username);
+                            return MessageBuilder.createMessage(message.getPayload(), mutableAccessor.getMessageHeaders());
+                        } else {
+                            log.warn("STOMP CONNECT 인증 실패: 토큰이 없거나 유효하지 않습니다.");
+                            // 인증 실패 시 연결 거부 (null 반환 시 메시지가 차단됨)
+                            return null;
+                        }
+                    } catch (Exception e) {
+                        log.error("STOMP CONNECT 인증 처리 중 오류 발생", e);
+                        return null;
+                    }
+                }
+
+                // MESSAGE 프레임 처리 (기존 로직 유지)
+                if (StompCommand.MESSAGE.equals(accessor.getCommand())) {
                     Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
                     if (sessionAttributes != null) {
                         String username = (String) sessionAttributes.get("username");
@@ -100,55 +150,55 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         @Override
         public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
                                       WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
+            // 핸드셰이크는 기본적으로 허용
+            // 실제 인증은 STOMP CONNECT 프레임에서 처리하므로 여기서는 기본 검증만 수행
+            // 하위 호환성을 위해 쿼리 파라미터 토큰이 있으면 검증 (fallback)
             try {
                 if (request instanceof ServletServerHttpRequest) {
                     ServletServerHttpRequest servletRequest = (ServletServerHttpRequest) request;
                     HttpServletRequest httpRequest = servletRequest.getServletRequest();
 
-                    // 헤더에서 토큰 추출 시도
-                    String token = jwtUtil.getJwtFromHeader(httpRequest);
-                    
-                    // 헤더에 토큰이 없으면 쿼리 파라미터에서 추출 (SockJS 호환성)
-                    if (!StringUtils.hasText(token)) {
-                        token = httpRequest.getParameter("token");
-                        // 쿼리 파라미터의 토큰이 Bearer 접두사를 포함하지 않으면 제거
-                        if (StringUtils.hasText(token) && token.startsWith(JwtUtil.BEARER_PREFIX)) {
+                    // 하위 호환성: 쿼리 파라미터에 토큰이 있으면 검증 (fallback)
+                    String token = httpRequest.getParameter("token");
+                    if (StringUtils.hasText(token)) {
+                        // Bearer 접두사 제거
+                        if (token.startsWith(JwtUtil.BEARER_PREFIX)) {
                             token = token.substring(JwtUtil.BEARER_PREFIX.length());
                         }
+
+                        if (jwtUtil.validateToken(token)) {
+                            Claims claims = jwtUtil.getUserInfoFromToken(token);
+                            String username = claims.getSubject();
+
+                            UserDetailsImpl userDetails = (UserDetailsImpl) userDetailsService.loadUserByUsername(username);
+                            Authentication authentication = new UsernamePasswordAuthenticationToken(
+                                    userDetails, null, userDetails.getAuthorities());
+
+                            SecurityContextHolder.getContext().setAuthentication(authentication);
+                            
+                            // WebSocket 메시지 핸들러에서 Principal로 접근할 수 있도록 설정
+                            attributes.put("username", username);
+                            attributes.put("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
+                            attributes.put(Principal.class.getName(), userDetails);
+
+                            log.info("WebSocket 핸드셰이크 성공 (쿼리 파라미터): username={}", username);
+                        } else {
+                            log.warn("WebSocket 핸드셰이크: 쿼리 파라미터 토큰이 유효하지 않습니다. STOMP CONNECT에서 재시도합니다.");
+                        }
+                    } else {
+                        // 쿼리 파라미터에 토큰이 없으면 STOMP CONNECT 프레임에서 처리하도록 허용
+                        log.debug("WebSocket 핸드셰이크: 쿼리 파라미터에 토큰이 없습니다. STOMP CONNECT에서 처리합니다.");
                     }
-
-                    if (!StringUtils.hasText(token)) {
-                        log.warn("WebSocket 핸드셰이크 실패: JWT 토큰이 없습니다.");
-                        return false;
-                    }
-
-                    if (!jwtUtil.validateToken(token)) {
-                        log.warn("WebSocket 핸드셰이크 실패: 유효하지 않은 JWT 토큰입니다.");
-                        return false;
-                    }
-
-                    Claims claims = jwtUtil.getUserInfoFromToken(token);
-                    String username = claims.getSubject();
-
-                    UserDetailsImpl userDetails = (UserDetailsImpl) userDetailsService.loadUserByUsername(username);
-                    Authentication authentication = new UsernamePasswordAuthenticationToken(
-                            userDetails, null, userDetails.getAuthorities());
-
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
                     
-                    // WebSocket 메시지 핸들러에서 Principal로 접근할 수 있도록 설정
-                    attributes.put("username", username);
-                    attributes.put("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
-                    // Principal을 직접 attributes에 저장 (메시지 핸들러에서 사용)
-                    attributes.put(Principal.class.getName(), userDetails);
-
-                    log.info("WebSocket 핸드셰이크 성공: username={}", username);
+                    // 기본적으로 핸드셰이크 허용 (실제 인증은 CONNECT 프레임에서 처리)
                     return true;
                 }
             } catch (Exception e) {
                 log.error("WebSocket 핸드셰이크 중 오류 발생", e);
+                // 오류 발생 시에도 핸드셰이크 허용 (CONNECT 프레임에서 인증 실패 처리)
+                return true;
             }
-            return false;
+            return true;
         }
 
         @Override
