@@ -64,7 +64,7 @@ class WebSocketService {
   private pendingSubscriptions: Map<
     string,
     {
-      timeoutId: NodeJS.Timeout;
+      timeoutId: ReturnType<typeof setTimeout>;
       cleanup: () => void;
     }
   > = new Map();
@@ -190,7 +190,7 @@ class WebSocketService {
     if (!this.client?.connected) {
       // 연결 중이면 연결 완료를 기다림
       if (this.connectionStatus === WebSocketConnectionStatus.CONNECTING) {
-        let timeoutId: NodeJS.Timeout | null = null;
+        let timeoutId: ReturnType<typeof setTimeout> | null = null;
         let isCancelled = false;
         
         const checkConnection = () => {
@@ -240,7 +240,7 @@ class WebSocketService {
       // 연결 대기 후 재시도 (최대 5초)
       let attempts = 0;
       const maxAttempts = 10;
-      let timeoutId: NodeJS.Timeout | null = null;
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
       let isCancelled = false;
       
       const checkAndSubscribe = () => {
@@ -370,7 +370,7 @@ class WebSocketService {
     if (!this.client?.connected) {
       // 연결 중이면 연결 완료를 기다림
       if (this.connectionStatus === WebSocketConnectionStatus.CONNECTING) {
-        let timeoutId: NodeJS.Timeout | null = null;
+        let timeoutId: ReturnType<typeof setTimeout> | null = null;
         let isCancelled = false;
         
         const checkConnection = () => {
@@ -422,7 +422,7 @@ class WebSocketService {
       // 연결 대기 후 재시도 (최대 5초)
       let attempts = 0;
       const maxAttempts = 10;
-      let timeoutId: NodeJS.Timeout | null = null;
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
       let isCancelled = false;
       
       const checkAndSubscribe = () => {
@@ -525,7 +525,7 @@ class WebSocketService {
     if (!this.client?.connected) {
       // 연결 중이면 연결 완료를 기다림
       if (this.connectionStatus === WebSocketConnectionStatus.CONNECTING) {
-        let timeoutId: NodeJS.Timeout | null = null;
+        let timeoutId: ReturnType<typeof setTimeout> | null = null;
         let isCancelled = false;
         
         const checkConnection = () => {
@@ -577,7 +577,7 @@ class WebSocketService {
       // 연결 대기 후 재시도 (최대 5초)
       let attempts = 0;
       const maxAttempts = 10;
-      let timeoutId: NodeJS.Timeout | null = null;
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
       let isCancelled = false;
       
       const checkAndSubscribe = () => {

@@ -20,7 +20,7 @@ export function MessageInput({
   placeholder = "메시지를 입력하세요.",
 }: MessageInputProps) {
   const [inputMessage, setInputMessage] = useState("");
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTypingRef = useRef(false);
 
   // 타이핑 이벤트 전송 (디바운싱)
