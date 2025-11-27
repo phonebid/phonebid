@@ -42,6 +42,11 @@ const purchasePlanOptions: PurchasePlanOption[] = [
     description: "통신사를 바꾸면 기기 가격이 저렴해질 가능성이 높아집니다.",
     value: "NUMBER_TRANSFER",
   },
+  {
+    title: "최저가로 구매할게요.",
+    description: "기기 변경, 통신사 변경 상관 없이 최저가로 구매합니다.",
+    value: "LOWEST_PRICE",
+  },
 ];
 
 const carrierOptions: { id: Carrier; title: string }[] = [
@@ -114,13 +119,15 @@ const QuoteCreateWizardPage: React.FC = () => {
       return Boolean(draft.model);
     }
     if (step === 3) {
-      return hasColorOptions ? Boolean(draft.color) : true;
+      // 색상 옵션이 있으면 항상 true (상관없음 선택 가능)
+      return true;
     }
     if (step === 4) {
-      return hasStorageOptions ? Boolean(draft.storage) : true;
+      // 용량 옵션이 있으면 항상 true (상관없음 선택 가능)
+      return true;
     }
     if (step === 5) {
-      return Boolean(draft.carrier);
+      return true;
     }
     return true;
   }, [
@@ -377,6 +384,13 @@ const QuoteCreateWizardPage: React.FC = () => {
                 />
               );
             })}
+            <SelectionCard
+              key="no-preference-color"
+              title="상관 없음"
+              selected={draft.color === undefined}
+              onClick={() => updateDraft({ color: undefined })}
+              className="py-4"
+            />
           </div>
         </section>
       );
@@ -437,6 +451,13 @@ const QuoteCreateWizardPage: React.FC = () => {
                 />
               );
             })}
+            <SelectionCard
+              key="no-preference-storage"
+              title="상관 없음"
+              selected={draft.storage === undefined}
+              onClick={() => updateDraft({ storage: undefined })}
+              className="py-4"
+            />
           </div>
         </section>
       );
@@ -466,6 +487,13 @@ const QuoteCreateWizardPage: React.FC = () => {
                 className="py-4"
               />
             ))}
+            <SelectionCard
+              key="no-preference-carrier"
+              title="상관 없음"
+              selected={draft.carrier === undefined}
+              onClick={() => updateDraft({ carrier: undefined })}
+              className="py-4"
+            />
           </div>
         </section>
       );
@@ -481,11 +509,6 @@ const QuoteCreateWizardPage: React.FC = () => {
           <h2 className="text-2xl font-bold tracking-tight">
             {selectedModelLabel ?? "기종 미선택"}
           </h2>
-          <p className="text-sm text-muted-foreground">
-            {draft.color?.displayLabel ?? "색상 미선택"},{" "}
-            {draft.storage?.displayLabel ?? "용량 미선택"},{" "}
-            {draft.carrier ?? "통신사 미선택"}
-          </p>
         </div>
         <div className="space-y-3">
           <SummaryCard
@@ -494,20 +517,17 @@ const QuoteCreateWizardPage: React.FC = () => {
           />
           <SummaryCard
             label="선택한 기종"
-            value={selectedModelLabel ?? "선택되지 않음"}
+            value={selectedModelLabel ?? "상관 없음"}
           />
           <SummaryCard
             label="색상"
-            value={draft.color?.displayLabel ?? "선택되지 않음"}
+            value={draft.color?.displayLabel ?? "상관 없음"}
           />
           <SummaryCard
             label="용량"
-            value={draft.storage?.displayLabel ?? "선택되지 않음"}
+            value={draft.storage?.displayLabel ?? "상관 없음"}
           />
-          <SummaryCard
-            label="통신사"
-            value={draft.carrier ?? "선택되지 않음"}
-          />
+          <SummaryCard label="통신사" value={draft.carrier ?? "상관 없음"} />
         </div>
         <p className="text-sm text-muted-foreground">
           경매 시작하기 버튼을 누르면 지금까지 선택한 정보를 바탕으로 견적이
@@ -641,6 +661,15 @@ const getPurchasePlanLabel = (value?: PurchaseMethod) => {
   }
   if (value === "NUMBER_TRANSFER") {
     return "통신사 변경";
+  }
+  if (value === "NEW_SUBSCRIPTION") {
+    return "신규가입";
+  }
+  if (value === "LOWEST_PRICE") {
+    return "최저가";
+  }
+  if (value === "ANY") {
+    return "상관 없음";
   }
   return "선택되지 않음";
 };

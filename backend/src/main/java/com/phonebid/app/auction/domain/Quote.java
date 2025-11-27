@@ -62,7 +62,7 @@ public class Quote extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "purchase_method")
-    @Comment("구매방법 (NUMBER_TRANSFER, DEVICE_CHANGE, NEW_SUBSCRIPTION, ANY)")
+    @Comment("구매방법 (NUMBER_TRANSFER, DEVICE_CHANGE, NEW_SUBSCRIPTION, LOWEST_PRICE, ANY)")
     private PurchaseMethod purchaseMethod;
 
     @Enumerated(EnumType.STRING)

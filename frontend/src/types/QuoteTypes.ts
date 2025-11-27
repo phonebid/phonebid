@@ -7,6 +7,7 @@ export type PurchaseMethod =
   | "NUMBER_TRANSFER"
   | "DEVICE_CHANGE"
   | "NEW_SUBSCRIPTION"
+  | "LOWEST_PRICE"
   | "ANY";
 export type ActivationMethod = "COMMON_SUBSIDY" | "SELECTIVE_SUBSIDY" | "ANY";
 export interface QuoteDraft {
