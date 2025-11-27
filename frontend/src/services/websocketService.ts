@@ -476,12 +476,6 @@ class WebSocketService {
       return cleanup;
     }
 
-    // 이미 구독 중이면 기존 구독 해제
-    if (this.readStatusSubscriptions.has(chatRoomId)) {
-      const existing = this.readStatusSubscriptions.get(chatRoomId);
-      existing?.unsubscribe();
-    }
-
     const topic = `/topic/chat/${chatRoomId}/read`;
 
     // 읽음 상태 콜백 등록
@@ -490,28 +484,37 @@ class WebSocketService {
     }
     this.readStatusCallbacks.get(chatRoomId)?.push(onReadStatus);
 
-    // STOMP 구독
-    const subscription = this.client.subscribe(topic, (message: IMessage) => {
-      try {
-        const chatMessage: ChatMessage = JSON.parse(message.body);
-        const callbacks = this.readStatusCallbacks.get(chatRoomId);
-        callbacks?.forEach((callback) => callback(chatMessage));
-      } catch (error) {
-        console.error("Failed to parse read status update:", error);
-      }
-    });
+    // 기존 구독이 없을 때만 새 STOMP 구독 생성
+    if (!this.readStatusSubscriptions.has(chatRoomId)) {
+      const subscription = this.client.subscribe(topic, (message: IMessage) => {
+        try {
+          const chatMessage: ChatMessage = JSON.parse(message.body);
+          const callbacks = this.readStatusCallbacks.get(chatRoomId);
+          callbacks?.forEach((callback) => callback(chatMessage));
+        } catch (error) {
+          console.error("Failed to parse read status update:", error);
+        }
+      });
 
-    this.readStatusSubscriptions.set(chatRoomId, subscription);
+      this.readStatusSubscriptions.set(chatRoomId, subscription);
+    }
 
     // 구독 해제 함수 반환
     return () => {
-      subscription.unsubscribe();
-      this.readStatusSubscriptions.delete(chatRoomId);
       const callbacks = this.readStatusCallbacks.get(chatRoomId);
       if (callbacks) {
         const index = callbacks.indexOf(onReadStatus);
         if (index > -1) {
           callbacks.splice(index, 1);
+        }
+        // 콜백이 모두 제거되었을 때만 STOMP 구독 해제
+        if (callbacks.length === 0) {
+          const subscription = this.readStatusSubscriptions.get(chatRoomId);
+          if (subscription) {
+            subscription.unsubscribe();
+            this.readStatusSubscriptions.delete(chatRoomId);
+          }
+          this.readStatusCallbacks.delete(chatRoomId);
         }
       }
     };
