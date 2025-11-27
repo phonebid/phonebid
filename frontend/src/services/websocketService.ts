@@ -165,6 +165,9 @@ class WebSocketService {
       this.readStatusSubscriptions.clear();
       this.readStatusCallbacks.clear();
 
+      // 메시지 콜백 정리
+      this.messageCallbacks.clear();
+
       // 지연된 구독 요청 취소
       this.pendingSubscriptions.forEach(({ timeoutId, cleanup }) => {
         clearTimeout(timeoutId);
