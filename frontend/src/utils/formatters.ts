@@ -96,3 +96,26 @@ export const maskEmail = (email: string): string => {
   const maskedUsername = username.charAt(0) + "*".repeat(username.length - 1);
   return `${maskedUsername}@${domain}`;
 };
+
+/**
+ * 채팅용 날짜 포맷팅 (오늘/어제 또는 전체 날짜)
+ */
+export const formatChatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (date.toDateString() === today.toDateString()) {
+    return "오늘";
+  } else if (date.toDateString() === yesterday.toDateString()) {
+    return "어제";
+  } else {
+    return date.toLocaleDateString("ko-KR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      weekday: "long",
+    });
+  }
+};

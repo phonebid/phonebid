@@ -71,6 +71,15 @@ public class WebSecurityConfig {
     }
 
     /**
+     * WebSocket 엔드포인트를 Spring Security 필터 체인에서 제외
+     * 실제 인증은 핸드셰이크 인터셉터에서 처리
+     */
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring().requestMatchers("/ws/chat/**");
+    }
+
+    /**
      * CORS 설정 - 환경별 origin 분리
      * 보안 강화를 위해 특정 origin만 허용
      */
@@ -124,7 +133,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/api/v1/users/login").permitAll() // 로그인 엔드포인트 접근 허가
                         .requestMatchers("/api/v1/auth/kakao/**").permitAll() // 카카오 OAuth 엔드포인트 접근 허가
                         .requestMatchers("/api/v1/auth/naver/**").permitAll() // 네이버 OAuth 엔드포인트 접근 허가
-                        .requestMatchers("/api/v1/payments/portone/**").permitAll() // PortOne 결제 엔드포인트 접근 허가                      //.requestMatchers(HttpMethod.GET, "/api/boards/**").permitAll()
+                        .requestMatchers("/api/v1/payments/portone/**").permitAll() // PortOne 결제 엔드포인트 접근 허가
                         .anyRequest().authenticated() // 그 외 모든 요청 인증처리
         );
 
