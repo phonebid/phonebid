@@ -314,12 +314,15 @@ class WebSocketService {
 
     // 구독 해제 함수 반환
     return () => {
-      this.unsubscribeFromChatRoom(chatRoomId);
       const callbacks = this.messageCallbacks.get(chatRoomId);
       if (callbacks) {
         const index = callbacks.indexOf(onMessage);
         if (index > -1) {
           callbacks.splice(index, 1);
+        }
+        // 콜백이 모두 제거되었을 때만 STOMP 구독 해제
+        if (callbacks.length === 0) {
+          this.unsubscribeFromChatRoom(chatRoomId);
         }
       }
     };
