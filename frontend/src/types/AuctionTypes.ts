@@ -45,9 +45,9 @@ export interface PlaceBidRequest {
 export interface Quote {
   id: string;
   phoneModel: PhoneModelResponse;
-  storage: PhoneOptionResponse;
+  storage: PhoneOptionResponse | null; // nullable: 상관없음 선택 시
   carrier: string;
-  color: PhoneOptionResponse;
+  color: PhoneOptionResponse | null; // nullable: 상관없음 선택 시
   status: "OPEN" | "CLOSED" | "CONTRACTED";
   expiredAt: string;
   purchaseMethod?: string;

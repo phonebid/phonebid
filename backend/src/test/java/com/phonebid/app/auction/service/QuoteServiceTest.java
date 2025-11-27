@@ -266,6 +266,29 @@ class QuoteServiceTest {
         verify(quoteRepository).save(any(Quote.class));
     }
 
+    @Test
+    @DisplayName("createQuote - 성공: 색상/용량 옵션 없이 견적 생성 성공")
+    void createQuote_Success_WithoutOptions() {
+        // given
+        QuoteCreateRequestDto requestWithoutOptions = QuoteCreateRequestDto.builder()
+                .phoneModelId(getUuid(phoneModel))
+                .storageOptionId(null)
+                .colorOptionId(null)
+                .carrier(Carrier.SKT)
+                .purchaseMethod(PurchaseMethod.NEW_SUBSCRIPTION)
+                .activationMethod(ActivationMethod.SELECTIVE_SUBSIDY)
+                .build();
+        
+        when(phoneModelRepository.findById(eq(getUuid(phoneModel)))).thenReturn(java.util.Optional.of(phoneModel));
+        when(quoteRepository.save(any(Quote.class))).thenReturn(testQuote1);
+
+        // when
+        quoteService.createQuote(requestWithoutOptions, testUser);
+
+        // then
+        verify(quoteRepository).save(any(Quote.class));
+    }
+
     private java.util.UUID getUuid(Object entity) {
         try {
             java.lang.reflect.Field idField = entity.getClass().getDeclaredField("id");

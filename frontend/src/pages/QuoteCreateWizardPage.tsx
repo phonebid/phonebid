@@ -6,6 +6,7 @@ import type {
   PurchaseMethod,
   Carrier,
   ActivationMethod,
+  QuoteCreateRequestDto,
 } from "types/QuoteTypes";
 import { getPhoneModels } from "services/phoneModelService";
 import type {
@@ -182,15 +183,25 @@ const QuoteCreateWizardPage: React.FC = () => {
       return;
     }
     if (step === 6) {
-      createQuote({
+      const payload: QuoteCreateRequestDto = {
         phoneModelId: draft.model ?? "",
-        storageOptionId: draft.storage?.id ?? "",
-        colorOptionId: draft.color?.id ?? "",
         carrier: draft.carrier as Carrier,
         purchaseMethod: draft.purchaseMethod as PurchaseMethod,
         activationMethod: draft.activationMethod as ActivationMethod,
-        currentCarrier: draft.currentCarrier as Carrier,
-      })
+      };
+
+      // 옵션이 선택된 경우에만 포함
+      if (draft.storage?.id) {
+        payload.storageOptionId = draft.storage.id;
+      }
+      if (draft.color?.id) {
+        payload.colorOptionId = draft.color.id;
+      }
+      if (draft.currentCarrier) {
+        payload.currentCarrier = draft.currentCarrier;
+      }
+
+      createQuote(payload)
         .then(() => {
           setShowSuccess(true);
         })

@@ -2,7 +2,7 @@
 
 import { PhoneOptionResponse } from "./PhoneModelTypes";
 
-export type Carrier = "SKT" | "KT" | "LGU" | "SKT_ALD" | "KT_ALD" | "LGU_ALD";
+export type Carrier = "SKT" | "KT" | "LGU" | "SKT_ALD" | "KT_ALD" | "LGU_ALD" | "ANY";
 export type PurchaseMethod =
   | "NUMBER_TRANSFER"
   | "DEVICE_CHANGE"
@@ -36,8 +36,8 @@ export interface QuoteCreateRequestDto {
 export interface QuoteSummary {
   id: string;
   model: string;
-  storage: string;
-  color: string;
+  storage: string | null; // nullable: 상관없음 선택 시
+  color: string | null; // nullable: 상관없음 선택 시
   carrier: Carrier;
   expiredAt: string;
   createdAt: string;
