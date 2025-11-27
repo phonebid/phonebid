@@ -58,7 +58,7 @@ public class ChatController {
      * 
      * @param chatRoomId 채팅방 ID
      * @param request 타이핑 이벤트 요청 DTO
-     * @param SimpMessageHeaderAccessor headerAccessor
+     * @param headerAccessor WebSocket 메시지 헤더 접근자
      */
     @MessageMapping("/chat/{chatRoomId}/typing")
     public void handleTyping(@DestinationVariable String chatRoomId,
