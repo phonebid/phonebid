@@ -39,7 +39,7 @@ public class ChatController {
         
         String authenticatedUsername = userDetails.getUsername();
         if (!authenticatedUsername.equals(request.getSenderId())) {
-            log.warn("발신자 불일치: authenticated={}, request.senderId={}", authenticatedUsername, request.getSenderId());
+            log.warn("발신자 불일치로 메시지 전송이 거부되었습니다.");
             throw new CustomException(ChatErrorCode.CHAT_ROOM_ACCESS_DENIED);
         }
 
@@ -68,7 +68,7 @@ public class ChatController {
         
         String authenticatedUsername = userDetails.getUsername();
         if (!authenticatedUsername.equals(request.getSenderId())) {
-            log.warn("발신자 불일치: authenticated={}, request.senderId={}", authenticatedUsername, request.getSenderId());
+            log.warn("발신자 불일치로 메시지 전송이 거부되었습니다.");
             throw new CustomException(ChatErrorCode.CHAT_ROOM_ACCESS_DENIED);
         }
 
@@ -112,14 +112,13 @@ public class ChatController {
                 try {
                     return (UserDetailsImpl) userDetailsService.loadUserByUsername(username);
                 } catch (Exception e) {
-                    log.error("사용자 정보 로드 실패: username={}", username, e);
+                    log.error("사용자 정보 로드 실패", e);
                     throw new CustomException(ChatErrorCode.CHAT_ROOM_ACCESS_DENIED);
                 }
             }
         }
 
-        log.error("인증된 사용자 정보를 찾을 수 없습니다. Principal={}, sessionAttributes={}", 
-                principal, sessionAttributes);
+        log.error("인증된 사용자 정보를 찾을 수 없습니다.");
         throw new CustomException(ChatErrorCode.CHAT_ROOM_ACCESS_DENIED);
     }
 }
