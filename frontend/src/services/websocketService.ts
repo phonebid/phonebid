@@ -76,13 +76,11 @@ class WebSocketService {
   connect(): void {
     // 이미 연결되어 있으면 중복 연결 방지
     if (this.client?.connected) {
-      console.log("WebSocket already connected");
       return;
     }
 
     // 이미 연결 중이면 중복 연결 방지
     if (this.connectionStatus === WebSocketConnectionStatus.CONNECTING) {
-      console.log("WebSocket connection already in progress");
       return;
     }
 
@@ -104,19 +102,12 @@ class WebSocketService {
       reconnectDelay: this.reconnectDelay,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
-      debug: (str) => {
-        if (import.meta.env.DEV) {
-          console.log("STOMP:", str);
-        }
-      },
       onConnect: () => {
-        console.log("WebSocket connected");
         this.connectionStatus = WebSocketConnectionStatus.CONNECTED;
         this.reconnectAttempts = 0;
         this.notifyStatusChange();
       },
       onDisconnect: () => {
-        console.log("WebSocket disconnected");
         this.connectionStatus = WebSocketConnectionStatus.DISCONNECTED;
         this.notifyStatusChange();
       },
@@ -320,7 +311,6 @@ class WebSocketService {
     });
 
     this.subscriptions.set(chatRoomId, subscription);
-    console.log(`Subscribed to chat room: ${chatRoomId}`);
 
     // 구독 해제 함수 반환
     return () => {
@@ -344,7 +334,6 @@ class WebSocketService {
       subscription.unsubscribe();
       this.subscriptions.delete(chatRoomId);
       this.messageCallbacks.delete(chatRoomId);
-      console.log(`Unsubscribed from chat room: ${chatRoomId}`);
     }
 
     // 타이핑 구독도 해제
@@ -353,7 +342,6 @@ class WebSocketService {
       typingSubscription.unsubscribe();
       this.typingSubscriptions.delete(chatRoomId);
       this.typingCallbacks.delete(chatRoomId);
-      console.log(`Unsubscribed from typing events: ${chatRoomId}`);
     }
 
     // 읽음 상태 구독도 해제
@@ -362,7 +350,6 @@ class WebSocketService {
       readStatusSubscription.unsubscribe();
       this.readStatusSubscriptions.delete(chatRoomId);
       this.readStatusCallbacks.delete(chatRoomId);
-      console.log(`Unsubscribed from read status events: ${chatRoomId}`);
     }
   }
 
@@ -505,7 +492,6 @@ class WebSocketService {
     });
 
     this.readStatusSubscriptions.set(chatRoomId, subscription);
-    console.log(`Subscribed to read status updates: ${chatRoomId}`);
 
     // 구독 해제 함수 반환
     return () => {
@@ -660,7 +646,6 @@ class WebSocketService {
     });
 
     this.typingSubscriptions.set(chatRoomId, subscription);
-    console.log(`Subscribed to typing events: ${chatRoomId}`);
 
     // 구독 해제 함수 반환
     return () => {
@@ -781,10 +766,6 @@ class WebSocketService {
 
     this.reconnectAttempts++;
     const delay = this.reconnectDelay * this.reconnectAttempts;
-
-    console.log(
-      `Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${delay}ms`
-    );
 
     // 기존 재연결 타이머가 있으면 취소
     if (this.reconnectTimeoutId) {
