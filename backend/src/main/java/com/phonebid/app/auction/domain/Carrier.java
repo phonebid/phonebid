@@ -11,7 +11,8 @@ public enum Carrier {
     LGU("LG유플러스", "LG"),
     SKT_ALD("SKT알뜰폰", "SKT_A"),
     KT_ALD("KT알뜰폰", "KT_A"),
-    LGU_ALD("LGU+알뜰폰", "LG_A");
+    LGU_ALD("LGU+알뜰폰", "LG_A"),
+    ANY("상관 없음", "ANY");
 
     private final String displayName;
     private final String shortName;

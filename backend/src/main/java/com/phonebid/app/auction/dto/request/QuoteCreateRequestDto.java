@@ -23,13 +23,10 @@ public class QuoteCreateRequestDto {
     @NotNull
     private UUID phoneModelId;
 
-    @NotNull
     private UUID storageOptionId;
 
-    @NotNull
     private UUID colorOptionId;
 
-    @NotNull
     private Carrier carrier;
 
     @NotNull

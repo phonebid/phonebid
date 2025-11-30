@@ -19,9 +19,9 @@ public class QuoteResponseDto {
 
     private UUID id;
     private PhoneModelResponseDto phoneModel;
-    private PhoneOptionResponseDto storage;
+    private PhoneOptionResponseDto storage; // nullable
     private Carrier carrier;
-    private PhoneOptionResponseDto color;
+    private PhoneOptionResponseDto color; // nullable
     private QuoteStatus status;
     private LocalDateTime expiredAt;
     private PurchaseMethod purchaseMethod;
@@ -34,9 +34,9 @@ public class QuoteResponseDto {
         return QuoteResponseDto.builder()
                 .id(quote.getId())
                 .phoneModel(PhoneModelResponseDto.fromWithoutOptions(quote.getPhoneModel()))
-                .storage(PhoneOptionResponseDto.from(quote.getStorage()))
+                .storage(quote.getStorage() != null ? PhoneOptionResponseDto.from(quote.getStorage()) : null)
                 .carrier(quote.getCarrier())
-                .color(PhoneOptionResponseDto.from(quote.getColor()))
+                .color(quote.getColor() != null ? PhoneOptionResponseDto.from(quote.getColor()) : null)
                 .status(quote.getStatus())
                 .expiredAt(quote.getExpiredAt())
                 .purchaseMethod(quote.getPurchaseMethod())

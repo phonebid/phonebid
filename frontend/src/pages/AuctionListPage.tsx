@@ -130,11 +130,11 @@ const AuctionListPage: React.FC = () => {
                           {quote.phoneModel?.model || "모델 정보 없음"} ·{" "}
                           {quote.storage?.displayLabel ||
                             quote.storage?.optionValue ||
-                            "저장용량 정보 없음"}{" "}
+                            "상관없음"}{" "}
                           ·{" "}
                           {quote.color?.displayLabel ||
                             quote.color?.optionValue ||
-                            "색상 정보 없음"}
+                            "상관없음"}
                         </h3>
                         <p className="text-sm text-muted-foreground">
                           {quote.carrier} · {quote.purchaseMethod || "신규"}

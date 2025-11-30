@@ -38,11 +38,11 @@ public class Quote extends BaseEntity {
     private PhoneModel phoneModel;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "storage", nullable = false)
+    @JoinColumn(name = "storage", nullable = true, columnDefinition = "UUID")
     private PhoneOption storage;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "color", nullable = false)
+    @JoinColumn(name = "color", nullable = true, columnDefinition = "UUID")
     private PhoneOption color;
 
     @Enumerated(EnumType.STRING)
@@ -62,7 +62,7 @@ public class Quote extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "purchase_method")
-    @Comment("구매방법 (NUMBER_TRANSFER, DEVICE_CHANGE, NEW_SUBSCRIPTION, ANY)")
+    @Comment("구매방법 (NUMBER_TRANSFER, DEVICE_CHANGE, NEW_SUBSCRIPTION, LOWEST_PRICE, ANY)")
     private PurchaseMethod purchaseMethod;
 
     @Enumerated(EnumType.STRING)
@@ -105,6 +105,8 @@ public class Quote extends BaseEntity {
     }
 
     public String getFullSpecification() {
-        return String.format("%s %s %s %s", phoneModel, storage, carrier.getDisplayName(), color);
+        String storageStr = storage != null ? storage.getDisplayLabel() : "상관없음";
+        String colorStr = color != null ? color.getDisplayLabel() : "상관없음";
+        return String.format("%s %s %s %s", phoneModel.getFullModelName(), storageStr, carrier.getDisplayName(), colorStr);
     }
 }

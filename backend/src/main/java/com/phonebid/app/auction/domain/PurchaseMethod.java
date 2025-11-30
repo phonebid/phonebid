@@ -9,6 +9,7 @@ public enum PurchaseMethod {
     NUMBER_TRANSFER("번호이동", "기존 번호를 다른 통신사로 이동"),
     DEVICE_CHANGE("기기변경", "동일 통신사에서 단말기만 변경"),
     NEW_SUBSCRIPTION("신규가입", "새로운 번호로 가입"),
+    LOWEST_PRICE("최저가", "기기 변경, 통신사 변경 상관 없이 최저가로 구매"),
     ANY("상관없음", "구매방법 무관");
 
     private final String displayName;
@@ -24,6 +25,10 @@ public enum PurchaseMethod {
 
     public boolean isNewSubscription() {
         return this == NEW_SUBSCRIPTION;
+    }
+
+    public boolean isLowestPrice() {
+        return this == LOWEST_PRICE;
     }
 
     public boolean isAny() {

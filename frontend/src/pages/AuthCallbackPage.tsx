@@ -5,55 +5,33 @@ import { useAuthStore } from "store/authStore";
 
 const AuthCallbackPage = () => {
   const navigate = useNavigate();
-  const { handleOAuthCallback } = useAuthStore();
 
   useEffect(() => {
     const processCallback = async () => {
       try {
         // URL에서 파라미터 추출
         const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get("code");
-        const state = urlParams.get("state");
+        const provider = urlParams.get("provider");
         const error = urlParams.get("error");
-        const errorDescription = urlParams.get("error_description");
 
         // 에러 체크
         if (error) {
-          const errorMsg = errorDescription || "OAuth 인증이 취소되었습니다.";
-          throw new Error(errorMsg);
+          throw new Error("OAuth 인증이 취소되었습니다.");
         }
 
-        // 필수 파라미터 체크
-        if (!code) {
-          throw new Error("인증 코드가 없습니다.");
+        // Provider 확인
+        if (!provider || (provider !== "KAKAO" && provider !== "NAVER")) {
+          throw new Error("OAuth 제공자를 확인할 수 없습니다.");
         }
 
-        if (!state) {
-          throw new Error("State 파라미터가 없습니다.");
-        }
+        // 쿠키에 토큰이 이미 설정되어 있으므로 프로필 API로 사용자 정보 조회
+        await useAuthStore.getState().checkAuth();
 
-        // State에서 provider 정보 추출
-        // state 형식: "KAKAO_randomstring" 또는 "NAVER_randomstring"
-        let provider = "";
-        if (state.startsWith("KAKAO_")) {
-          provider = "KAKAO";
-        } else if (state.startsWith("NAVER_")) {
-          provider = "NAVER";
-        } else {
-          // 세션 스토리지에서 provider 정보 확인 (fallback)
-          const savedProvider = sessionStorage.getItem("oauth_provider");
-          if (savedProvider) {
-            provider = savedProvider;
-            sessionStorage.removeItem("oauth_provider");
-          } else {
-            throw new Error("OAuth 제공자를 확인할 수 없습니다.");
-          }
-        }
+        toast.success(`${provider} 로그인이 완료되었습니다.`);
 
-        // handle OAuth callback
-
-        // AuthStore를 통해 콜백 처리
-        await handleOAuthCallback(provider, code, state);
+        // 세션 스토리지 정리
+        sessionStorage.removeItem("oauth_state");
+        sessionStorage.removeItem("oauth_provider");
 
         // 로그인 성공 시 홈으로 이동
         navigate("/", { replace: true });
@@ -69,7 +47,7 @@ const AuthCallbackPage = () => {
     };
 
     processCallback();
-  }, [navigate, handleOAuthCallback]);
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">

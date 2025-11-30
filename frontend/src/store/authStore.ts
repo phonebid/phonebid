@@ -1,20 +1,15 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
-import type { AuthState, LoginResponse, User } from "types/UserTypes";
+import type { AuthState, User, ProfileResponseDto } from "types/UserTypes";
 import { apiClient } from "services/apiClient";
-import { toast } from "react-toastify";
 
 interface AuthStore extends AuthState {
   // Actions
-  login: (user: User, accessToken: string) => void;
+  login: (user: User) => void;
   logout: () => void;
   forceLogout: () => void;
-  handleOAuthCallback: (
-    provider: string,
-    code: string,
-    state: string
-  ) => Promise<void>;
-  initializeAuth: () => void;
+  initializeAuth: () => Promise<void>;
+  checkAuth: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -27,19 +22,15 @@ export const useAuthStore = create<AuthStore>()(
         accessToken: null,
 
         // Basic Actions
-        login: (user: User, accessToken: string) => {
+        login: (user: User) => {
+          // 쿠키 기반 인증이므로 사용자 정보만 저장
           localStorage.setItem("userData", JSON.stringify(user));
-          // Bearer 접두사 제거
-          localStorage.setItem(
-            "accessToken",
-            accessToken.replace("Bearer ", "")
-          );
 
           set(
             {
               isAuthenticated: true,
               user,
-              accessToken,
+              accessToken: null, // 쿠키에 저장되므로 null로 설정
             },
             false,
             "auth/login"
@@ -47,8 +38,8 @@ export const useAuthStore = create<AuthStore>()(
         },
 
         logout: () => {
-          localStorage.removeItem("accessToken");
           localStorage.removeItem("userData");
+          // 쿠키는 백엔드에서 삭제해야 함 (프론트엔드에서는 HttpOnly 쿠키 접근 불가)
 
           set(
             {
@@ -62,7 +53,6 @@ export const useAuthStore = create<AuthStore>()(
         },
 
         forceLogout: () => {
-          localStorage.removeItem("accessToken");
           localStorage.removeItem("userData");
 
           set(
@@ -75,64 +65,71 @@ export const useAuthStore = create<AuthStore>()(
             "auth/forceLogout"
           );
 
-          // 로그인 페이지로 리다이렉트
-          window.location.href = "/login";
-        },
-
-        // OAuth Actions
-        handleOAuthCallback: async (
-          provider: string,
-          code: string,
-          state: string
-        ) => {
-          try {
-            // OAuth 토큰 교환 및 사용자 정보 조회
-            const response = await apiClient.post(
-              "/api/v1/auth/oauth/callback",
-              {
-                provider,
-                code,
-                state,
-              }
-            );
-
-            const { accessToken, username, nickname, role } =
-              response as unknown as LoginResponse;
-
-            get().login({ username, nickname, role }, accessToken);
-
-            toast.success(`${provider} 로그인이 완료되었습니다.`);
-          } catch (error: any) {
-            console.error("OAuth 콜백 처리 실패:", error);
-            const errorMessage =
-              error.response?.data?.message || "OAuth 로그인에 실패했습니다.";
-            toast.error(errorMessage);
-            throw error;
+          // 이미 로그인 페이지에 있으면 리다이렉트하지 않음 (무한 루프 방지)
+          if (window.location.pathname !== "/login") {
+            window.location.href = "/login";
           }
         },
 
         // Utility Actions
-        initializeAuth: () => {
-          const accessToken = localStorage.getItem("accessToken");
-          const userData = localStorage.getItem("userData");
+        initializeAuth: async () => {
+          // 쿠키 기반 인증이므로 항상 API 호출로 인증 상태 확인
+          // localStorage에 userData가 없어도 쿠키에 토큰이 있을 수 있음 (예: 카카오 로그인 직후)
+          try {
+            // 쿠키에 토큰이 있는지 확인하기 위해 프로필 API 호출
+            await get().checkAuth();
+          } catch (error) {
+            // 인증 실패 시 로컬 스토리지 정리
+            console.error("인증 상태 확인 실패:", error);
+            localStorage.removeItem("userData");
+            set(
+              {
+                isAuthenticated: false,
+                user: null,
+                accessToken: null,
+              },
+              false,
+              "auth/initialize"
+            );
+          }
+        },
 
-          if (accessToken && userData) {
-            try {
-              const user = JSON.parse(userData) as User;
-              set(
-                {
-                  isAuthenticated: true,
-                  user,
-                  accessToken,
-                },
-                false,
-                "auth/initialize"
-              );
-            } catch (error) {
-              console.error("인증 상태 복원 실패:", error);
-              localStorage.removeItem("accessToken");
-              localStorage.removeItem("userData");
-            }
+        checkAuth: async () => {
+          try {
+            // 쿠키에 토큰이 있는지 확인하기 위해 프로필 API 호출
+            const profile = await apiClient.get<ProfileResponseDto>("/users/profile");
+            
+            const user: User = {
+              username: profile.username,
+              nickname: profile.nickname,
+              role: profile.role,
+            };
+
+            // 사용자 정보 업데이트
+            localStorage.setItem("userData", JSON.stringify(user));
+
+            set(
+              {
+                isAuthenticated: true,
+                user,
+                accessToken: null, // 쿠키에 저장되므로 null
+              },
+              false,
+              "auth/checkAuth"
+            );
+          } catch (error) {
+            // 인증 실패
+            localStorage.removeItem("userData");
+            set(
+              {
+                isAuthenticated: false,
+                user: null,
+                accessToken: null,
+              },
+              false,
+              "auth/checkAuth"
+            );
+            throw error;
           }
         },
       }),

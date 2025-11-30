@@ -15,6 +15,7 @@ class ApiClient {
       baseURL: `${baseURL}${API_CONSTANTS.ENDPOINTS.API_V1}`,
       timeout: getApiTimeout(),
       headers: API_CONSTANTS.DEFAULT_HEADERS,
+      withCredentials: true, // 쿠키 자동 전송 활성화
     });
 
     this.setupInterceptors();
@@ -22,6 +23,8 @@ class ApiClient {
 
   private setupInterceptors() {
     // Request interceptor for auth token
+    // 쿠키 기반 인증 사용 시 헤더에 토큰을 명시적으로 설정하지 않아도 됨
+    // 하지만 하위 호환성을 위해 localStorage에 토큰이 있으면 헤더에 추가
     this.client.interceptors.request.use(
       (config) => {
         const token = localStorage.getItem("accessToken");
@@ -40,14 +43,22 @@ class ApiClient {
         const errorMessage =
           error.response?.data?.message || "알 수 없는 오류가 발생했습니다.";
         const errorCode = error.response?.status || 500;
+        const requestUrl = error.config?.url || "";
 
         console.error("API Error:", error);
 
         // 토큰 관련 에러 처리 (401, 403)
         if (errorCode === 401 || errorCode === 403) {
-          const { forceLogout } = useAuthStore.getState();
-          toast.error("세션이 만료되었습니다. 다시 로그인해주세요.");
-          forceLogout();
+          // 인증 확인용 요청(/users/profile)이거나 이미 로그인 페이지에 있으면 forceLogout 호출 안 함
+          const isAuthCheckRequest = requestUrl.includes("/users/profile");
+          const isOnLoginPage = window.location.pathname === "/login";
+
+          if (!isAuthCheckRequest && !isOnLoginPage) {
+            const { forceLogout } = useAuthStore.getState();
+            toast.error("세션이 만료되었습니다. 다시 로그인해주세요.");
+            forceLogout();
+          }
+
           return Promise.reject(
             new ApiErrorClass(errorCode, "인증이 필요합니다.")
           );

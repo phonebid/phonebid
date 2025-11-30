@@ -6,6 +6,7 @@ import com.phonebid.app.auction.dto.response.QuoteResponseDto;
 import com.phonebid.app.common.dto.ApiResponse;
 import com.phonebid.app.security.UserDetailsImpl;
 import jakarta.validation.Valid;
+import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -23,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * 판매자 문서 컨트롤러
