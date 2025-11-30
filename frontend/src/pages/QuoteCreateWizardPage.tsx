@@ -185,7 +185,7 @@ const QuoteCreateWizardPage: React.FC = () => {
     if (step === 6) {
       const payload: QuoteCreateRequestDto = {
         phoneModelId: draft.model ?? "",
-        carrier: draft.carrier as Carrier,
+        carrier: draft.carrier ?? "ANY" as Carrier,
         purchaseMethod: draft.purchaseMethod as PurchaseMethod,
         activationMethod: draft.activationMethod as ActivationMethod,
       };
