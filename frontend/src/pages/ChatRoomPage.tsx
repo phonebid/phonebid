@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import { getChatRoom, getChatMessagesPaginated, markMessagesAsRead } from "services/chatService";
 import type { PaginatedChatMessages } from "types/ChatTypes";
 import { getQuoteDetail } from "services/quoteService";
@@ -20,6 +20,7 @@ const ChatRoomPage: React.FC = () => {
   const { chatRoomId } = useParams<{ chatRoomId: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { mutate } = useSWRConfig();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -151,10 +152,8 @@ const ChatRoomPage: React.FC = () => {
                 .then(() => {
                   // 읽음 처리 성공 시 로컬 스토리지에 저장
                   saveReadMessageIds(chatRoomId, messageIds);
-                  // 채팅방 목록 갱신을 위해 SWR 캐시 무효화
-                  if (typeof window !== 'undefined' && window.location.pathname === `/chat/${chatRoomId}`) {
-                    // SWR 캐시 무효화는 useSWR의 mutate를 사용하거나 페이지 이동 시 자동 갱신됨
-                  }
+                  // 채팅방 목록 캐시 즉시 무효화
+                  mutate("/chat/rooms?page=0&size=20");
                 })
                 .catch((error) => {
                   console.error("Failed to mark messages as read:", error);
@@ -195,7 +194,7 @@ const ChatRoomPage: React.FC = () => {
         return mergedMessages;
       });
     }
-  }, [initialMessagesPage, chatRoomId, user, chatRoom, getReadMessageIds, saveReadMessageIds]);
+  }, [initialMessagesPage, chatRoomId, user, chatRoom, getReadMessageIds, saveReadMessageIds, mutate]);
 
   // 이전 페이지 로드 함수
   const loadPreviousPage = useCallback(async () => {
@@ -363,6 +362,8 @@ const ChatRoomPage: React.FC = () => {
                 msg.id === message.id ? { ...msg, isRead: true } : msg
               )
             );
+            // 채팅방 목록 캐시 즉시 무효화
+            mutate("/chat/rooms?page=0&size=20");
           })
           .catch((error) => {
             console.error("Failed to mark message as read:", error);
