@@ -31,3 +31,17 @@ export interface SignupRequest {
   name: string;
   nickname: string;
 }
+
+export interface ProfileResponseDto {
+  id: string;
+  username: string;
+  email: string;
+  name: string;
+  nickname: string;
+  phone: string | null;
+  role: string;
+  provider: string | null;
+  providerId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}

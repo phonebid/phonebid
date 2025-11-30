@@ -52,10 +52,10 @@ is_delete BOOLEAN NOT NULL DEFAULT FALSE
 CREATE TABLE quotes (
 id UUID PRIMARY KEY,
 user_id UUID NOT NULL, -- 견적 요청자 (users.id)
-model VARCHAR(255) NOT NULL, -- 기종명 (예: iPhone 16)
-storage VARCHAR(255) NOT NULL, -- 저장 용량 (예: 128GB)
+phone_model_id UUID NOT NULL, -- 기종 (phone_models.id)
+storage UUID, -- 저장 용량 옵션 (phone_options.id, nullable: 상관없음 선택 시)
 carrier VARCHAR(255) NOT NULL, -- 통신사: SKT, KT, LGU
-color VARCHAR(255) NOT NULL,
+color UUID, -- 색상 옵션 (phone_options.id, nullable: 상관없음 선택 시)
 status VARCHAR(255) NOT NULL, -- OPEN, CLOSED, CONTRACTED
 expired_at TIMESTAMP NOT NULL, -- 경매 마감 시각
 -- 구매 조건 필드들
@@ -127,6 +127,9 @@ CREATE INDEX idx_seller_documents_type ON seller_documents(type);
 ALTER TABLE sellers ADD CONSTRAINT fk_sellers_user FOREIGN KEY (user_id) REFERENCES users(id);
 ALTER TABLE seller_documents ADD CONSTRAINT fk_documents_seller FOREIGN KEY (seller_id) REFERENCES sellers(user_id);
 ALTER TABLE quotes ADD CONSTRAINT fk_quotes_user FOREIGN KEY (user_id) REFERENCES users(id);
+ALTER TABLE quotes ADD CONSTRAINT fk_quotes_phone_model FOREIGN KEY (phone_model_id) REFERENCES phone_models(id);
+ALTER TABLE quotes ADD CONSTRAINT fk_quotes_storage FOREIGN KEY (storage) REFERENCES phone_options(id);
+ALTER TABLE quotes ADD CONSTRAINT fk_quotes_color FOREIGN KEY (color) REFERENCES phone_options(id);
 ALTER TABLE bids ADD CONSTRAINT fk_bids_quote FOREIGN KEY (quote_id) REFERENCES quotes(id);
 ALTER TABLE bids ADD CONSTRAINT fk_bids_seller FOREIGN KEY (seller_id) REFERENCES sellers(user_id);
 ALTER TABLE bid_history ADD CONSTRAINT fk_history_bid FOREIGN KEY (bid_id) REFERENCES bids(id);

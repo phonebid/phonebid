@@ -57,14 +57,15 @@ const LoginPage = () => {
           credentials
         );
 
-        const { accessToken, username, nickname, role } = response;
+        // 쿠키에 토큰이 자동으로 저장되므로 사용자 정보만 저장
+        const { username, nickname, role } = response;
         const userData: User = {
           username,
           nickname,
           role,
         };
 
-        login(userData, accessToken);
+        login(userData);
 
         toast.success("로그인이 완료되었습니다.");
         navigate("/", { replace: true });
