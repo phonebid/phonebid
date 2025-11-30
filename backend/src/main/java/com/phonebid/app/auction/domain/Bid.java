@@ -10,6 +10,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.hibernate.annotations.Comment;
@@ -91,6 +93,14 @@ public class Bid extends BaseEntity {
     @Comment("약정개월")
     private Integer contractMonths;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    @Comment("입찰 상태 (ACTIVE, SELECTED, CANCELLED)")
+    private BidStatus status;
+
+    @OneToMany(mappedBy = "bid", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<BidAdditionalService> additionalServiceList = new ArrayList<>();
+
     @Builder
     public Bid(Quote quote, Seller seller, Integer price, Integer deliveryDays, Double ratingSnapshot,
                PurchaseMethod purchaseMethod, Carrier carrier, Carrier currentCarrier, ActivationMethod activationMethod,
@@ -112,6 +122,33 @@ public class Bid extends BaseEntity {
         this.additionalServices = additionalServices;
         this.pricePlan = pricePlan;
         this.contractMonths = contractMonths;
+        this.status = BidStatus.ACTIVE;
+    }
+
+    public void addAdditionalService(BidAdditionalService additionalService) {
+        this.additionalServiceList.add(additionalService);
+    }
+
+    public void select() {
+        if (this.status != BidStatus.ACTIVE) {
+            throw new CustomException(AuctionErrorCode.BID_NOT_ALLOWED);
+        }
+        this.status = BidStatus.SELECTED;
+    }
+
+    public void cancel() {
+        if (this.status != BidStatus.ACTIVE) {
+            throw new CustomException(AuctionErrorCode.BID_NOT_ALLOWED);
+        }
+        this.status = BidStatus.CANCELLED;
+    }
+
+    public boolean isActive() {
+        return this.status == BidStatus.ACTIVE;
+    }
+
+    public boolean isSelected() {
+        return this.status == BidStatus.SELECTED;
     }
 
     // 비즈니스 메서드
