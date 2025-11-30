@@ -1,6 +1,7 @@
 package com.phonebid.app.chat.repository;
 
 import com.phonebid.app.chat.domain.ChatRoom;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -24,6 +25,17 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, UUID> {
      */
     @Query("SELECT c FROM ChatRoom c WHERE c.consumer.id = :userId OR c.seller.user.id = :userId ORDER BY c.createdAt DESC")
     Page<ChatRoom> findByUserIdOrderByCreatedAtDesc(@Param("userId") UUID userId, Pageable pageable);
+
+    /**
+     * 양쪽 사용자 모두 삭제한 채팅방 조회
+     * DB 레벨에서 필터링하여 성능 최적화
+     * 활성 멤버 수가 0인 채팅방만 조회
+     */
+    @Query("SELECT DISTINCT cr FROM ChatRoom cr " +
+           "WHERE (SELECT COUNT(ucr) FROM UserChatRoom ucr " +
+           "WHERE ucr.chatRoom.id = cr.id AND ucr.deletedAt IS NULL " +
+           "AND (ucr.isDelete = false OR ucr.isDelete IS NULL)) = 0")
+    List<ChatRoom> findFullyDeletedChatRooms();
 }
 
 

@@ -18,9 +18,16 @@ public class ChatRoomResponse {
     private ChatRoomStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    
+    private String sellerName;
+    private String consumerName;
+    private String lastMessage;
+    private Integer totalPrice;
+    private Long unreadCount;
 
     private ChatRoomResponse(UUID id, UUID quoteId, UUID consumerId, UUID sellerId,
-                             ChatRoomStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
+                             ChatRoomStatus status, LocalDateTime createdAt, LocalDateTime updatedAt,
+                             String sellerName, String consumerName, String lastMessage, Integer totalPrice, Long unreadCount) {
         this.id = id;
         this.quoteId = quoteId;
         this.consumerId = consumerId;
@@ -28,6 +35,11 @@ public class ChatRoomResponse {
         this.status = status;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.sellerName = sellerName;
+        this.consumerName = consumerName;
+        this.lastMessage = lastMessage;
+        this.totalPrice = totalPrice;
+        this.unreadCount = unreadCount;
     }
 
     public static ChatRoomResponse from(ChatRoom chatRoom) {
@@ -35,10 +47,32 @@ public class ChatRoomResponse {
                 chatRoom.getId(),
                 chatRoom.getQuote().getId(),
                 chatRoom.getConsumer().getId(),
-                chatRoom.getSeller().getSellerId(),
+                chatRoom.getSeller().getUser().getId(), // Seller의 User ID 사용 (메시지 senderId와 일치)
                 chatRoom.getStatus(),
                 chatRoom.getCreatedAt(),
-                chatRoom.getUpdatedAt()
+                chatRoom.getUpdatedAt(),
+                null, // sellerName은 서비스에서 설정
+                null, // consumerName은 서비스에서 설정
+                null, // lastMessage는 서비스에서 설정
+                null, // totalPrice는 서비스에서 설정
+                null  // unreadCount는 서비스에서 설정
+        );
+    }
+    
+    public static ChatRoomResponse from(ChatRoom chatRoom, String sellerName, String consumerName, String lastMessage, Integer totalPrice, Long unreadCount) {
+        return new ChatRoomResponse(
+                chatRoom.getId(),
+                chatRoom.getQuote().getId(),
+                chatRoom.getConsumer().getId(),
+                chatRoom.getSeller().getUser().getId(), // Seller의 User ID 사용 (메시지 senderId와 일치)
+                chatRoom.getStatus(),
+                chatRoom.getCreatedAt(),
+                chatRoom.getUpdatedAt(),
+                sellerName,
+                consumerName,
+                lastMessage,
+                totalPrice,
+                unreadCount
         );
     }
 }

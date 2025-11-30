@@ -24,6 +24,8 @@ import com.phonebid.app.chat.dto.response.ChatRoomResponse;
 import com.phonebid.app.chat.errorcode.ChatErrorCode;
 import com.phonebid.app.chat.repository.ChatMessageRepository;
 import com.phonebid.app.chat.repository.ChatRoomRepository;
+import com.phonebid.app.chat.repository.UserChatRoomRepository;
+import com.phonebid.app.auction.repository.BidRepository;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.member.domain.Role;
 import com.phonebid.app.member.domain.Seller;
@@ -40,6 +42,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -59,6 +62,15 @@ class ChatRoomServiceTest {
 
     @Mock
     private ChatMessageRepository chatMessageRepository;
+
+    @Mock
+    private UserChatRoomRepository userChatRoomRepository;
+
+    @Mock
+    private BidRepository bidRepository;
+
+    @Mock
+    private SimpMessagingTemplate messagingTemplate;
 
     @InjectMocks
     private ChatRoomService chatRoomService;
@@ -90,14 +102,18 @@ class ChatRoomServiceTest {
             ReflectionTestUtils.setField(saved, "id", chatRoomId);
             return saved;
         });
+        when(userChatRoomRepository.save(any(com.phonebid.app.chat.domain.UserChatRoom.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         ChatRoomResponse response = chatRoomService.createChatRoom(request);
 
         assertThat(response.getId()).isEqualTo(chatRoomId);
         assertThat(response.getQuoteId()).isEqualTo(quoteId);
         assertThat(response.getConsumerId()).isEqualTo(consumerId);
-        assertThat(response.getSellerId()).isEqualTo(sellerId);
+        assertThat(response.getSellerId()).isEqualTo(seller.getUser().getId());
         verify(chatRoomRepository).save(any(ChatRoom.class));
+        verify(userChatRoomRepository, org.mockito.Mockito.times(2))
+                .save(any(com.phonebid.app.chat.domain.UserChatRoom.class));
     }
 
     @Test
@@ -150,6 +166,8 @@ class ChatRoomServiceTest {
         ReflectionTestUtils.setField(chatRoom, "id", chatRoomId);
 
         when(chatRoomRepository.findById(chatRoomId)).thenReturn(Optional.of(chatRoom));
+        when(userChatRoomRepository.existsActiveByUserIdAndChatRoomId(requesterId, chatRoomId))
+                .thenReturn(false);
 
         assertThatThrownBy(() -> chatRoomService.getChatRoom(chatRoomId, requesterId))
                 .isInstanceOf(CustomException.class)
@@ -187,7 +205,10 @@ class ChatRoomServiceTest {
         ReflectionTestUtils.setField(request, "messageIds", List.of(messageId));
 
         when(chatRoomRepository.findById(chatRoomId)).thenReturn(Optional.of(chatRoom));
+        when(userChatRoomRepository.existsActiveByUserIdAndChatRoomId(consumerId, chatRoomId))
+                .thenReturn(true);
         when(chatMessageRepository.findByChatRoomIdAndIdIn(eq(chatRoomId), any())).thenReturn(List.of(message));
+        when(chatMessageRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         chatRoomService.markMessagesAsRead(chatRoomId, consumerId, request);
 
@@ -219,6 +240,8 @@ class ChatRoomServiceTest {
                 .build();
 
         when(chatRoomRepository.findById(chatRoomId)).thenReturn(Optional.of(chatRoom));
+        when(userChatRoomRepository.existsActiveByUserIdAndChatRoomId(consumerId, chatRoomId))
+                .thenReturn(true);
         when(chatMessageRepository.findByChatRoomIdOrderByCreatedAtAsc(chatRoomId)).thenReturn(List.of(message));
 
         List<ChatMessageResponse> responses = chatRoomService.getChatMessages(chatRoomId, consumerId);

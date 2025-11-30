@@ -4,7 +4,9 @@ import com.phonebid.app.auction.domain.Quote;
 import com.phonebid.app.auction.domain.QuoteStatus;
 import com.phonebid.app.auction.dto.request.QuoteCreateRequestDto;
 import com.phonebid.app.auction.dto.response.QuoteResponseDto;
+import com.phonebid.app.auction.repository.BidRepository;
 import com.phonebid.app.auction.repository.QuoteRepository;
+import com.phonebid.app.common.errorcode.AuctionErrorCode;
 import com.phonebid.app.common.errorcode.PhoneErrorCode;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.member.domain.User;
@@ -25,6 +27,7 @@ public class QuoteService {
 
     private final QuoteRepository quoteRepository;
     private final PhoneModelRepository phoneModelRepository;
+    private final BidRepository bidRepository;
 
     @Transactional
     public void createQuote(QuoteCreateRequestDto quoteRequestDto, User user) {
@@ -71,6 +74,31 @@ public class QuoteService {
         return quotes.stream()
                 .map(QuoteResponseDto::from)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 견적 상세 조회
+     */
+    public QuoteResponseDto getQuoteById(UUID quoteId) {
+        Quote quote = quoteRepository.findById(quoteId)
+                .orElseThrow(() -> new CustomException(AuctionErrorCode.QUOTE_NOT_FOUND));
+        
+        // 삭제된 견적인지 확인
+        if (quote.getIsDelete() != null && quote.getIsDelete()) {
+            throw new CustomException(AuctionErrorCode.QUOTE_NOT_FOUND);
+        }
+        
+        // 입찰 개수 조회
+        long bidCount = bidRepository.countByQuoteId(quoteId);
+        
+        return QuoteResponseDto.from(quote, bidCount);
+    }
+
+    /**
+     * 견적의 입찰 개수 조회
+     */
+    public long getBidCountByQuoteId(UUID quoteId) {
+        return bidRepository.countByQuoteId(quoteId);
     }
 
 }

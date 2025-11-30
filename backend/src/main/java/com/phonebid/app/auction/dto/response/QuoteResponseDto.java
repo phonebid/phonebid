@@ -28,6 +28,7 @@ public class QuoteResponseDto {
     private Carrier currentCarrier;
     private ActivationMethod activationMethod;
     private LocalDateTime createdAt;
+    private Long bidCount;
 
     public static QuoteResponseDto from(Quote quote) {
         return QuoteResponseDto.builder()
@@ -42,6 +43,24 @@ public class QuoteResponseDto {
                 .currentCarrier(quote.getCurrentCarrier())
                 .activationMethod(quote.getActivationMethod())
                 .createdAt(quote.getCreatedAt())
+                .bidCount(null) // 기본값은 null, 필요시 서비스에서 설정
+                .build();
+    }
+
+    public static QuoteResponseDto from(Quote quote, Long bidCount) {
+        return QuoteResponseDto.builder()
+                .id(quote.getId())
+                .phoneModel(PhoneModelResponseDto.fromWithoutOptions(quote.getPhoneModel()))
+                .storage(PhoneOptionResponseDto.from(quote.getStorage()))
+                .carrier(quote.getCarrier())
+                .color(PhoneOptionResponseDto.from(quote.getColor()))
+                .status(quote.getStatus())
+                .expiredAt(quote.getExpiredAt())
+                .purchaseMethod(quote.getPurchaseMethod())
+                .currentCarrier(quote.getCurrentCarrier())
+                .activationMethod(quote.getActivationMethod())
+                .createdAt(quote.getCreatedAt())
+                .bidCount(bidCount)
                 .build();
     }
 }
