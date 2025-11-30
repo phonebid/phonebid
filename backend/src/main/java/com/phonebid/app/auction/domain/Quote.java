@@ -107,6 +107,6 @@ public class Quote extends BaseEntity {
     public String getFullSpecification() {
         String storageStr = storage != null ? storage.getDisplayLabel() : "상관없음";
         String colorStr = color != null ? color.getDisplayLabel() : "상관없음";
-        return String.format("%s %s %s %s", phoneModel, storageStr, carrier.getDisplayName(), colorStr);
+        return String.format("%s %s %s %s", phoneModel.getFullModelName(), storageStr, carrier.getDisplayName(), colorStr);
     }
 }
