@@ -1,33 +1,28 @@
 package com.phonebid.app.auction.controller;
 
-import com.phonebid.app.auction.service.QuoteService;
 import com.phonebid.app.auction.dto.request.QuoteCreateRequestDto;
+import com.phonebid.app.auction.dto.response.BidListResponseDto;
 import com.phonebid.app.auction.dto.response.QuoteResponseDto;
+import com.phonebid.app.auction.service.BidService;
+import com.phonebid.app.auction.service.QuoteService;
 import com.phonebid.app.common.dto.ApiResponse;
 import com.phonebid.app.security.UserDetailsImpl;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
 
 /**
- * 판매자 문서 컨트롤러
- * 판매자 문서 업로드 및 관리 API 엔드포인트를 제공하는 컨트롤러
+ * 견적 컨트롤러
+ * 견적 관리 API 엔드포인트를 제공하는 컨트롤러
  */
 @Slf4j
 @RestController
@@ -36,12 +31,11 @@ import java.util.UUID;
 public class QuoteController {
 
     private final QuoteService quoteService;
+    private final BidService bidService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Void>> createQuote(@RequestBody @Valid QuoteCreateRequestDto quoteRequestDto) {
-        // JWT 토큰에서 사용자 정보 추출
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+    public ResponseEntity<ApiResponse<Void>> createQuote(@RequestBody @Valid QuoteCreateRequestDto quoteRequestDto,
+                                                         @AuthenticationPrincipal UserDetailsImpl userDetails) {
         
         quoteService.createQuote(quoteRequestDto, userDetails.getUser());
         return ResponseEntity.ok()
@@ -51,10 +45,8 @@ public class QuoteController {
     @GetMapping("/my")
     public ResponseEntity<ApiResponse<List<QuoteResponseDto>>> getMyOpenQuotes(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        // JWT 토큰에서 사용자 정보 추출
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
         
         Pageable pageable = PageRequest.of(page, size);
         List<QuoteResponseDto> quotes = quoteService.getMyOpenQuotes(userDetails.getUser(), pageable);
@@ -65,7 +57,6 @@ public class QuoteController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<QuoteResponseDto>>> getAllOpenQuotes() {
-        
         
         List<QuoteResponseDto> quotes = quoteService.getAllOpenQuotes();
         
@@ -80,4 +71,24 @@ public class QuoteController {
                 .body(ApiResponse.success(HttpStatus.OK, "견적 상세 조회가 성공적으로 완료되었습니다.", quote));
     }
 
+    /**
+     * 특정 견적의 입찰 목록 조회 (판매자용)
+     */
+    @GetMapping("/{quoteId}/bids")
+    public ResponseEntity<ApiResponse<List<BidListResponseDto>>> getBidsByQuoteId(@PathVariable UUID quoteId) {
+        List<BidListResponseDto> bids = bidService.getBidsByQuoteId(quoteId);
+        return ResponseEntity.ok()
+                .body(ApiResponse.success(HttpStatus.OK, "입찰 목록 조회가 성공적으로 완료되었습니다.", bids));
+    }
+
+    /**
+     * 판매자용 전체 견적 목록 조회
+     * - 모든 진행중인 견적을 조회 (판매자가 입찰할 수 있는 목록)
+     */
+    @GetMapping("/seller")
+    public ResponseEntity<ApiResponse<List<QuoteResponseDto>>> getQuotesForSeller() {
+        List<QuoteResponseDto> quotes = quoteService.getAllOpenQuotes();
+        return ResponseEntity.ok()
+                .body(ApiResponse.success(HttpStatus.OK, "판매자용 견적 목록 조회가 성공적으로 완료되었습니다.", quotes));
+    }
 }
