@@ -118,7 +118,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     }
 
     /**
-     * WebSocket 핸드셰이크 시 JWT 토큰을 검증하고 인증 정보를 설정하는 인터셉터
+     * WebSocket 핸드셰이크 시 Cookie 헤더에서 JWT 토큰을 검증하고 인증 정보를 설정하는 인터셉터
      */
     @RequiredArgsConstructor
     private static class JwtHandshakeInterceptor implements HandshakeInterceptor {
@@ -129,19 +129,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         @Override
         public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
                                       WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
-            // 핸드셰이크는 기본적으로 허용
-            // 실제 인증은 STOMP CONNECT 프레임에서 처리하므로 여기서는 기본 검증만 수행
-            // 하위 호환성을 위해 쿼리 파라미터 토큰이 있으면 검증 (fallback)
             try {
                 if (request instanceof ServletServerHttpRequest) {
                     ServletServerHttpRequest servletRequest = (ServletServerHttpRequest) request;
                     HttpServletRequest httpRequest = servletRequest.getServletRequest();
 
-                    // 쿠키 또는 쿼리 파라미터에서 토큰 추출
+                    // Cookie 헤더에서 JWT 토큰 추출
                     String token = jwtUtil.getJwtFromCookie(httpRequest);
-                    if (!StringUtils.hasText(token)) {
-                        token = httpRequest.getParameter("token");
-                    }
 
                     if (StringUtils.hasText(token)) {
                         if (token.startsWith(JwtUtil.BEARER_PREFIX)) {
@@ -163,23 +157,22 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                             attributes.put("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
                             attributes.put(Principal.class.getName(), userDetails);
 
-                            log.info("WebSocket 핸드셰이크 성공 (쿠키/쿼리): username={}", username);
+                            log.info("WebSocket 핸드셰이크 인증 성공");
+                            return true;
                         } else {
-                            log.warn("WebSocket 핸드셰이크: 토큰이 유효하지 않습니다. STOMP CONNECT에서 재시도합니다.");
+                            log.warn("WebSocket 핸드셰이크 실패: JWT 토큰이 유효하지 않습니다.");
+                            return false;
                         }
                     } else {
-                        log.debug("WebSocket 핸드셰이크: 토큰이 없어 STOMP CONNECT에서 처리합니다.");
+                        log.warn("WebSocket 핸드셰이크 실패: Cookie에 JWT 토큰이 없습니다.");
+                        return false;
                     }
-                    
-                    // 기본적으로 핸드셰이크 허용 (실제 인증은 CONNECT 프레임에서 처리)
-                    return true;
                 }
             } catch (Exception e) {
                 log.error("WebSocket 핸드셰이크 중 오류 발생", e);
-                // 오류 발생 시에도 핸드셰이크 허용 (CONNECT 프레임에서 인증 실패 처리)
-                return true;
+                return false;
             }
-            return true;
+            return false;
         }
 
         @Override
