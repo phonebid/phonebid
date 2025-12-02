@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import com.phonebid.app.jwt.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
-import com.phonebid.app.security.UserDetailsServiceImpl;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -21,7 +20,6 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.StringUtils;
-import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -40,6 +38,20 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
         this.objectMapper = new ObjectMapper();
+    }
+
+    /**
+     * 공개 경로는 JWT 토큰 검증을 건너뜁니다.
+     * 로그인, 회원가입, OAuth 등 인증 없이 접근 가능한 엔드포인트
+     */
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.equals("/api/v1/users/login")
+            || path.equals("/api/v1/users/signup")
+            || path.startsWith("/api/v1/auth/kakao")
+            || path.startsWith("/api/v1/auth/naver");
+            // || path.startsWith("/api/v1/payments/portone");
     }
 
     @Override
