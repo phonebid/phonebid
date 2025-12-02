@@ -85,24 +85,15 @@ class WebSocketService {
     }
 
     const baseUrl = getApiBaseUrl();
-    const token = localStorage.getItem("accessToken");
-    
-    if (!token) {
-      console.error("JWT 토큰이 없습니다. WebSocket 연결을 중단합니다.");
-      this.connectionStatus = WebSocketConnectionStatus.ERROR;
-      this.notifyStatusChange();
-      return;
-    }
-
-    // URL에서 토큰 제거 (보안 강화: 로그/히스토리/Referrer 노출 방지)
     const wsUrl = `${baseUrl}/ws/chat`;
+    const sockJsOptions: SockJS.Options & { withCredentials?: boolean } = {
+      // 쿠키 자동 전송 활성화
+      withCredentials: true,
+    };
 
     this.client = new Client({
-      webSocketFactory: () => new SockJS(wsUrl) as unknown as WebSocket,
-      // STOMP CONNECT 프레임 헤더에 토큰 포함 (URL 노출 방지)
-      connectHeaders: {
-        Authorization: `Bearer ${token}`,
-      },
+      webSocketFactory: () =>
+        new SockJS(wsUrl, undefined, sockJsOptions) as unknown as WebSocket,
       reconnectDelay: this.reconnectDelay,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
