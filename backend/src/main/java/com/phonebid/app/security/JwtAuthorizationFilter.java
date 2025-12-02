@@ -40,6 +40,20 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         this.objectMapper = new ObjectMapper();
     }
 
+    /**
+     * 공개 경로는 JWT 토큰 검증을 건너뜁니다.
+     * 로그인, 회원가입, OAuth 등 인증 없이 접근 가능한 엔드포인트
+     */
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.equals("/api/v1/users/login")
+            || path.equals("/api/v1/users/signup")
+            || path.startsWith("/api/v1/auth/kakao")
+            || path.startsWith("/api/v1/auth/naver");
+            // || path.startsWith("/api/v1/payments/portone");
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain filterChain) throws ServletException, IOException {
         // 헤더에서 토큰 값 가져오기 (우선순위 1)
