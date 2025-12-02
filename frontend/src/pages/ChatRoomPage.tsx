@@ -627,9 +627,9 @@ const ChatRoomPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-indigo-50 overflow-hidden">
+    <div className="flex flex-col h-screen bg-indigo-50 overflow-hidden">
       {/* 헤더 - 고정 */}
-      <div className="bg-white border-b flex-shrink-0 z-10">
+      <div className="bg-white border-b flex-shrink-0 z-10 sticky top-0">
         <div className="flex items-center px-4 py-3 relative">
           <button
             onClick={handleBack}
@@ -761,7 +761,7 @@ const ChatRoomPage: React.FC = () => {
       </div>
 
       {/* 메시지 입력 영역 - 고정 */}
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 sticky bottom-0 bg-white">
         <MessageInput
           onSendMessage={handleSendMessage}
           onTyping={handleTyping}
