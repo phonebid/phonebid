@@ -44,20 +44,10 @@ public class BidService {
     @Transactional
     public BidResponseDto createBid(BidCreateRequestDto requestDto, User user) {
         // 1. 판매자 조회 및 검증
-        Seller seller = sellerRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new CustomException(AuctionErrorCode.SELLER_NOT_FOUND));
-        
-        if (!seller.canSell()) {
-            throw new CustomException(AuctionErrorCode.SELLER_NOT_APPROVED);
-        }
+        Seller seller = validateAndGetSeller(user);
 
         // 2. 견적 조회 및 검증
-        Quote quote = quoteRepository.findById(requestDto.getQuoteId())
-                .orElseThrow(() -> new CustomException(AuctionErrorCode.QUOTE_NOT_FOUND));
-        
-        if (!quote.canReceiveBids()) {
-            throw new CustomException(AuctionErrorCode.QUOTE_EXPIRED);
-        }
+        Quote quote = validateAndGetQuote(requestDto.getQuoteId());
 
         // 3. 중복 입찰 체크
         if (bidRepository.existsByQuoteIdAndSellerId(quote.getId(), seller.getSellerId())) {
@@ -65,15 +55,61 @@ public class BidService {
         }
 
         // 4. 요금제 생성 및 저장
-        PricePlan pricePlan = requestDto.toPricePlanEntity();
-        pricePlanRepository.save(pricePlan);
+        PricePlan pricePlan = createAndSavePricePlan(requestDto);
 
         // 5. 입찰 생성
-        Double ratingSnapshot = 4.5; // TODO: 실제 판매자 평점으로 교체
-        Bid bid = requestDto.toBidEntity(quote, seller, pricePlan, ratingSnapshot);
-        bidRepository.save(bid);
+        Bid bid = createAndSaveBid(requestDto, quote, seller, pricePlan);
 
         // 6. 부가서비스 생성
+        saveAdditionalServices(requestDto, bid);
+
+        log.info("입찰 생성 완료 - bidId: {}, quoteId: {}, sellerId: {}", 
+                bid.getId(), quote.getId(), seller.getSellerId());
+
+        return BidResponseDto.from(bid);
+    }
+
+    // createBid 헬퍼메서드 시작
+    // 판매자 조회 및 검증
+    private Seller validateAndGetSeller(User user) {
+        Seller seller = sellerRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new CustomException(AuctionErrorCode.SELLER_NOT_FOUND));
+        
+        if (!seller.canSell()) {
+            throw new CustomException(AuctionErrorCode.SELLER_NOT_APPROVED);
+        }
+        
+        return seller;
+    }
+
+    // 견적 조회 및 검증
+    private Quote validateAndGetQuote(UUID quoteId) {
+        Quote quote = quoteRepository.findById(quoteId)
+                .orElseThrow(() -> new CustomException(AuctionErrorCode.QUOTE_NOT_FOUND));
+        
+        if (!quote.canReceiveBids()) {
+            throw new CustomException(AuctionErrorCode.QUOTE_EXPIRED);
+        }
+        
+        return quote;
+    }
+
+    // 요금제 생성 및 저장
+    private PricePlan createAndSavePricePlan(BidCreateRequestDto requestDto) {
+        PricePlan pricePlan = requestDto.toPricePlanEntity();
+        return pricePlanRepository.save(pricePlan);
+    }
+
+    // 입찰 생성 및 저장
+    private Bid createAndSaveBid(BidCreateRequestDto requestDto, Quote quote, Seller seller, PricePlan pricePlan) {
+        // TODO: seller.getRating()으로 교체 (Seller 엔티티에 getRating() 메서드 추가 필요)
+        Double ratingSnapshot = 4.5;
+        Bid bid = requestDto.toBidEntity(quote, seller, pricePlan, ratingSnapshot);
+        return bidRepository.save(bid);
+    }
+
+    // 부가서비스 생성 및 저장
+    private void saveAdditionalServices(BidCreateRequestDto requestDto, Bid bid) {
         if (requestDto.getAdditionalServices() != null && !requestDto.getAdditionalServices().isEmpty()) {
             for (AdditionalServiceRequestDto serviceDto : requestDto.getAdditionalServices()) {
                 BidAdditionalService additionalService = serviceDto.toEntity(bid);
@@ -81,12 +117,9 @@ public class BidService {
                 bid.addAdditionalService(additionalService);
             }
         }
-
-        log.info("입찰 생성 완료 - bidId: {}, quoteId: {}, sellerId: {}", 
-                bid.getId(), quote.getId(), seller.getSellerId());
-
-        return BidResponseDto.from(bid);
     }
+
+    // 헬퍼메서드 끝
 
     /**
      * 입찰 상세 조회
