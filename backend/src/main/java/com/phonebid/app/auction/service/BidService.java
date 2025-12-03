@@ -134,6 +134,7 @@ public class BidService {
     /**
      * 판매자가 특정 견적에 이미 입찰했는지 확인
      */
+    @Transactional(readOnly = true)
     public boolean hasAlreadyBid(UUID quoteId, User user) {
         Seller seller = sellerRepository.findByUserId(user.getId())
                 .orElse(null);
