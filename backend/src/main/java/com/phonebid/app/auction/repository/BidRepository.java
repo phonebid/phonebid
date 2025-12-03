@@ -52,7 +52,8 @@ public interface BidRepository extends JpaRepository<Bid, UUID> {
     /**
      * 특정 견적의 모든 활성 입찰 목록 조회
      */
-    @Query("SELECT b FROM Bid b " +
+    @Query("SELECT DISTINCT b FROM Bid b " +
+           "LEFT JOIN FETCH b.additionalServiceList " +
            "WHERE b.quote.id = :quoteId " +
            "AND b.status = :status " +
            "AND (b.isDelete = false OR b.isDelete IS NULL) " +
@@ -62,7 +63,8 @@ public interface BidRepository extends JpaRepository<Bid, UUID> {
     /**
      * 특정 판매자의 입찰 목록 조회
      */
-    @Query("SELECT b FROM Bid b " +
+    @Query("SELECT DISTINCT b FROM Bid b " +
+           "LEFT JOIN FETCH b.additionalServiceList " +
            "WHERE b.seller.sellerId = :sellerId " +
            "AND (b.isDelete = false OR b.isDelete IS NULL) " +
            "ORDER BY b.createdAt DESC")
@@ -71,7 +73,8 @@ public interface BidRepository extends JpaRepository<Bid, UUID> {
     /**
      * 특정 판매자의 상태별 입찰 목록 조회
      */
-    @Query("SELECT b FROM Bid b " +
+    @Query("SELECT DISTINCT b FROM Bid b " +
+           "LEFT JOIN FETCH b.additionalServiceList " +
            "WHERE b.seller.sellerId = :sellerId " +
            "AND b.status = :status " +
            "AND (b.isDelete = false OR b.isDelete IS NULL) " +
