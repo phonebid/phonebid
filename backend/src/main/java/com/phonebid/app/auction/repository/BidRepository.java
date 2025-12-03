@@ -54,10 +54,10 @@ public interface BidRepository extends JpaRepository<Bid, UUID> {
      */
     @Query("SELECT b FROM Bid b " +
            "WHERE b.quote.id = :quoteId " +
-           "AND b.status = 'ACTIVE' " +
+           "AND b.status = :status " +
            "AND (b.isDelete = false OR b.isDelete IS NULL) " +
            "ORDER BY b.installmentPrincipal ASC")
-    List<Bid> findActiveByQuoteId(@Param("quoteId") UUID quoteId);
+    List<Bid> findActiveByQuoteId(@Param("quoteId") UUID quoteId, @Param("status") BidStatus status);
 
     /**
      * 특정 판매자의 입찰 목록 조회
@@ -83,8 +83,8 @@ public interface BidRepository extends JpaRepository<Bid, UUID> {
      */
     @Query("SELECT MIN(b.installmentPrincipal) FROM Bid b " +
            "WHERE b.quote.id = :quoteId " +
-           "AND b.status = 'ACTIVE' " +
+           "AND b.status = :status " +
            "AND (b.isDelete = false OR b.isDelete IS NULL)")
-    Integer findMinInstallmentPrincipalByQuoteId(@Param("quoteId") UUID quoteId);
+    Integer findMinInstallmentPrincipalByQuoteId(@Param("quoteId") UUID quoteId, @Param("status") BidStatus status);
 }
 

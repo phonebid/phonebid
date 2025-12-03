@@ -109,7 +109,7 @@ public class BidService {
             throw new CustomException(AuctionErrorCode.QUOTE_NOT_FOUND);
         }
 
-        List<Bid> bids = bidRepository.findActiveByQuoteId(quoteId);
+        List<Bid> bids = bidRepository.findActiveByQuoteId(quoteId, BidStatus.ACTIVE);
         return bids.stream()
                 .map(BidListResponseDto::from)
                 .collect(Collectors.toList());
@@ -158,7 +158,7 @@ public class BidService {
      */
     @Transactional(readOnly = true)
     public Integer getMinInstallmentPrincipal(UUID quoteId) {
-        return bidRepository.findMinInstallmentPrincipalByQuoteId(quoteId);
+        return bidRepository.findMinInstallmentPrincipalByQuoteId(quoteId, BidStatus.ACTIVE);
     }
 }
 
