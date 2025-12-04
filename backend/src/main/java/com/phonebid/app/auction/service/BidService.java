@@ -16,6 +16,7 @@ import com.phonebid.app.member.domain.User;
 import com.phonebid.app.member.repository.SellerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -157,9 +158,9 @@ public class BidService {
                 .orElseThrow(() -> new CustomException(AuctionErrorCode.SELLER_NOT_FOUND));
 
         Pageable pageable = PageRequest.of(page, size);
-        List<Bid> bids = bidRepository.findBySellerId(seller.getSellerId(), pageable);
+        Page<Bid> bidPage = bidRepository.findBySellerId(seller.getSellerId(), pageable);
         
-        return bids.stream()
+        return bidPage.getContent().stream()
                 .map(BidListResponseDto::from)
                 .collect(Collectors.toList());
     }

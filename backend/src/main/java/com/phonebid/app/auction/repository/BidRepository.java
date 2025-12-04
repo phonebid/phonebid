@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -63,23 +64,30 @@ public interface BidRepository extends JpaRepository<Bid, UUID> {
     /**
      * 특정 판매자의 입찰 목록 조회
      */
-    @Query("SELECT DISTINCT b FROM Bid b " +
+    @Query(value = "SELECT DISTINCT b FROM Bid b " +
            "LEFT JOIN FETCH b.additionalServiceList " +
            "WHERE b.seller.sellerId = :sellerId " +
            "AND (b.isDelete = false OR b.isDelete IS NULL) " +
-           "ORDER BY b.createdAt DESC")
-    List<Bid> findBySellerId(@Param("sellerId") UUID sellerId, Pageable pageable);
+           "ORDER BY b.createdAt DESC",
+           countQuery = "SELECT COUNT(DISTINCT b) FROM Bid b " +
+           "WHERE b.seller.sellerId = :sellerId " +
+           "AND (b.isDelete = false OR b.isDelete IS NULL)")
+    Page<Bid> findBySellerId(@Param("sellerId") UUID sellerId, Pageable pageable);
 
     /**
      * 특정 판매자의 상태별 입찰 목록 조회
      */
-    @Query("SELECT DISTINCT b FROM Bid b " +
+    @Query(value = "SELECT DISTINCT b FROM Bid b " +
            "LEFT JOIN FETCH b.additionalServiceList " +
            "WHERE b.seller.sellerId = :sellerId " +
            "AND b.status = :status " +
            "AND (b.isDelete = false OR b.isDelete IS NULL) " +
-           "ORDER BY b.createdAt DESC")
-    List<Bid> findBySellerIdAndStatus(@Param("sellerId") UUID sellerId, @Param("status") BidStatus status, Pageable pageable);
+           "ORDER BY b.createdAt DESC",
+           countQuery = "SELECT COUNT(DISTINCT b) FROM Bid b " +
+           "WHERE b.seller.sellerId = :sellerId " +
+           "AND b.status = :status " +
+           "AND (b.isDelete = false OR b.isDelete IS NULL)")
+    Page<Bid> findBySellerIdAndStatus(@Param("sellerId") UUID sellerId, @Param("status") BidStatus status, Pageable pageable);
 
     /**
      * 특정 견적의 최저 할부원금 입찰 조회
