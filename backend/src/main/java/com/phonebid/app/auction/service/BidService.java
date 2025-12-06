@@ -153,16 +153,14 @@ public class BidService {
      * 판매자 본인의 입찰 목록 조회
      */
     @Transactional(readOnly = true)
-    public List<BidListResponseDto> getMyBids(User user, int page, int size) {
+    public Page<BidListResponseDto> getMyBids(User user, int page, int size) {
         Seller seller = sellerRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new CustomException(AuctionErrorCode.SELLER_NOT_FOUND));
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Bid> bidPage = bidRepository.findBySellerId(seller.getSellerId(), pageable);
         
-        return bidPage.getContent().stream()
-                .map(BidListResponseDto::from)
-                .collect(Collectors.toList());
+        return bidPage.map(BidListResponseDto::from);
     }
 
     /**
