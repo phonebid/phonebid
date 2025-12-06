@@ -566,6 +566,13 @@ const ChatRoomPage: React.FC = () => {
     [chatRoomId, user, sendTyping]
   );
 
+  // 뒤로가기 핸들러 - 채팅방 목록 캐시를 갱신하고 이동
+  const handleBack = useCallback(() => {
+    // 채팅방 목록 캐시를 강제로 revalidate
+    mutate("/chat/rooms?page=0&size=20");
+    navigate("/chat");
+  }, [mutate, navigate]);
+
   // 메시지가 같은 날짜인지 확인
   const isSameDate = (date1: string, date2: string): boolean => {
     const d1 = new Date(date1).toDateString();
@@ -620,12 +627,12 @@ const ChatRoomPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-indigo-50 overflow-hidden">
+    <div className="flex flex-col h-screen bg-indigo-50 overflow-hidden">
       {/* 헤더 - 고정 */}
-      <div className="bg-white border-b flex-shrink-0 z-10">
+      <div className="bg-white border-b flex-shrink-0 z-10 sticky top-0">
         <div className="flex items-center px-4 py-3 relative">
           <button
-            onClick={() => navigate("/chat")}
+            onClick={handleBack}
             className="text-gray-600 hover:text-gray-900 p-1 absolute left-4"
             aria-label="뒤로가기"
           >
@@ -754,7 +761,7 @@ const ChatRoomPage: React.FC = () => {
       </div>
 
       {/* 메시지 입력 영역 - 고정 */}
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 sticky bottom-0 bg-white">
         <MessageInput
           onSendMessage={handleSendMessage}
           onTyping={handleTyping}

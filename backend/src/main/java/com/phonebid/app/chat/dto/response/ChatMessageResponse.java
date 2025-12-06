@@ -1,5 +1,6 @@
 package com.phonebid.app.chat.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.phonebid.app.chat.domain.ChatMessage;
 import com.phonebid.app.chat.domain.MessageType;
 import java.time.LocalDateTime;
@@ -16,6 +17,7 @@ public class ChatMessageResponse {
     private UUID senderId;
     private MessageType messageType;
     private String content;
+    @JsonProperty("isRead")
     private boolean isRead;
     private LocalDateTime createdAt;
 

@@ -51,4 +51,10 @@ public interface SellerRepository extends JpaRepository<Seller, UUID> {
      */
     @Query("SELECT s FROM Seller s WHERE s.approvalStatus = 'APPROVED'")
     List<Seller> findApprovedSellers();
+
+    /**
+     * User ID로 판매자 조회
+     */
+    @Query("SELECT s FROM Seller s WHERE s.user.id = :userId")
+    Optional<Seller> findByUserId(@Param("userId") UUID userId);
 } 

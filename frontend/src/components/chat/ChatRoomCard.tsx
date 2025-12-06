@@ -237,7 +237,9 @@ export function ChatRoomCard({
           </div>
           
           {/* 마지막 메시지 영역 */}
-          <p className="text-sm text-gray-500 truncate mb-2">{lastMessage}</p>
+          <p className={`text-sm truncate mb-2 ${unreadCount > 0 ? "font-semibold text-gray-900" : "text-gray-500"}`}>
+            {lastMessage}
+          </p>
           
           {/* 구분선 */}
           <div className="border-t border-gray-100 my-2"></div>

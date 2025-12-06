@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import useSWR from "swr";
 import { getChatRooms } from "services/chatService";
 import { realtimeDataConfig } from "services/swrConfig";
@@ -6,6 +7,8 @@ import type { PaginatedChatRooms } from "types/ChatTypes";
 import { ChatRoomCard } from "components/chat/ChatRoomCard";
 
 const ChatListPage: React.FC = () => {
+  const navigate = useNavigate();
+
   useEffect(() => {
     document.title = "채팅 목록 | PhoneBid";
   }, []);
@@ -43,9 +46,32 @@ const ChatListPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="bg-white border-b">
-          <div className="max-w-2xl mx-auto px-4 py-4">
-            <h1 className="text-lg font-semibold text-gray-900">채팅</h1>
+        <div className="bg-white border-b sticky top-0 z-10">
+          <div className="max-w-2xl mx-auto px-4 py-3">
+            <div className="flex items-center relative">
+              <button
+                onClick={() => navigate("/")}
+                className="text-gray-600 hover:text-gray-900 p-1 absolute left-0"
+                aria-label="홈으로"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+              </button>
+              <div className="flex-1 flex justify-center">
+                <h1 className="text-base font-semibold text-gray-900">채팅</h1>
+              </div>
+            </div>
           </div>
         </div>
         <div className="max-w-2xl mx-auto px-4 py-4">
@@ -60,9 +86,32 @@ const ChatListPage: React.FC = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="bg-white border-b">
-          <div className="max-w-2xl mx-auto px-4 py-4">
-            <h1 className="text-lg font-semibold text-gray-900">채팅</h1>
+        <div className="bg-white border-b sticky top-0 z-10">
+          <div className="max-w-2xl mx-auto px-4 py-3">
+            <div className="flex items-center relative">
+              <button
+                onClick={() => navigate("/")}
+                className="text-gray-600 hover:text-gray-900 p-1 absolute left-0"
+                aria-label="홈으로"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+              </button>
+              <div className="flex-1 flex justify-center">
+                <h1 className="text-base font-semibold text-gray-900">채팅</h1>
+              </div>
+            </div>
           </div>
         </div>
         <div className="max-w-2xl mx-auto px-4 py-4">
@@ -78,11 +127,32 @@ const ChatListPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       {/* 헤더 */}
       <div className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-lg font-semibold text-gray-900">채팅</h1>
+        <div className="max-w-2xl mx-auto px-4 py-3">
+          <div className="flex items-center relative">
+            <button
+              onClick={() => navigate("/")}
+              className="text-gray-600 hover:text-gray-900 p-1 absolute left-0"
+              aria-label="홈으로"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </button>
+            <div className="flex-1 flex justify-center">
+              <h1 className="text-base font-semibold text-gray-900">채팅</h1>
+            </div>
             {totalUnreadCount > 0 && (
-              <span className="bg-red-500 text-white text-[9px] font-medium rounded-md px-1 py-0.5 min-w-[16px] h-[16px] flex items-center justify-center leading-none">
+              <span className="bg-red-500 text-white text-[9px] font-medium rounded-md px-1 py-0.5 min-w-[16px] h-[16px] flex items-center justify-center leading-none absolute right-0">
                 {totalUnreadCount > 99 ? "99+" : totalUnreadCount}
               </span>
             )}
