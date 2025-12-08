@@ -1,6 +1,7 @@
 package com.phonebid.app.auction.controller;
 
 import com.phonebid.app.auction.dto.request.BidCreateRequestDto;
+import com.phonebid.app.auction.dto.request.BidUpdateRequestDto;
 import com.phonebid.app.auction.dto.response.BidListResponseDto;
 import com.phonebid.app.auction.dto.response.BidResponseDto;
 import com.phonebid.app.auction.service.BidService;
@@ -28,7 +29,7 @@ public class BidController {
     /**
      * 입찰 생성
      * - 판매자만 입찰 가능
-     * - 동일 견적에 여러 번 입찰 가능 (수정 불가, 새로운 입찰로만 가능)
+     * - 동일 견적에 여러 번 입찰 가능
      */
     @PostMapping
     public ResponseEntity<ApiResponse<BidResponseDto>> createBid(@RequestBody @Valid BidCreateRequestDto requestDto, 
@@ -38,6 +39,22 @@ public class BidController {
         
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(HttpStatus.CREATED, "입찰이 성공적으로 생성되었습니다.", response));
+    }
+
+    /**
+     * 입찰 수정
+     * - 본인의 입찰만 수정 가능
+     * - ACTIVE 상태이고 견적이 아직 입찰을 받을 수 있는 상태여야 함
+     */
+    @PutMapping("/{bidId}")
+    public ResponseEntity<ApiResponse<BidResponseDto>> updateBid(@PathVariable UUID bidId,
+                                                                 @RequestBody @Valid BidUpdateRequestDto requestDto,
+                                                                 @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        
+        BidResponseDto response = bidService.updateBid(bidId, requestDto, userDetails.getUser());
+        
+        return ResponseEntity.ok()
+                .body(ApiResponse.success(HttpStatus.OK, "입찰이 성공적으로 수정되었습니다.", response));
     }
 
     /**

@@ -153,7 +153,7 @@ public class Bid extends BaseEntity {
 
     // 비즈니스 메서드
     public boolean canModify() {
-        return quote.canReceiveBids();
+        return isActive() && quote.canReceiveBids();
     }
 
     public void updateBid(Integer newPrice, Integer newDeliveryDays) {
@@ -162,6 +162,55 @@ public class Bid extends BaseEntity {
         }
         this.price = newPrice;
         this.deliveryDays = newDeliveryDays;
+    }
+
+    /**
+     * 입찰 정보 수정 (포괄적)
+     */
+    public void updateBidDetails(Integer price, Integer deliveryDays, Integer additionalSubsidy,
+                                 Integer installmentPrincipal, Integer contractMonths) {
+        if (!canModify()) {
+            throw new CustomException(AuctionErrorCode.BID_MODIFICATION_NOT_ALLOWED);
+        }
+        
+        if (price != null) {
+            this.price = price;
+        }
+        if (deliveryDays != null) {
+            this.deliveryDays = deliveryDays;
+        }
+        if (additionalSubsidy != null) {
+            this.additionalSubsidy = additionalSubsidy;
+        }
+        if (installmentPrincipal != null) {
+            this.installmentPrincipal = installmentPrincipal;
+        }
+        if (contractMonths != null) {
+            this.contractMonths = contractMonths;
+        }
+    }
+
+    /**
+     * 요금제 변경
+     */
+    public void updatePricePlan(PricePlan newPricePlan) {
+        if (!canModify()) {
+            throw new CustomException(AuctionErrorCode.BID_MODIFICATION_NOT_ALLOWED);
+        }
+        this.pricePlan = newPricePlan;
+    }
+
+    /**
+     * 부가서비스 목록 교체
+     */
+    public void replaceAdditionalServices(List<BidAdditionalService> newServices) {
+        if (!canModify()) {
+            throw new CustomException(AuctionErrorCode.BID_MODIFICATION_NOT_ALLOWED);
+        }
+        this.additionalServiceList.clear();
+        if (newServices != null) {
+            this.additionalServiceList.addAll(newServices);
+        }
     }
 
     public String getBidSummary() {

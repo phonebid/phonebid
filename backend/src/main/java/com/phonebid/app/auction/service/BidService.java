@@ -3,6 +3,7 @@ package com.phonebid.app.auction.service;
 import com.phonebid.app.auction.domain.*;
 import com.phonebid.app.auction.dto.request.AdditionalServiceRequestDto;
 import com.phonebid.app.auction.dto.request.BidCreateRequestDto;
+import com.phonebid.app.auction.dto.request.BidUpdateRequestDto;
 import com.phonebid.app.auction.dto.response.BidListResponseDto;
 import com.phonebid.app.auction.dto.response.BidResponseDto;
 import com.phonebid.app.auction.repository.BidAdditionalServiceRepository;
@@ -22,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -40,7 +42,6 @@ public class BidService {
     /**
      * 입찰 생성
      * - 판매자는 동일 견적에 여러 번 입찰 가능
-     * - 수정 불가 (새로운 입찰로만 가능)
      */
     @Transactional
     public BidResponseDto createBid(BidCreateRequestDto requestDto, User user) {
@@ -116,6 +117,78 @@ public class BidService {
     }
 
     // 헬퍼메서드 끝
+
+    /**
+     * 입찰 수정
+     * - 본인의 입찰만 수정 가능
+     * - ACTIVE 상태이고 견적이 아직 입찰을 받을 수 있는 상태여야 함
+     */
+    @Transactional
+    public BidResponseDto updateBid(UUID bidId, BidUpdateRequestDto requestDto, User user) {
+        // 1. 입찰 조회 및 검증
+        Bid bid = bidRepository.findById(bidId)
+                .orElseThrow(() -> new CustomException(AuctionErrorCode.BID_NOT_FOUND));
+
+        // 2. 판매자 조회 및 검증
+        Seller seller = validateAndGetSeller(user);
+
+        // 3. 본인의 입찰인지 확인
+        if (!bid.getSeller().getSellerId().equals(seller.getSellerId())) {
+            throw new CustomException(AuctionErrorCode.BID_NOT_ALLOWED);
+        }
+
+        // 4. 수정 가능한 상태인지 확인 (canModify 내부에서 ACTIVE 상태와 견적 상태 체크)
+        if (!bid.canModify()) {
+            throw new CustomException(AuctionErrorCode.BID_MODIFICATION_NOT_ALLOWED);
+        }
+
+        // 5. 요금제 업데이트 (요금제 정보가 제공된 경우)
+        if (requestDto.getPricePlanName() != null || requestDto.getPricePlanPrice() != null) {
+            String planName = requestDto.getPricePlanName() != null 
+                    ? requestDto.getPricePlanName() 
+                    : (bid.getPricePlan() != null ? bid.getPricePlan().getPlanName() : null);
+            Integer planPrice = requestDto.getPricePlanPrice() != null 
+                    ? requestDto.getPricePlanPrice() 
+                    : (bid.getPricePlan() != null ? bid.getPricePlan().getPlanPrice() : null);
+            
+            PricePlan newPricePlan = PricePlan.builder()
+                    .carrier(bid.getCarrier())
+                    .planName(planName)
+                    .planPrice(planPrice)
+                    .build();
+            pricePlanRepository.save(newPricePlan);
+            bid.updatePricePlan(newPricePlan);
+        }
+
+        // 6. 부가서비스 업데이트 (부가서비스 목록이 제공된 경우)
+        if (requestDto.getAdditionalServices() != null) {
+            // 기존 부가서비스 삭제
+            bidAdditionalServiceRepository.deleteAll(bid.getAdditionalServiceList());
+            bid.getAdditionalServiceList().clear();
+
+            // 새로운 부가서비스 추가
+            List<BidAdditionalService> newServices = new ArrayList<>();
+            for (AdditionalServiceRequestDto serviceDto : requestDto.getAdditionalServices()) {
+                BidAdditionalService additionalService = serviceDto.toEntity(bid);
+                bidAdditionalServiceRepository.save(additionalService);
+                newServices.add(additionalService);
+            }
+            bid.replaceAdditionalServices(newServices);
+        }
+
+        // 7. 입찰 정보 업데이트
+        bid.updateBidDetails(
+                requestDto.getPrice(),
+                requestDto.getDeliveryDays(),
+                requestDto.getAdditionalSubsidy(),
+                requestDto.getInstallmentPrincipal(),
+                requestDto.getContractMonths()
+        );
+
+        log.info("입찰 수정 완료 - bidId: {}", bid.getId());
+
+        return BidResponseDto.from(bid);
+    }
 
     /**
      * 입찰 상세 조회
