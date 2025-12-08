@@ -28,7 +28,7 @@ public class BidController {
     /**
      * 입찰 생성
      * - 판매자만 입찰 가능
-     * - 한 견적당 1회만 입찰 가능 (수정 불가)
+     * - 동일 견적에 여러 번 입찰 가능 (수정 불가, 새로운 입찰로만 가능)
      */
     @PostMapping
     public ResponseEntity<ApiResponse<BidResponseDto>> createBid(@RequestBody @Valid BidCreateRequestDto requestDto, 

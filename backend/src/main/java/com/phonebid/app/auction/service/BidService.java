@@ -39,8 +39,8 @@ public class BidService {
 
     /**
      * 입찰 생성
-     * - 판매자당 견적당 1회만 입찰 가능
-     * - 수정 불가
+     * - 판매자는 동일 견적에 여러 번 입찰 가능
+     * - 수정 불가 (새로운 입찰로만 가능)
      */
     @Transactional
     public BidResponseDto createBid(BidCreateRequestDto requestDto, User user) {
@@ -50,18 +50,13 @@ public class BidService {
         // 2. 견적 조회 및 검증
         Quote quote = validateAndGetQuote(requestDto.getQuoteId());
 
-        // 3. 중복 입찰 체크
-        if (bidRepository.existsByQuoteIdAndSellerId(quote.getId(), seller.getSellerId())) {
-            throw new CustomException(AuctionErrorCode.DUPLICATE_BID);
-        }
-
-        // 4. 요금제 생성 및 저장
+        // 3. 요금제 생성 및 저장
         PricePlan pricePlan = createAndSavePricePlan(requestDto);
 
-        // 5. 입찰 생성
+        // 4. 입찰 생성
         Bid bid = createAndSaveBid(requestDto, quote, seller, pricePlan);
 
-        // 6. 부가서비스 생성
+        // 5. 부가서비스 생성
         saveAdditionalServices(requestDto, bid);
 
         log.info("입찰 생성 완료 - bidId: {}, quoteId: {}, sellerId: {}", 
@@ -164,7 +159,8 @@ public class BidService {
     }
 
     /**
-     * 판매자가 특정 견적에 이미 입찰했는지 확인
+     * 판매자가 특정 견적에 입찰한 이력이 있는지 확인
+     * (정보 제공용, 입찰 제한은 하지 않음)
      */
     @Transactional(readOnly = true)
     public boolean hasAlreadyBid(UUID quoteId, User user) {
