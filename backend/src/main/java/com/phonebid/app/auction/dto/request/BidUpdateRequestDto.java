@@ -25,6 +25,7 @@ public class BidUpdateRequestDto {
     @Min(value = 0, message = "할부원금은 0 이상이어야 합니다.")
     private Integer installmentPrincipal;
 
+    @Min(value = 1, message = "약정개월은 1개월 이상이어야 합니다.")
     private Integer contractMonths;
 
     private String pricePlanName;
