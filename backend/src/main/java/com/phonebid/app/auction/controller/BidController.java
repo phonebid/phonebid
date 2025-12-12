@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,6 +33,7 @@ public class BidController {
      * - 동일 견적에 여러 번 입찰 가능
      */
     @PostMapping
+    @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<ApiResponse<BidResponseDto>> createBid(@RequestBody @Valid BidCreateRequestDto requestDto, 
                                                                  @AuthenticationPrincipal UserDetailsImpl userDetails) {
         
@@ -47,6 +49,7 @@ public class BidController {
      * - ACTIVE 상태이고 견적이 아직 입찰을 받을 수 있는 상태여야 함
      */
     @PutMapping("/{bidId}")
+    @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<ApiResponse<BidResponseDto>> updateBid(@PathVariable UUID bidId,
                                                                  @RequestBody @Valid BidUpdateRequestDto requestDto,
                                                                  @AuthenticationPrincipal UserDetailsImpl userDetails) {
@@ -59,10 +62,14 @@ public class BidController {
 
     /**
      * 입찰 상세 조회
+     * - 인증된 사용자만 접근 가능
+     * - 견적 소유자(소비자)만 조회 가능
      */
     @GetMapping("/{bidId}")
-    public ResponseEntity<ApiResponse<BidResponseDto>> getBidById(@PathVariable UUID bidId) {
-        BidResponseDto response = bidService.getBidById(bidId);
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<BidResponseDto>> getBidById(@PathVariable UUID bidId,
+                                                                  @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        BidResponseDto response = bidService.getBidById(bidId, userDetails.getUser());
         
         return ResponseEntity.ok()
                 .body(ApiResponse.success(HttpStatus.OK, "입찰 상세 조회가 성공적으로 완료되었습니다.", response));
