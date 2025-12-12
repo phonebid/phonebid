@@ -19,6 +19,7 @@ public class BidUpdateRequestDto {
     @Min(value = 1, message = "배송 예상일은 1일 이상이어야 합니다.")
     private Integer deliveryDays;
 
+    @Min(value = 0, message = "추가 지원금은 0 이상이어야 합니다.")
     private Integer additionalSubsidy;
 
     @Min(value = 0, message = "할부원금은 0 이상이어야 합니다.")
