@@ -223,13 +223,19 @@ public class BidService {
         } else if (user.getRole() == Role.CONSUMER) {
             // 소비자: 자신의 견적인지 확인 후 모든 입찰 조회
             if (!quote.getUser().getId().equals(user.getId())) {
-                throw new CustomException(AuctionErrorCode.BID_NOT_ALLOWED);
+                throw new CustomException(AuctionErrorCode.QUOTE_NOT_OWNED_BY_USER);
             }
             bids = bidRepository.findActiveByQuoteId(quoteId, BidStatus.ACTIVE);
         } else if (user.getRole() == Role.SELLER) {
-            // 판매자: 자신의 입찰만 조회
+            // 판매자: 자신이 입찰한 견적의 입찰 목록만 조회 가능
             Seller seller = sellerRepository.findByUserId(user.getId())
                     .orElseThrow(() -> new CustomException(AuctionErrorCode.SELLER_NOT_FOUND));
+            
+            // 해당 견적에 입찰했는지 확인
+            if (!bidRepository.existsByQuoteIdAndSellerId(quoteId, seller.getSellerId())) {
+                throw new CustomException(AuctionErrorCode.BID_NOT_EXISTS_FOR_SELLER);
+            }
+            
             bids = bidRepository.findByQuoteIdAndSellerIdAndStatus(quoteId, seller.getSellerId(), BidStatus.ACTIVE);
         } else {
             throw new CustomException(AuctionErrorCode.BID_NOT_ALLOWED);
