@@ -78,13 +78,17 @@ public class QuoteController {
     }
 
     /**
-     * 특정 견적의 입찰 목록 조회 (판매자용)
+     * 특정 견적의 입찰 목록 조회
+     * - 견적 소유자(소비자): 모든 입찰 목록 조회 가능
+     * - 판매자: 자신이 입찰한 입찰만 조회 가능
+     * - 관리자: 모든 입찰 목록 조회 가능
      */
     @GetMapping("/{quoteId}/bids")
-    public ResponseEntity<ApiResponse<List<BidListResponseDto>>> getBidsByQuoteId(@PathVariable UUID quoteId) {
-        List<BidListResponseDto> bids = bidService.getBidsByQuoteId(quoteId);
+    public ResponseEntity<ApiResponse<List<BidListResponseDto>>> getBidsByQuoteId(@PathVariable UUID quoteId,
+                                                                                  @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        List<BidListResponseDto> bids = bidService.getBidsByQuoteId(quoteId, userDetails.getUser());
         return ResponseEntity.ok()
-                .body(ApiResponse.success(HttpStatus.OK, "입찰 목록 조회가 성공적으로 완료되었습니다.", bids));
+                .body(ApiResponse.success(HttpStatus.OK, "견적 별 입찰 목록 조회가 성공적으로 완료되었습니다.", bids));
     }
 
     /**

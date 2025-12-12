@@ -12,6 +12,7 @@ import com.phonebid.app.auction.repository.PricePlanRepository;
 import com.phonebid.app.auction.repository.QuoteRepository;
 import com.phonebid.app.common.errorcode.AuctionErrorCode;
 import com.phonebid.app.common.exception.CustomException;
+import com.phonebid.app.member.domain.Role;
 import com.phonebid.app.member.domain.Seller;
 import com.phonebid.app.member.domain.User;
 import com.phonebid.app.member.repository.SellerRepository;
@@ -203,15 +204,37 @@ public class BidService {
 
     /**
      * 특정 견적의 입찰 목록 조회
+     * - 견적 소유자(소비자): 모든 입찰 목록 조회 가능
+     * - 판매자: 자신이 입찰한 입찰만 조회 가능
+     * - 관리자: 모든 입찰 목록 조회 가능
      */
     @Transactional(readOnly = true)
-    public List<BidListResponseDto> getBidsByQuoteId(UUID quoteId) {
-        // 견적 존재 확인
-        if (!quoteRepository.existsById(quoteId)) {
-            throw new CustomException(AuctionErrorCode.QUOTE_NOT_FOUND);
+    public List<BidListResponseDto> getBidsByQuoteId(UUID quoteId, User user) {
+        // 1. 견적 조회 및 검증
+        Quote quote = quoteRepository.findById(quoteId)
+                .orElseThrow(() -> new CustomException(AuctionErrorCode.QUOTE_NOT_FOUND));
+
+        // 2. 권한에 따라 입찰 목록 필터링
+        List<Bid> bids;
+        
+        if (user.getRole() == Role.ADMIN) {
+            // 관리자: 모든 입찰 조회
+            bids = bidRepository.findActiveByQuoteId(quoteId, BidStatus.ACTIVE);
+        } else if (user.getRole() == Role.CONSUMER) {
+            // 소비자: 자신의 견적인지 확인 후 모든 입찰 조회
+            if (!quote.getUser().getId().equals(user.getId())) {
+                throw new CustomException(AuctionErrorCode.BID_NOT_ALLOWED);
+            }
+            bids = bidRepository.findActiveByQuoteId(quoteId, BidStatus.ACTIVE);
+        } else if (user.getRole() == Role.SELLER) {
+            // 판매자: 자신의 입찰만 조회
+            Seller seller = sellerRepository.findByUserId(user.getId())
+                    .orElseThrow(() -> new CustomException(AuctionErrorCode.SELLER_NOT_FOUND));
+            bids = bidRepository.findByQuoteIdAndSellerIdAndStatus(quoteId, seller.getSellerId(), BidStatus.ACTIVE);
+        } else {
+            throw new CustomException(AuctionErrorCode.BID_NOT_ALLOWED);
         }
 
-        List<Bid> bids = bidRepository.findActiveByQuoteId(quoteId, BidStatus.ACTIVE);
         return bids.stream()
                 .map(BidListResponseDto::from)
                 .collect(Collectors.toList());
