@@ -97,5 +97,19 @@ public interface BidRepository extends JpaRepository<Bid, UUID> {
            "AND b.status = :status " +
            "AND (b.isDelete = false OR b.isDelete IS NULL)")
     Integer findMinInstallmentPrincipalByQuoteId(@Param("quoteId") UUID quoteId, @Param("status") BidStatus status);
+
+    /**
+     * 특정 견적과 판매자의 활성 입찰 목록 조회
+     */
+    @Query("SELECT DISTINCT b FROM Bid b " +
+           "LEFT JOIN FETCH b.additionalServiceList " +
+           "WHERE b.quote.id = :quoteId " +
+           "AND b.seller.sellerId = :sellerId " +
+           "AND b.status = :status " +
+           "AND (b.isDelete = false OR b.isDelete IS NULL) " +
+           "ORDER BY b.installmentPrincipal ASC")
+    List<Bid> findByQuoteIdAndSellerIdAndStatus(@Param("quoteId") UUID quoteId, 
+                                                 @Param("sellerId") UUID sellerId, 
+                                                 @Param("status") BidStatus status);
 }
 

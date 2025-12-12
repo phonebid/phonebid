@@ -4,6 +4,8 @@ import com.phonebid.app.common.dto.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -84,6 +86,28 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.error(HttpStatus.BAD_REQUEST, 
                         "파일 업로드에 필요한 파라미터가 누락되었습니다: " + e.getRequestPartName(), null));
+    }
+
+    /**
+     * 권한 거부 예외 처리 (Spring Security 6.x)
+     * @PreAuthorize, @Secured 등 메서드 시큐리티에서 권한이 없을 때 발생
+     */
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAuthorizationDeniedException(AuthorizationDeniedException e) {
+        log.warn("권한 거부: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error(HttpStatus.FORBIDDEN, "접근 권한이 없습니다.", null));
+    }
+
+    /**
+     * 권한 거부 예외 처리 (Spring Security 5.x)
+     * @PreAuthorize, @Secured 등 메서드 시큐리티에서 권한이 없을 때 발생
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(AccessDeniedException e) {
+        log.warn("권한 거부: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error(HttpStatus.FORBIDDEN, "접근 권한이 없습니다.", null));
     }
 
     /**

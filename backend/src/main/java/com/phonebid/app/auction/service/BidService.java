@@ -3,6 +3,7 @@ package com.phonebid.app.auction.service;
 import com.phonebid.app.auction.domain.*;
 import com.phonebid.app.auction.dto.request.AdditionalServiceRequestDto;
 import com.phonebid.app.auction.dto.request.BidCreateRequestDto;
+import com.phonebid.app.auction.dto.request.BidUpdateRequestDto;
 import com.phonebid.app.auction.dto.response.BidListResponseDto;
 import com.phonebid.app.auction.dto.response.BidResponseDto;
 import com.phonebid.app.auction.repository.BidAdditionalServiceRepository;
@@ -11,6 +12,7 @@ import com.phonebid.app.auction.repository.PricePlanRepository;
 import com.phonebid.app.auction.repository.QuoteRepository;
 import com.phonebid.app.common.errorcode.AuctionErrorCode;
 import com.phonebid.app.common.exception.CustomException;
+import com.phonebid.app.member.domain.Role;
 import com.phonebid.app.member.domain.Seller;
 import com.phonebid.app.member.domain.User;
 import com.phonebid.app.member.repository.SellerRepository;
@@ -22,6 +24,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -39,8 +42,7 @@ public class BidService {
 
     /**
      * 입찰 생성
-     * - 판매자당 견적당 1회만 입찰 가능
-     * - 수정 불가
+     * - 판매자는 동일 견적에 여러 번 입찰 가능
      */
     @Transactional
     public BidResponseDto createBid(BidCreateRequestDto requestDto, User user) {
@@ -50,18 +52,13 @@ public class BidService {
         // 2. 견적 조회 및 검증
         Quote quote = validateAndGetQuote(requestDto.getQuoteId());
 
-        // 3. 중복 입찰 체크
-        if (bidRepository.existsByQuoteIdAndSellerId(quote.getId(), seller.getSellerId())) {
-            throw new CustomException(AuctionErrorCode.DUPLICATE_BID);
-        }
-
-        // 4. 요금제 생성 및 저장
+        // 3. 요금제 생성 및 저장
         PricePlan pricePlan = createAndSavePricePlan(requestDto);
 
-        // 5. 입찰 생성
+        // 4. 입찰 생성
         Bid bid = createAndSaveBid(requestDto, quote, seller, pricePlan);
 
-        // 6. 부가서비스 생성
+        // 5. 부가서비스 생성
         saveAdditionalServices(requestDto, bid);
 
         log.info("입찰 생성 완료 - bidId: {}, quoteId: {}, sellerId: {}", 
@@ -123,6 +120,78 @@ public class BidService {
     // 헬퍼메서드 끝
 
     /**
+     * 입찰 수정
+     * - 본인의 입찰만 수정 가능
+     * - ACTIVE 상태이고 견적이 아직 입찰을 받을 수 있는 상태여야 함
+     */
+    @Transactional
+    public BidResponseDto updateBid(UUID bidId, BidUpdateRequestDto requestDto, User user) {
+        // 1. 입찰 조회 및 검증
+        Bid bid = bidRepository.findById(bidId)
+                .orElseThrow(() -> new CustomException(AuctionErrorCode.BID_NOT_FOUND));
+
+        // 2. 판매자 조회 및 검증
+        Seller seller = validateAndGetSeller(user);
+
+        // 3. 본인의 입찰인지 확인
+        if (!bid.getSeller().getSellerId().equals(seller.getSellerId())) {
+            throw new CustomException(AuctionErrorCode.BID_NOT_ALLOWED);
+        }
+
+        // 4. 수정 가능한 상태인지 확인 (canModify 내부에서 ACTIVE 상태와 견적 상태 체크)
+        if (!bid.canModify()) {
+            throw new CustomException(AuctionErrorCode.BID_MODIFICATION_NOT_ALLOWED);
+        }
+
+        // 5. 요금제 업데이트 (요금제 정보가 제공된 경우)
+        if (requestDto.getPricePlanName() != null || requestDto.getPricePlanPrice() != null) {
+            String planName = requestDto.getPricePlanName() != null 
+                    ? requestDto.getPricePlanName() 
+                    : (bid.getPricePlan() != null ? bid.getPricePlan().getPlanName() : null);
+            Integer planPrice = requestDto.getPricePlanPrice() != null 
+                    ? requestDto.getPricePlanPrice() 
+                    : (bid.getPricePlan() != null ? bid.getPricePlan().getPlanPrice() : null);
+            
+            PricePlan newPricePlan = PricePlan.builder()
+                    .carrier(bid.getCarrier())
+                    .planName(planName)
+                    .planPrice(planPrice)
+                    .build();
+            pricePlanRepository.save(newPricePlan);
+            bid.updatePricePlan(newPricePlan);
+        }
+
+        // 6. 부가서비스 업데이트 (부가서비스 목록이 제공된 경우)
+        if (requestDto.getAdditionalServices() != null) {
+            // 기존 부가서비스 삭제
+            bidAdditionalServiceRepository.deleteAll(bid.getAdditionalServiceList());
+            bid.getAdditionalServiceList().clear();
+
+            // 새로운 부가서비스 추가
+            List<BidAdditionalService> newServices = new ArrayList<>();
+            for (AdditionalServiceRequestDto serviceDto : requestDto.getAdditionalServices()) {
+                BidAdditionalService additionalService = serviceDto.toEntity(bid);
+                bidAdditionalServiceRepository.save(additionalService);
+                newServices.add(additionalService);
+            }
+            bid.replaceAdditionalServices(newServices);
+        }
+
+        // 7. 입찰 정보 업데이트
+        bid.updateBidDetails(
+                requestDto.getPrice(),
+                requestDto.getDeliveryDays(),
+                requestDto.getAdditionalSubsidy(),
+                requestDto.getInstallmentPrincipal(),
+                requestDto.getContractMonths()
+        );
+
+        log.info("입찰 수정 완료 - bidId: {}", bid.getId());
+
+        return BidResponseDto.from(bid);
+    }
+
+    /**
      * 입찰 상세 조회
      */
     @Transactional(readOnly = true)
@@ -135,15 +204,37 @@ public class BidService {
 
     /**
      * 특정 견적의 입찰 목록 조회
+     * - 견적 소유자(소비자): 모든 입찰 목록 조회 가능
+     * - 판매자: 자신이 입찰한 입찰만 조회 가능
+     * - 관리자: 모든 입찰 목록 조회 가능
      */
     @Transactional(readOnly = true)
-    public List<BidListResponseDto> getBidsByQuoteId(UUID quoteId) {
-        // 견적 존재 확인
-        if (!quoteRepository.existsById(quoteId)) {
-            throw new CustomException(AuctionErrorCode.QUOTE_NOT_FOUND);
+    public List<BidListResponseDto> getBidsByQuoteId(UUID quoteId, User user) {
+        // 1. 견적 조회 및 검증
+        Quote quote = quoteRepository.findById(quoteId)
+                .orElseThrow(() -> new CustomException(AuctionErrorCode.QUOTE_NOT_FOUND));
+
+        // 2. 권한에 따라 입찰 목록 필터링
+        List<Bid> bids;
+        
+        if (user.getRole() == Role.ADMIN) {
+            // 관리자: 모든 입찰 조회
+            bids = bidRepository.findActiveByQuoteId(quoteId, BidStatus.ACTIVE);
+        } else if (user.getRole() == Role.CONSUMER) {
+            // 소비자: 자신의 견적인지 확인 후 모든 입찰 조회
+            if (!quote.getUser().getId().equals(user.getId())) {
+                throw new CustomException(AuctionErrorCode.BID_NOT_ALLOWED);
+            }
+            bids = bidRepository.findActiveByQuoteId(quoteId, BidStatus.ACTIVE);
+        } else if (user.getRole() == Role.SELLER) {
+            // 판매자: 자신의 입찰만 조회
+            Seller seller = sellerRepository.findByUserId(user.getId())
+                    .orElseThrow(() -> new CustomException(AuctionErrorCode.SELLER_NOT_FOUND));
+            bids = bidRepository.findByQuoteIdAndSellerIdAndStatus(quoteId, seller.getSellerId(), BidStatus.ACTIVE);
+        } else {
+            throw new CustomException(AuctionErrorCode.BID_NOT_ALLOWED);
         }
 
-        List<Bid> bids = bidRepository.findActiveByQuoteId(quoteId, BidStatus.ACTIVE);
         return bids.stream()
                 .map(BidListResponseDto::from)
                 .collect(Collectors.toList());
@@ -164,7 +255,8 @@ public class BidService {
     }
 
     /**
-     * 판매자가 특정 견적에 이미 입찰했는지 확인
+     * 판매자가 특정 견적에 입찰한 이력이 있는지 확인
+     * (정보 제공용, 입찰 제한은 하지 않음)
      */
     @Transactional(readOnly = true)
     public boolean hasAlreadyBid(UUID quoteId, User user) {
