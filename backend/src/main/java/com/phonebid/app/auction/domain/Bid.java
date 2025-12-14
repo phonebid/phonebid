@@ -167,26 +167,25 @@ public class Bid extends BaseEntity {
     /**
      * 입찰 정보 수정 (포괄적)
      */
-    public void updateBidDetails(Integer price, Integer deliveryDays, Integer additionalSubsidy,
-                                 Integer installmentPrincipal, Integer contractMonths) {
+    public void updateBidDetails(BidUpdateCommand command) {
         if (!canModify()) {
             throw new CustomException(AuctionErrorCode.BID_MODIFICATION_NOT_ALLOWED);
         }
         
-        if (price != null) {
-            this.price = price;
+        if (command.hasPrice()) {
+            this.price = command.getPrice();
         }
-        if (deliveryDays != null) {
-            this.deliveryDays = deliveryDays;
+        if (command.hasDeliveryDays()) {
+            this.deliveryDays = command.getDeliveryDays();
         }
-        if (additionalSubsidy != null) {
-            this.additionalSubsidy = additionalSubsidy;
+        if (command.hasAdditionalSubsidy()) {
+            this.additionalSubsidy = command.getAdditionalSubsidy();
         }
-        if (installmentPrincipal != null) {
-            this.installmentPrincipal = installmentPrincipal;
+        if (command.hasInstallmentPrincipal()) {
+            this.installmentPrincipal = command.getInstallmentPrincipal();
         }
-        if (contractMonths != null) {
-            this.contractMonths = contractMonths;
+        if (command.hasContractMonths()) {
+            this.contractMonths = command.getContractMonths();
         }
     }
 
@@ -209,6 +208,11 @@ public class Bid extends BaseEntity {
         }
         this.additionalServiceList.clear();
         if (newServices != null) {
+            for (BidAdditionalService service : newServices) {
+                if (service.getBid() == null || !service.getBid().getId().equals(this.id)) {
+                    throw new CustomException(AuctionErrorCode.BID_NOT_ALLOWED);
+                }
+            }
             this.additionalServiceList.addAll(newServices);
         }
     }
