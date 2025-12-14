@@ -85,11 +85,6 @@ public class Bid extends BaseEntity {
     @Comment("할부원금 (원)")
     private Integer installmentPrincipal;
 
-    @Column(name = "additional_services", length = 500)
-    @Comment("부가서비스 설명")
-    private String additionalServices;
-
-
     @Column(name = "contract_months")
     @Comment("약정개월")
     private Integer contractMonths;
@@ -105,7 +100,7 @@ public class Bid extends BaseEntity {
     @Builder
     public Bid(Quote quote, Seller seller, Integer price, Integer deliveryDays, Double ratingSnapshot,
                PurchaseMethod purchaseMethod, Carrier carrier, Carrier currentCarrier, ActivationMethod activationMethod,
-               Integer additionalSubsidy, Integer installmentPrincipal, String additionalServices,
+               Integer additionalSubsidy, Integer installmentPrincipal,
                PricePlan pricePlan, Integer contractMonths) {
         validateBidCreation(purchaseMethod, activationMethod, currentCarrier);
         
@@ -120,7 +115,6 @@ public class Bid extends BaseEntity {
         this.activationMethod = activationMethod;
         this.additionalSubsidy = additionalSubsidy;
         this.installmentPrincipal = installmentPrincipal;
-        this.additionalServices = additionalServices;
         this.pricePlan = pricePlan;
         this.contractMonths = contractMonths;
         this.status = BidStatus.ACTIVE;
