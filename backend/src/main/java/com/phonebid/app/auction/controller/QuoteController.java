@@ -15,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -55,7 +56,12 @@ public class QuoteController {
                 .body(ApiResponse.success(HttpStatus.OK, "내 견적 조회가 성공적으로 완료되었습니다.", quotes));
     }
 
+    /**
+     * 진행중인 전체 견적 목록 조회
+     * - 관리자(ADMIN) 및 판매자(SELLER)만 접근 가능
+     */
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'SELLER')")
     public ResponseEntity<ApiResponse<List<QuoteResponseDto>>> getAllOpenQuotes() {
         
         List<QuoteResponseDto> quotes = quoteService.getAllOpenQuotes();
@@ -72,23 +78,17 @@ public class QuoteController {
     }
 
     /**
-     * 특정 견적의 입찰 목록 조회 (판매자용)
+     * 특정 견적의 입찰 목록 조회
+     * - 견적 소유자(소비자): 모든 입찰 목록 조회 가능
+     * - 판매자: 자신이 입찰한 입찰만 조회 가능
+     * - 관리자: 모든 입찰 목록 조회 가능
      */
     @GetMapping("/{quoteId}/bids")
-    public ResponseEntity<ApiResponse<List<BidListResponseDto>>> getBidsByQuoteId(@PathVariable UUID quoteId) {
-        List<BidListResponseDto> bids = bidService.getBidsByQuoteId(quoteId);
+    public ResponseEntity<ApiResponse<List<BidListResponseDto>>> getBidsByQuoteId(@PathVariable UUID quoteId,
+                                                                                  @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        List<BidListResponseDto> bids = bidService.getBidsByQuoteId(quoteId, userDetails.getUser());
         return ResponseEntity.ok()
-                .body(ApiResponse.success(HttpStatus.OK, "입찰 목록 조회가 성공적으로 완료되었습니다.", bids));
+                .body(ApiResponse.success(HttpStatus.OK, "견적 별 입찰 목록 조회가 성공적으로 완료되었습니다.", bids));
     }
 
-    /**
-     * 판매자용 전체 견적 목록 조회
-     * - 모든 진행중인 견적을 조회 (판매자가 입찰할 수 있는 목록)
-     */
-    @GetMapping("/seller")
-    public ResponseEntity<ApiResponse<List<QuoteResponseDto>>> getQuotesForSeller() {
-        List<QuoteResponseDto> quotes = quoteService.getAllOpenQuotes();
-        return ResponseEntity.ok()
-                .body(ApiResponse.success(HttpStatus.OK, "판매자용 견적 목록 조회가 성공적으로 완료되었습니다.", quotes));
-    }
 }
