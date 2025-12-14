@@ -78,4 +78,14 @@ public class PricePlan extends BaseEntity{
         return lowerPlanName.contains("무제한") || lowerPlanName.contains("unlimited");
     }
 
+    // 요금제 정보 업데이트
+    public void update(String planName, Integer planPrice) {
+        if (planName != null) {
+            this.planName = planName;
+        }
+        if (planPrice != null) {
+            this.planPrice = planPrice;
+        }
+    }
+
 } 

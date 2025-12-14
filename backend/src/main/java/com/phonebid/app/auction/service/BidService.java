@@ -145,20 +145,22 @@ public class BidService {
 
         // 5. 요금제 업데이트 (요금제 정보가 제공된 경우)
         if (requestDto.getPricePlanName() != null || requestDto.getPricePlanPrice() != null) {
-            String planName = requestDto.getPricePlanName() != null 
-                    ? requestDto.getPricePlanName() 
-                    : (bid.getPricePlan() != null ? bid.getPricePlan().getPlanName() : null);
-            Integer planPrice = requestDto.getPricePlanPrice() != null 
-                    ? requestDto.getPricePlanPrice() 
-                    : (bid.getPricePlan() != null ? bid.getPricePlan().getPlanPrice() : null);
+            PricePlan existingPricePlan = bid.getPricePlan();
             
-            PricePlan newPricePlan = PricePlan.builder()
-                    .carrier(bid.getCarrier())
-                    .planName(planName)
-                    .planPrice(planPrice)
-                    .build();
-            pricePlanRepository.save(newPricePlan);
-            bid.updatePricePlan(newPricePlan);
+            if (existingPricePlan != null) {
+                // 기존 PricePlan이 있는 경우 필드 업데이트
+                existingPricePlan.update(requestDto.getPricePlanName(), requestDto.getPricePlanPrice());
+                pricePlanRepository.save(existingPricePlan);
+            } else {
+                // 기존 PricePlan이 없는 경우 새로 생성
+                PricePlan newPricePlan = PricePlan.builder()
+                        .carrier(bid.getCarrier())
+                        .planName(requestDto.getPricePlanName())
+                        .planPrice(requestDto.getPricePlanPrice())
+                        .build();
+                pricePlanRepository.save(newPricePlan);
+                bid.updatePricePlan(newPricePlan);
+            }
         }
 
         // 6. 부가서비스 업데이트 (부가서비스 목록이 제공된 경우)
