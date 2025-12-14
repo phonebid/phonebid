@@ -140,10 +140,6 @@ public class BidService {
 
         // 4. 수정 가능한 상태인지 확인 (canModify 내부에서 ACTIVE 상태와 견적 상태 체크)
         if (!bid.canModify()) {
-            // 디버깅 로그
-            log.warn("입찰 수정 불가 - bidId: {}, bidStatus: {}, quoteStatus: {}, quoteExpired: {}", 
-                    bidId, bid.getStatus(), bid.getQuote().getStatus(), bid.getQuote().isExpired());
-            // 끝
             throw new CustomException(AuctionErrorCode.BID_MODIFICATION_NOT_ALLOWED);
         }
 
