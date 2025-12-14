@@ -29,7 +29,8 @@ public enum AuctionErrorCode implements ErrorCode {
     INVALID_BID_STATUS(HttpStatus.BAD_REQUEST, "잘못된 입찰 상태입니다."),
     QUOTE_NOT_OWNED_BY_USER(HttpStatus.FORBIDDEN, "해당 유저가 올린 견적이 아닙니다."),
     BID_NOT_EXISTS_FOR_SELLER(HttpStatus.NOT_FOUND, "해당 견적에 입찰한 이력이 없습니다."),
-    BID_ACCESS_DENIED(HttpStatus.FORBIDDEN, "해당 입찰에 대한 접근 권한이 없습니다.");
+    BID_ACCESS_DENIED(HttpStatus.FORBIDDEN, "해당 입찰에 대한 접근 권한이 없습니다."),
+    INVALID_ADDITIONAL_SERVICE(HttpStatus.BAD_REQUEST, "부가서비스가 올바른 입찰에 연결되지 않았습니다.");
 
     private final HttpStatus status;
     private final String message;

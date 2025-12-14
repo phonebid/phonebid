@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.hibernate.annotations.Comment;
@@ -209,8 +210,8 @@ public class Bid extends BaseEntity {
         this.additionalServiceList.clear();
         if (newServices != null) {
             for (BidAdditionalService service : newServices) {
-                if (service.getBid() == null || !service.getBid().getId().equals(this.id)) {
-                    throw new CustomException(AuctionErrorCode.BID_NOT_ALLOWED);
+                if (!Objects.equals(service.getBid(), this)) {
+                    throw new CustomException(AuctionErrorCode.INVALID_ADDITIONAL_SERVICE);
                 }
             }
             this.additionalServiceList.addAll(newServices);
