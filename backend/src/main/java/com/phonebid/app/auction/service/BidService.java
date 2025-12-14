@@ -196,7 +196,7 @@ public class BidService {
 
     /**
      * 입찰 상세 조회
-     * - 견적 소유자(소비자)만 조회 가능
+     * - 견적 소유자(소비자) 또는 관리자만 조회 가능
      * - 판매자나 다른 사용자의 접근은 403 Forbidden으로 거부
      */
     @Transactional(readOnly = true)
@@ -204,9 +204,12 @@ public class BidService {
         Bid bid = bidRepository.findById(bidId)
                 .orElseThrow(() -> new CustomException(AuctionErrorCode.BID_NOT_FOUND));
         
-        // 견적 소유자(소비자)인지 확인
+        // 견적 소유자(소비자) 또는 관리자인지 확인
         Quote quote = bid.getQuote();
-        if (!quote.getUser().getId().equals(user.getId())) {
+        boolean isQuoteOwner = quote.getUser().getId().equals(user.getId());
+        boolean isAdmin = user.getRole() == Role.ADMIN;
+        
+        if (!isQuoteOwner && !isAdmin) {
             throw new CustomException(AuctionErrorCode.BID_ACCESS_DENIED);
         }
         
