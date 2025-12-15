@@ -7,10 +7,8 @@ import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.common.errorcode.CommonErrorCode;
 import com.phonebid.app.member.dto.request.SignupRequestDto;
 import com.phonebid.app.member.dto.request.LoginRequestDto;
-import com.phonebid.app.member.dto.request.ProfileUpdateRequestDto;
 import com.phonebid.app.member.dto.request.PasswordChangeRequestDto;
 import com.phonebid.app.member.dto.response.LoginResponseDto;
-import com.phonebid.app.member.dto.response.ProfileResponseDto;
 import com.phonebid.app.member.domain.User;
 import com.phonebid.app.member.domain.Role;
 import com.phonebid.app.member.repository.UserRepository;
@@ -99,34 +97,6 @@ public class UserService {
             user.getNickname(), 
             user.getRole().name()
         );
-    }
-
-    /**
-     * 내 정보 조회
-     */
-    @Transactional(readOnly = true)
-    public ProfileResponseDto getProfile(String username) {
-        User user = loadActiveUser(username);
-        
-        return ProfileResponseDto.from(user);
-    }
-
-    /**
-     * 내 정보 수정 (닉네임만 수정 가능)
-     */
-    @Transactional
-    public void updateProfile(String username, ProfileUpdateRequestDto requestDto) {
-        User user = loadActiveUser(username);
-
-        String newNickname = requestDto.getNickname();
-        
-        // 닉네임 중복 확인 (자신의 기존 닉네임은 제외)
-        Optional<User> checkNickname = userRepository.findByNickname(newNickname);
-        if (checkNickname.isPresent() && !checkNickname.get().getId().equals(user.getId())) {
-            throw new CustomException(CommonErrorCode.DUPLICATE_NICKNAME);
-        }
-
-        user.updateNickname(newNickname);
     }
 
     /**
