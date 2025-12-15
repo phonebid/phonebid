@@ -6,17 +6,33 @@ import com.phonebid.app.member.domain.User;
 import com.phonebid.app.member.repository.UserRepository;
 import com.phonebid.app.mypage.dto.request.ProfileUpdateRequestDto;
 import com.phonebid.app.mypage.dto.response.ProfileResponseDto;
+import com.phonebid.app.mypage.dto.response.PurchaseDetailResponseDto;
+import com.phonebid.app.mypage.dto.response.PurchaseHistoryResponseDto;
+import com.phonebid.app.trade.domain.Contract;
+import com.phonebid.app.trade.domain.ContractStatus;
+import com.phonebid.app.trade.domain.Delivery;
+import com.phonebid.app.trade.domain.Payment;
+import com.phonebid.app.trade.repository.ContractRepository;
+import com.phonebid.app.trade.repository.DeliveryRepository;
+import com.phonebid.app.trade.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class MyPageService {
 
     private final UserRepository userRepository;
+    private final ContractRepository contractRepository;
+    private final PaymentRepository paymentRepository;
+    private final DeliveryRepository deliveryRepository;
 
     /**
      * 프로필 조회
@@ -57,6 +73,44 @@ public class MyPageService {
         if (newPhone != null && !newPhone.trim().isEmpty()) {
             user.updatePhone(newPhone.trim());
         }
+    }
+
+    /**
+     * 구매내역 목록 조회
+     * 구매완료 또는 취소/환불 상태의 구매내역을 페이징하여 조회합니다.
+     */
+    @Transactional(readOnly = true)
+    public Page<PurchaseHistoryResponseDto> getPurchaseHistory(String username, String status, int page, int size) {
+        ContractStatus contractStatus = "CANCELLED".equals(status) 
+            ? ContractStatus.CANCELLED 
+            : ContractStatus.SIGNED;
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Contract> contracts = contractRepository.findByUsernameAndStatus(username, contractStatus, pageable);
+        
+        return contracts.map(contract -> {
+            Optional<Payment> payment = paymentRepository.findByContractId(contract.getId());
+            return PurchaseHistoryResponseDto.from(contract, payment.orElse(null));
+        });
+    }
+
+    /**
+     * 구매내역 상세 조회
+     * 특정 계약의 상세 정보를 조회합니다.
+     */
+    @Transactional(readOnly = true)
+    public PurchaseDetailResponseDto getPurchaseDetail(String username, UUID contractId) {
+        Contract contract = contractRepository.findByIdAndUsername(contractId, username)
+            .orElseThrow(() -> new CustomException(CommonErrorCode.RESOURCE_NOT_FOUND));
+        
+        Optional<Payment> payment = paymentRepository.findByContractId(contractId);
+        Optional<Delivery> delivery = deliveryRepository.findByContractId(contractId);
+        
+        return PurchaseDetailResponseDto.from(
+            contract, 
+            payment.orElse(null), 
+            delivery.orElse(null)
+        );
     }
 
     /**
