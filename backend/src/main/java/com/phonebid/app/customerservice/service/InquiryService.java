@@ -122,6 +122,8 @@ public class InquiryService {
 
     @Transactional
     public void updateReply(String adminUsername, UUID inquiryId, UUID replyId, InquiryReplyRequestDto requestDto) {
+        loadActiveAdmin(adminUsername);
+
         InquiryReply reply = inquiryReplyRepository.findById(replyId)
                 .orElseThrow(() -> new CustomException(CustomerServiceErrorCode.INQUIRY_REPLY_NOT_FOUND));
 
@@ -134,6 +136,8 @@ public class InquiryService {
 
     @Transactional
     public void deleteReply(String adminUsername, UUID inquiryId, UUID replyId) {
+        loadActiveAdmin(adminUsername);
+
         InquiryReply reply = inquiryReplyRepository.findById(replyId)
                 .orElseThrow(() -> new CustomException(CustomerServiceErrorCode.INQUIRY_REPLY_NOT_FOUND));
 
