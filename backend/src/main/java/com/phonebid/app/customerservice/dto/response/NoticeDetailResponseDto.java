@@ -25,7 +25,7 @@ public class NoticeDetailResponseDto {
         dto.content = notice.getContent();
         dto.isImportant = notice.getIsImportant();
         dto.viewCount = notice.getViewCount();
-        dto.adminNickname = notice.getAdmin().getNickname();
+        dto.adminNickname = notice.getAdmin() != null ? notice.getAdmin().getNickname() : null;
         dto.createdAt = notice.getCreatedAt();
         dto.updatedAt = notice.getUpdatedAt();
         return dto;

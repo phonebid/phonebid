@@ -36,7 +36,7 @@ public class InquiryDetailResponseDto {
             InquiryReplyDto dto = new InquiryReplyDto();
             dto.id = reply.getId();
             dto.content = reply.getContent();
-            dto.adminNickname = reply.getAdmin().getNickname();
+            dto.adminNickname = reply.getAdmin() != null ? reply.getAdmin().getNickname() : null;
             dto.createdAt = reply.getCreatedAt();
             dto.updatedAt = reply.getUpdatedAt();
             return dto;
