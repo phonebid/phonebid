@@ -4,10 +4,15 @@ import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.common.errorcode.CommonErrorCode;
 import com.phonebid.app.member.domain.User;
 import com.phonebid.app.member.repository.UserRepository;
+import com.phonebid.app.mypage.domain.Account;
+import com.phonebid.app.mypage.domain.Bank;
+import com.phonebid.app.mypage.dto.request.AccountCreateRequestDto;
 import com.phonebid.app.mypage.dto.request.ProfileUpdateRequestDto;
+import com.phonebid.app.mypage.dto.response.AccountResponseDto;
 import com.phonebid.app.mypage.dto.response.ProfileResponseDto;
 import com.phonebid.app.mypage.dto.response.PurchaseDetailResponseDto;
 import com.phonebid.app.mypage.dto.response.PurchaseHistoryResponseDto;
+import com.phonebid.app.mypage.repository.AccountRepository;
 import com.phonebid.app.trade.domain.Contract;
 import com.phonebid.app.trade.domain.ContractStatus;
 import com.phonebid.app.trade.domain.Delivery;
@@ -33,6 +38,7 @@ public class MyPageService {
     private final ContractRepository contractRepository;
     private final PaymentRepository paymentRepository;
     private final DeliveryRepository deliveryRepository;
+    private final AccountRepository accountRepository;
 
     /**
      * 프로필 조회
@@ -111,6 +117,59 @@ public class MyPageService {
             payment.orElse(null), 
             delivery.orElse(null)
         );
+    }
+
+    /**
+     * 계좌 등록
+     * 사용자의 계좌 정보를 등록합니다. 동일한 은행과 계좌번호 조합은 중복 등록할 수 없습니다.
+     */
+    @Transactional
+    public void createAccount(String username, AccountCreateRequestDto requestDto) {
+        User user = loadActiveUser(username);
+        
+        Bank bank = requestDto.getBank();
+        String accountNumber = requestDto.getAccountNumber().trim();
+        String accountHolderName = requestDto.getAccountHolderName().trim();
+        
+        // 동일 사용자의 동일 은행, 동일 계좌번호 중복 확인
+        boolean exists = accountRepository.existsByUsernameAndAccountNumberAndBank(
+            username, accountNumber, bank);
+        if (exists) {
+            throw new CustomException(CommonErrorCode.DUPLICATE_ACCOUNT);
+        }
+        
+        Account account = Account.builder()
+            .user(user)
+            .bank(bank)
+            .accountNumber(accountNumber)
+            .accountHolderName(accountHolderName)
+            .build();
+        
+        accountRepository.save(account);
+    }
+
+    /**
+     * 계좌 목록 조회
+     * 사용자의 등록된 계좌 목록을 페이징하여 조회합니다.
+     */
+    @Transactional(readOnly = true)
+    public Page<AccountResponseDto> getAccounts(String username, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Account> accounts = accountRepository.findByUsername(username, pageable);
+        
+        return accounts.map(AccountResponseDto::from);
+    }
+
+    /**
+     * 계좌 삭제
+     * 사용자의 계좌를 소프트 삭제합니다. 본인의 계좌만 삭제할 수 있습니다.
+     */
+    @Transactional
+    public void deleteAccount(String username, UUID accountId) {
+        Account account = accountRepository.findByIdAndUsername(accountId, username)
+            .orElseThrow(() -> new CustomException(CommonErrorCode.RESOURCE_NOT_FOUND));
+        
+        account.softDelete(username);
     }
 
     /**
