@@ -14,10 +14,11 @@ import java.util.UUID;
 @Repository
 public interface NoticeRepository extends JpaRepository<Notice, UUID> {
 
-    @Query("SELECT n FROM Notice n ORDER BY n.isImportant DESC, n.createdAt DESC")
+    @Query("SELECT n FROM Notice n WHERE (n.isDelete = false OR n.isDelete IS NULL) " +
+           "ORDER BY n.isImportant DESC, n.createdAt DESC")
     Page<Notice> findAllOrdered(Pageable pageable);
 
-    @Query("SELECT n FROM Notice n WHERE n.id = :id")
+    @Query("SELECT n FROM Notice n WHERE n.id = :id AND (n.isDelete = false OR n.isDelete IS NULL)")
     Optional<Notice> findByIdForView(@Param("id") UUID id);
 }
 

@@ -15,10 +15,11 @@ import java.util.UUID;
 @Repository
 public interface FaqRepository extends JpaRepository<Faq, UUID> {
 
-    @Query("SELECT f FROM Faq f WHERE (:category IS NULL OR f.category = :category) ORDER BY f.createdAt DESC")
+    @Query("SELECT f FROM Faq f WHERE (:category IS NULL OR f.category = :category) " +
+           "AND (f.isDelete = false OR f.isDelete IS NULL) ORDER BY f.createdAt DESC")
     Page<Faq> findAllWithCategoryFilter(@Param("category") FaqCategory category, Pageable pageable);
 
-    @Query("SELECT f FROM Faq f WHERE f.id = :id")
+    @Query("SELECT f FROM Faq f WHERE f.id = :id AND (f.isDelete = false OR f.isDelete IS NULL)")
     Optional<Faq> findByIdForView(@Param("id") UUID id);
 }
 

@@ -12,7 +12,8 @@ import java.util.UUID;
 @Repository
 public interface InquiryReplyRepository extends JpaRepository<InquiryReply, UUID> {
 
-    @Query("SELECT ir FROM InquiryReply ir WHERE ir.inquiry.id = :inquiryId")
+    @Query("SELECT ir FROM InquiryReply ir WHERE ir.inquiry.id = :inquiryId " +
+           "AND (ir.isDelete = false OR ir.isDelete IS NULL)")
     Optional<InquiryReply> findByInquiryId(@Param("inquiryId") UUID inquiryId);
 }
 

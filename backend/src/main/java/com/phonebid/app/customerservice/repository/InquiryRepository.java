@@ -16,19 +16,19 @@ import java.util.UUID;
 @Repository
 public interface InquiryRepository extends JpaRepository<Inquiry, UUID> {
 
-    @Query("SELECT i FROM Inquiry i WHERE i.user.username = :username ORDER BY i.createdAt DESC")
+    @Query("SELECT i FROM Inquiry i WHERE i.user.username = :username " +
+           "AND (i.isDelete = false OR i.isDelete IS NULL) ORDER BY i.createdAt DESC")
     Page<Inquiry> findByUsername(@Param("username") String username, Pageable pageable);
 
-    @Query("SELECT i FROM Inquiry i WHERE i.id = :id AND i.user.username = :username")
+    @Query("SELECT i FROM Inquiry i WHERE i.id = :id AND i.user.username = :username " +
+           "AND (i.isDelete = false OR i.isDelete IS NULL)")
     Optional<Inquiry> findByIdAndUsername(@Param("id") UUID id, @Param("username") String username);
 
     @Query("SELECT i FROM Inquiry i WHERE " +
            "(:status IS NULL OR i.status = :status) AND " +
-           "(:category IS NULL OR i.category = :category) " +
+           "(:category IS NULL OR i.category = :category) AND " +
+           "(i.isDelete = false OR i.isDelete IS NULL) " +
            "ORDER BY i.createdAt DESC")
-    Page<Inquiry> findAllWithFilters(
-            @Param("status") InquiryStatus status,
-            @Param("category") InquiryCategory category,
-            Pageable pageable);
+    Page<Inquiry> findAllWithFilters(@Param("status") InquiryStatus status, @Param("category") InquiryCategory category, Pageable pageable);
 }
 
