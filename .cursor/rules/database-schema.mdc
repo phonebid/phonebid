@@ -452,6 +452,7 @@ idx_seller_documents_type       -- seller_documents(type) - 문서 타입별 조
 - LAZY 로딩 기본 사용
 - N+1 문제 방지를 위한 JOIN FETCH 활용
 - 페이징 처리 필수 (대용량 데이터)
+- 페이지네이션 시에는 batch fetching 사용
 - 적절한 인덱스 활용
 - 복합 쿼리 시 인덱스 힌트 고려
 
@@ -958,6 +959,7 @@ idx_seller_documents_type       -- seller_documents(type) - 문서 타입별 조
 - LAZY 로딩 기본 사용
 - N+1 문제 방지를 위한 JOIN FETCH 활용
 - 페이징 처리 필수 (대용량 데이터)
+- 페이지네이션 시에는 batch fetching 사용
 - 적절한 인덱스 활용
 - 복합 쿼리 시 인덱스 힌트 고려
 
