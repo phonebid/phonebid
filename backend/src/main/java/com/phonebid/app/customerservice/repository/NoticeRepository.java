@@ -18,7 +18,7 @@ public interface NoticeRepository extends JpaRepository<Notice, UUID> {
            "ORDER BY n.isImportant DESC, n.createdAt DESC")
     Page<Notice> findAllOrdered(Pageable pageable);
 
-    @Query("SELECT n FROM Notice n WHERE n.id = :id AND (n.isDelete = false OR n.isDelete IS NULL)")
+    @Query("SELECT n FROM Notice n JOIN FETCH n.admin WHERE n.id = :id AND (n.isDelete = false OR n.isDelete IS NULL)")
     Optional<Notice> findByIdForView(@Param("id") UUID id);
 }
 
