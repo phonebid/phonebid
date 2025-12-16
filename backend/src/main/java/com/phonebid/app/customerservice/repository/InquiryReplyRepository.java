@@ -15,5 +15,9 @@ public interface InquiryReplyRepository extends JpaRepository<InquiryReply, UUID
     @Query("SELECT ir FROM InquiryReply ir JOIN FETCH ir.admin WHERE ir.inquiry.id = :inquiryId " +
            "AND (ir.isDelete = false OR ir.isDelete IS NULL)")
     Optional<InquiryReply> findByInquiryId(@Param("inquiryId") UUID inquiryId);
+
+    @Query("SELECT ir FROM InquiryReply ir WHERE ir.id = :id " +
+           "AND (ir.isDelete = false OR ir.isDelete IS NULL)")
+    Optional<InquiryReply> findByIdAndNotDeleted(@Param("id") UUID id);
 }
 

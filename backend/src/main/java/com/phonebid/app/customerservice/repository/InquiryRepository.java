@@ -30,5 +30,9 @@ public interface InquiryRepository extends JpaRepository<Inquiry, UUID> {
            "(i.isDelete = false OR i.isDelete IS NULL) " +
            "ORDER BY i.createdAt DESC")
     Page<Inquiry> findAllWithFilters(@Param("status") InquiryStatus status, @Param("category") InquiryCategory category, Pageable pageable);
+
+    @Query("SELECT i FROM Inquiry i WHERE i.id = :id " +
+           "AND (i.isDelete = false OR i.isDelete IS NULL)")
+    Optional<Inquiry> findByIdAndNotDeleted(@Param("id") UUID id);
 }
 

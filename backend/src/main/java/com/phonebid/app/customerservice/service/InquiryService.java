@@ -104,7 +104,7 @@ public class InquiryService {
     @Transactional
     public void createReply(String adminUsername, UUID inquiryId, InquiryReplyRequestDto requestDto) {
         User admin = loadActiveAdmin(adminUsername);
-        Inquiry inquiry = inquiryRepository.findById(inquiryId)
+        Inquiry inquiry = inquiryRepository.findByIdAndNotDeleted(inquiryId)
                 .orElseThrow(() -> new CustomException(CustomerServiceErrorCode.INQUIRY_NOT_FOUND));
 
         Optional<InquiryReply> existingReply = inquiryReplyRepository.findByInquiryId(inquiryId);
@@ -126,7 +126,7 @@ public class InquiryService {
     public void updateReply(String adminUsername, UUID inquiryId, UUID replyId, InquiryReplyRequestDto requestDto) {
         loadActiveAdmin(adminUsername);
 
-        InquiryReply reply = inquiryReplyRepository.findById(replyId)
+        InquiryReply reply = inquiryReplyRepository.findByIdAndNotDeleted(replyId)
                 .orElseThrow(() -> new CustomException(CustomerServiceErrorCode.INQUIRY_REPLY_NOT_FOUND));
 
         if (!reply.getInquiry().getId().equals(inquiryId)) {
@@ -140,7 +140,7 @@ public class InquiryService {
     public void deleteReply(String adminUsername, UUID inquiryId, UUID replyId) {
         loadActiveAdmin(adminUsername);
 
-        InquiryReply reply = inquiryReplyRepository.findById(replyId)
+        InquiryReply reply = inquiryReplyRepository.findByIdAndNotDeleted(replyId)
                 .orElseThrow(() -> new CustomException(CustomerServiceErrorCode.INQUIRY_REPLY_NOT_FOUND));
 
         if (!reply.getInquiry().getId().equals(inquiryId)) {
