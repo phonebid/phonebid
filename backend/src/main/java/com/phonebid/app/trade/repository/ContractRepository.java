@@ -52,18 +52,24 @@ public interface ContractRepository extends JpaRepository<Contract, UUID> {
     Optional<Contract> findByIdAndUsername(@Param("contractId") UUID contractId, @Param("username") String username);
 
     /**
-     * 사용자명으로 구매완료 또는 취소 상태의 모든 계약을 조회
+     * 사용자명과 상태 목록으로 계약 목록을 페이징 조회
      * 구매완료와 취소를 함께 조회할 때 사용됨
      */
-    @Query("SELECT c FROM Contract c " +
+    @Query(value = "SELECT c FROM Contract c " +
            "JOIN FETCH c.quote q " +
            "JOIN FETCH q.user u " +
            "JOIN FETCH c.selectedBid b " +
            "JOIN FETCH q.phoneModel pm " +
            "WHERE u.username = :username " +
-           "AND (c.status = 'SIGNED' OR c.status = 'CANCELLED') " +
+           "AND c.status IN :statuses " +
            "AND (c.isDelete = false OR c.isDelete IS NULL) " +
-           "ORDER BY c.signedAt DESC")
-    List<Contract> findAllByUsername(@Param("username") String username, Pageable pageable);
+           "ORDER BY c.signedAt DESC",
+           countQuery = "SELECT COUNT(c) FROM Contract c " +
+           "JOIN c.quote q " +
+           "JOIN q.user u " +
+           "WHERE u.username = :username " +
+           "AND c.status IN :statuses " +
+           "AND (c.isDelete = false OR c.isDelete IS NULL)")
+    Page<Contract> findAllByUsername(@Param("username") String username, @Param("statuses") List<ContractStatus> statuses, Pageable pageable);
 }
 
