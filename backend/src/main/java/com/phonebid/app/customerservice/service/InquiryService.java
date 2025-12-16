@@ -93,7 +93,9 @@ public class InquiryService {
     }
 
     @Transactional(readOnly = true)
-    public Page<InquiryResponseDto> getAllInquiries(InquiryStatus status, InquiryCategory category, int page, int size) {
+    public Page<InquiryResponseDto> getAllInquiries(String adminUsername, InquiryStatus status, InquiryCategory category, int page, int size) {
+        loadActiveAdmin(adminUsername);
+
         Pageable pageable = PageRequest.of(page, size);
         Page<Inquiry> inquiries = inquiryRepository.findAllWithFilters(status, category, pageable);
         return inquiries.map(InquiryResponseDto::from);

@@ -34,7 +34,7 @@ public class AdminInquiryController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        Page<InquiryResponseDto> responseDto = inquiryService.getAllInquiries(status, category, page, size);
+        Page<InquiryResponseDto> responseDto = inquiryService.getAllInquiries(userDetails.getUsername(), status, category, page, size);
 
         return ResponseEntity.ok()
                 .body(ApiResponse.success(HttpStatus.OK, "전체 문의 목록 조회가 성공적으로 완료되었습니다.", responseDto));
