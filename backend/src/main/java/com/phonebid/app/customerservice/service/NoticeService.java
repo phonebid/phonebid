@@ -59,6 +59,8 @@ public class NoticeService {
 
     @Transactional
     public void updateNotice(String adminUsername, UUID noticeId, NoticeUpdateRequestDto requestDto) {
+        loadActiveAdmin(adminUsername);
+
         Notice notice = noticeRepository.findById(noticeId)
                 .orElseThrow(() -> new CustomException(CustomerServiceErrorCode.NOTICE_NOT_FOUND));
 
@@ -75,6 +77,8 @@ public class NoticeService {
 
     @Transactional
     public void deleteNotice(String adminUsername, UUID noticeId) {
+        loadActiveAdmin(adminUsername);
+
         Notice notice = noticeRepository.findById(noticeId)
                 .orElseThrow(() -> new CustomException(CustomerServiceErrorCode.NOTICE_NOT_FOUND));
 
@@ -87,6 +91,10 @@ public class NoticeService {
                 .orElseThrow(() -> new CustomException(CommonErrorCode.USER_NOT_FOUND));
     }
 
+    /**
+     * 활성 관리자 조회 및 권한 검증
+     * 관리자가 아닌 경우 예외를 발생시킵니다.
+     */
     private User loadActiveAdmin(String username) {
         User user = loadActiveUser(username);
         if (!user.isAdmin()) {

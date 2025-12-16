@@ -59,6 +59,8 @@ public class FaqService {
 
     @Transactional
     public void updateFaq(String adminUsername, UUID faqId, FaqUpdateRequestDto requestDto) {
+        loadActiveAdmin(adminUsername);
+
         Faq faq = faqRepository.findById(faqId)
                 .orElseThrow(() -> new CustomException(CustomerServiceErrorCode.FAQ_NOT_FOUND));
 
@@ -75,6 +77,8 @@ public class FaqService {
 
     @Transactional
     public void deleteFaq(String adminUsername, UUID faqId) {
+        loadActiveAdmin(adminUsername);
+
         Faq faq = faqRepository.findById(faqId)
                 .orElseThrow(() -> new CustomException(CustomerServiceErrorCode.FAQ_NOT_FOUND));
 
@@ -87,6 +91,10 @@ public class FaqService {
                 .orElseThrow(() -> new CustomException(CommonErrorCode.USER_NOT_FOUND));
     }
 
+    /**
+     * 활성 관리자 조회 및 권한 검증
+     * 관리자가 아닌 경우 예외를 발생시킵니다.
+     */
     private User loadActiveAdmin(String username) {
         User user = loadActiveUser(username);
         if (!user.isAdmin()) {
