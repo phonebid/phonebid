@@ -1,7 +1,9 @@
 package com.phonebid.app.mypage.controller;
 
 import com.phonebid.app.common.dto.ApiResponse;
+import com.phonebid.app.mypage.dto.request.AccountCreateRequestDto;
 import com.phonebid.app.mypage.dto.request.ProfileUpdateRequestDto;
+import com.phonebid.app.mypage.dto.response.AccountResponseDto;
 import com.phonebid.app.mypage.dto.response.ProfileResponseDto;
 import com.phonebid.app.mypage.dto.response.PurchaseDetailResponseDto;
 import com.phonebid.app.mypage.dto.response.PurchaseHistoryResponseDto;
@@ -80,6 +82,51 @@ public class MyPageController {
         
         return ResponseEntity.ok()
                 .body(ApiResponse.success(HttpStatus.OK, "구매내역 상세 조회가 성공적으로 완료되었습니다.", responseDto));
+    }
+
+    /**
+     * 계좌 등록
+     * 사용자의 계좌 정보를 등록합니다. 동일한 은행과 계좌번호 조합은 중복 등록할 수 없습니다.
+     */
+    @PostMapping("/accounts")
+    public ResponseEntity<ApiResponse<Void>> createAccount(@AuthenticationPrincipal UserDetailsImpl userDetails,
+                                                           @Valid @RequestBody AccountCreateRequestDto requestDto) {
+        
+        myPageService.createAccount(userDetails.getUsername(), requestDto);
+        
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(HttpStatus.CREATED, "계좌 등록이 성공적으로 완료되었습니다.", null));
+    }
+
+    /**
+     * 계좌 목록 조회
+     * 사용자의 등록된 계좌 목록을 페이징하여 조회합니다. 등록일 기준 내림차순으로 정렬하여 반환합니다.
+     */
+    @GetMapping("/accounts")
+    public ResponseEntity<ApiResponse<Page<AccountResponseDto>>> getAccounts(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        Page<AccountResponseDto> responseDto = myPageService.getAccounts(
+            userDetails.getUsername(), page, size);
+        
+        return ResponseEntity.ok()
+                .body(ApiResponse.success(HttpStatus.OK, "계좌 목록 조회가 성공적으로 완료되었습니다.", responseDto));
+    }
+
+    /**
+     * 계좌 삭제
+     * 사용자의 계좌를 삭제합니다. 본인의 계좌만 삭제할 수 있습니다.
+     */
+    @DeleteMapping("/accounts/{accountId}")
+    public ResponseEntity<ApiResponse<Void>> deleteAccount(@AuthenticationPrincipal UserDetailsImpl userDetails,
+                                                           @PathVariable UUID accountId) {
+        
+        myPageService.deleteAccount(userDetails.getUsername(), accountId);
+        
+        return ResponseEntity.ok()
+                .body(ApiResponse.success(HttpStatus.OK, "계좌 삭제가 성공적으로 완료되었습니다.", null));
     }
 }
 
