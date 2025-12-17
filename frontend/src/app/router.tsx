@@ -14,6 +14,8 @@ import PaymentFailPage from "pages/PaymentFailPage";
 import QuoteCreateWizardPage from "@/pages/QuoteCreateWizardPage";
 import ChatListPage from "pages/ChatListPage";
 import ChatRoomPage from "pages/ChatRoomPage";
+import MyPage from "pages/MyPage";
+import ProfilePage from "pages/ProfilePage";
 
 export const AppRouter: React.FC = () => {
   return (
@@ -29,6 +31,7 @@ export const AppRouter: React.FC = () => {
         <Route path="/payment/fail" element={<PaymentFailPage />} />
         <Route path="/chat" element={<ChatListPage />} />
         <Route path="/chat/:chatRoomId" element={<ChatRoomPage />} />
+        <Route path="/mypage/profile" element={<ProfilePage />} />
 
         {/* Layout이 포함된 일반 페이지들 */}
         <Route
@@ -43,6 +46,7 @@ export const AppRouter: React.FC = () => {
                   path="/admin/phone-models"
                   element={<PhoneModelManagePage />}
                 />
+                <Route path="/mypage" element={<MyPage />} />
               </Routes>
             </Layout>
           }

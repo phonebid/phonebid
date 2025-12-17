@@ -49,12 +49,20 @@ const Header: React.FC = () => {
               이용방법
             </Link>
             {isAuthenticated && (
-              <Link
-                to="/chat"
-                className="text-gray-700 hover:text-indigo-500 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              >
-                채팅
-              </Link>
+              <>
+                <Link
+                  to="/chat"
+                  className="text-gray-700 hover:text-indigo-500 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  채팅
+                </Link>
+                <Link
+                  to="/mypage"
+                  className="text-gray-700 hover:text-indigo-500 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  마이페이지
+                </Link>
+              </>
             )}
             <Link
               to="/admin/phone-models"
@@ -171,13 +179,22 @@ const Header: React.FC = () => {
               이용방법
             </Link>
             {isAuthenticated && (
-              <Link
-                to="/chat"
-                className="block px-2 py-2 rounded-md text-gray-700 hover:bg-gray-100"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                채팅
-              </Link>
+              <>
+                <Link
+                  to="/chat"
+                  className="block px-2 py-2 rounded-md text-gray-700 hover:bg-gray-100"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  채팅
+                </Link>
+                <Link
+                  to="/mypage"
+                  className="block px-2 py-2 rounded-md text-gray-700 hover:bg-gray-100"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  마이페이지
+                </Link>
+              </>
             )}
 
             <div className="border-t pt-2 mt-2">
