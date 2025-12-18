@@ -29,7 +29,7 @@ const MyPage = () => {
       id: "purchases",
       label: "구매내역",
       path: "/mypage/purchases",
-      enabled: false,
+      enabled: true,
       icon: (
         <svg
           className="w-5 h-5"

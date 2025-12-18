@@ -16,6 +16,8 @@ import ChatListPage from "pages/ChatListPage";
 import ChatRoomPage from "pages/ChatRoomPage";
 import MyPage from "pages/MyPage";
 import ProfilePage from "pages/ProfilePage";
+import PurchaseHistoryPage from "pages/PurchaseHistoryPage";
+import PurchaseDetailPage from "pages/PurchaseDetailPage";
 
 export const AppRouter: React.FC = () => {
   return (
@@ -32,6 +34,11 @@ export const AppRouter: React.FC = () => {
         <Route path="/chat" element={<ChatListPage />} />
         <Route path="/chat/:chatRoomId" element={<ChatRoomPage />} />
         <Route path="/mypage/profile" element={<ProfilePage />} />
+        <Route path="/mypage/purchases" element={<PurchaseHistoryPage />} />
+        <Route
+          path="/mypage/purchases/:contractId"
+          element={<PurchaseDetailPage />}
+        />
 
         {/* Layout이 포함된 일반 페이지들 */}
         <Route
