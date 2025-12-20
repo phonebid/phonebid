@@ -4,6 +4,8 @@ import type {
   ProfileUpdateRequestDto,
   PurchaseHistoryResponseDto,
   PurchaseDetailResponseDto,
+  AccountCreateRequestDto,
+  AccountResponseDto,
   Page,
 } from "types/MyPageTypes";
 
@@ -39,6 +41,29 @@ export const mypageService = {
     return await apiClient.get<PurchaseDetailResponseDto>(
       `/mypage/purchases/${contractId}`
     );
+  },
+
+  createAccount: async (
+    data: AccountCreateRequestDto
+  ): Promise<void> => {
+    return await apiClient.post<void>("/mypage/accounts", data);
+  },
+
+  getAccounts: async (
+    page: number = 0,
+    size: number = 10
+  ): Promise<Page<AccountResponseDto>> => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      size: size.toString(),
+    });
+    return await apiClient.get<Page<AccountResponseDto>>(
+      `/mypage/accounts?${params.toString()}`
+    );
+  },
+
+  deleteAccount: async (accountId: string): Promise<void> => {
+    return await apiClient.delete<void>(`/mypage/accounts/${accountId}`);
   },
 };
 

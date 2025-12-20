@@ -50,7 +50,7 @@ const MyPage = () => {
       id: "accounts",
       label: "계좌관리",
       path: "/mypage/accounts",
-      enabled: false,
+      enabled: true,
       icon: (
         <svg
           className="w-5 h-5"

@@ -18,6 +18,7 @@ import MyPage from "pages/MyPage";
 import ProfilePage from "pages/ProfilePage";
 import PurchaseHistoryPage from "pages/PurchaseHistoryPage";
 import PurchaseDetailPage from "pages/PurchaseDetailPage";
+import AccountManagementPage from "pages/AccountManagementPage";
 
 export const AppRouter: React.FC = () => {
   return (
@@ -39,6 +40,7 @@ export const AppRouter: React.FC = () => {
           path="/mypage/purchases/:contractId"
           element={<PurchaseDetailPage />}
         />
+        <Route path="/mypage/accounts" element={<AccountManagementPage />} />
 
         {/* Layout이 포함된 일반 페이지들 */}
         <Route

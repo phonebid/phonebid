@@ -69,3 +69,35 @@ export interface PurchaseDetailResponseDto {
   canReview: boolean;
 }
 
+export interface AccountCreateRequestDto {
+  bankName: string;
+  accountNumber: string;
+  accountHolderName: string;
+}
+
+export interface AccountResponseDto {
+  accountId: string;
+  bankName: string;
+  accountNumber: string;
+  accountHolderName: string;
+  createdAt: string;
+}
+
+export const BANK_LIST = [
+  "KB국민은행",
+  "신한은행",
+  "하나은행",
+  "우리은행",
+  "NH농협은행",
+  "IBK기업은행",
+  "카카오뱅크",
+  "토스뱅크",
+  "KEB하나은행",
+  "SC제일은행",
+  "한국씨티은행",
+  "KDB산업은행",
+  "저축은행",
+  "우체국",
+  "수협은행",
+] as const;
+
