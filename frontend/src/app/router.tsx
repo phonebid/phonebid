@@ -19,6 +19,14 @@ import ProfilePage from "pages/ProfilePage";
 import PurchaseHistoryPage from "pages/PurchaseHistoryPage";
 import PurchaseDetailPage from "pages/PurchaseDetailPage";
 import AccountManagementPage from "pages/AccountManagementPage";
+import CustomerServicePage from "pages/CustomerServicePage";
+import InquiryPage from "pages/InquiryPage";
+import MyInquiriesPage from "pages/MyInquiriesPage";
+import InquiryDetailPage from "pages/InquiryDetailPage";
+import NoticeListPage from "pages/NoticeListPage";
+import NoticeDetailPage from "pages/NoticeDetailPage";
+import FAQListPage from "pages/FAQListPage";
+import FAQDetailPage from "pages/FAQDetailPage";
 
 export const AppRouter: React.FC = () => {
   return (
@@ -41,6 +49,14 @@ export const AppRouter: React.FC = () => {
           element={<PurchaseDetailPage />}
         />
         <Route path="/mypage/accounts" element={<AccountManagementPage />} />
+        <Route path="/mypage/customer-service" element={<CustomerServicePage />} />
+        <Route path="/mypage/customer-service/inquiry" element={<InquiryPage />} />
+        <Route path="/mypage/customer-service/inquiries/my" element={<MyInquiriesPage />} />
+        <Route path="/mypage/customer-service/inquiries/:inquiryId" element={<InquiryDetailPage />} />
+        <Route path="/mypage/customer-service/notices" element={<NoticeListPage />} />
+        <Route path="/mypage/customer-service/notices/:noticeId" element={<NoticeDetailPage />} />
+        <Route path="/mypage/customer-service/faqs" element={<FAQListPage />} />
+        <Route path="/mypage/customer-service/faqs/:faqId" element={<FAQDetailPage />} />
 
         {/* Layout이 포함된 일반 페이지들 */}
         <Route

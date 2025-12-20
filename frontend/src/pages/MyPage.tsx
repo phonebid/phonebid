@@ -98,7 +98,7 @@ const MyPage = () => {
       id: "customer-service",
       label: "고객센터",
       path: "/mypage/customer-service",
-      enabled: false,
+      enabled: true,
       icon: (
         <svg
           className="w-5 h-5"
