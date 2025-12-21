@@ -5,15 +5,17 @@ import { toast } from "react-toastify";
 import type { InquiryCreateRequestDto } from "types/CustomerServiceTypes";
 import {
   InquiryCategory,
+  INQUIRY_CATEGORY,
   INQUIRY_CATEGORY_LABELS,
 } from "types/CustomerServiceTypes";
+import { getErrorMessage, logError } from "utils/errorUtils";
 
 const InquiryPage = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
   const [formData, setFormData] = useState<InquiryCreateRequestDto>({
-    category: InquiryCategory.PAYMENT,
+    category: INQUIRY_CATEGORY.PAYMENT,
     title: "",
     content: "",
   });
@@ -76,10 +78,9 @@ const InquiryPage = () => {
       });
       toast.success("문의가 등록되었습니다.");
       navigate("/mypage/customer-service/inquiries/my");
-    } catch (error: any) {
-      console.error("문의 등록 실패:", error);
-      const errorMessage =
-        error.response?.data?.message || "문의 등록에 실패했습니다.";
+    } catch (error: unknown) {
+      logError("문의 등록 실패:", error);
+      const errorMessage = getErrorMessage(error) || "문의 등록에 실패했습니다.";
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -134,7 +135,7 @@ const InquiryPage = () => {
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
-                {Object.values(InquiryCategory).map((category) => (
+                {Object.values(INQUIRY_CATEGORY).map((category) => (
                   <option key={category} value={category}>
                     {INQUIRY_CATEGORY_LABELS[category]}
                   </option>
