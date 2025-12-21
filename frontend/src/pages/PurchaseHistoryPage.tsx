@@ -7,6 +7,7 @@ import type {
   Page,
 } from "types/MyPageTypes";
 import { logError } from "utils/errorUtils";
+import { formatDateKorean, formatPrice } from "utils/formatters";
 
 const PurchaseHistoryPage = () => {
   const navigate = useNavigate();
@@ -52,18 +53,6 @@ const PurchaseHistoryPage = () => {
       return;
     }
     navigate(`/mypage/purchases/${contractId}/review`);
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}년${month}월${day}일`;
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("ko-KR").format(price) + "원";
   };
 
   if (isLoading) {
@@ -143,7 +132,7 @@ const PurchaseHistoryPage = () => {
                       {purchase.productName}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {formatDate(purchase.transactionDate)}
+                      {formatDateKorean(purchase.transactionDate)}
                     </div>
                   </div>
                   <span

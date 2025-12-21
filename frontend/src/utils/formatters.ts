@@ -130,3 +130,21 @@ export const formatDateSimple = (date: string | Date): string => {
   const day = String(dateObj.getDate()).padStart(2, "0");
   return `${year}.${month}.${day}`;
 };
+
+/**
+ * 날짜를 yyyy년MM월dd일 형식으로 포맷팅
+ */
+export const formatDateKorean = (date: string | Date): string => {
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+  const day = String(dateObj.getDate()).padStart(2, "0");
+  return `${year}년${month}월${day}일`;
+};
+
+/**
+ * 가격을 한국 통화 형식으로 포맷팅 (숫자 + "원")
+ */
+export const formatPrice = (price: number): string => {
+  return new Intl.NumberFormat("ko-KR").format(price) + "원";
+};
