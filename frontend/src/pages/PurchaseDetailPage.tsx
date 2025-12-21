@@ -27,8 +27,6 @@ const PurchaseDetailPage = () => {
       setPurchaseDetail(data);
     } catch (error: unknown) {
       logError("구매내역 상세 조회 실패:", error);
-      const msg = error instanceof Error ? error.message : String(error);
-      toast.error(`구매내역 상세 정보를 불러오는데 실패했습니다: ${msg}`);
       navigate("/mypage/purchases");
     } finally {
       setIsLoading(false);

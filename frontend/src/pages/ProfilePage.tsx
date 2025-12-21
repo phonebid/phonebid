@@ -44,8 +44,6 @@ const ProfilePage = () => {
       });
     } catch (error: unknown) {
       logError("프로필 조회 실패:", error);
-      const msg = error instanceof Error ? error.message : String(error);
-      toast.error(msg || "프로필 정보를 불러오는데 실패했습니다.");
     } finally {
       setIsLoadingProfile(false);
     }
@@ -144,24 +142,6 @@ const ProfilePage = () => {
       navigate("/mypage");
     } catch (error: unknown) {
       logError("프로필 수정 실패:", error);
-      let errorMessage = "프로필 수정에 실패했습니다.";
-      if (
-        error &&
-        typeof error === "object" &&
-        "response" in error &&
-        error.response &&
-        typeof error.response === "object" &&
-        "data" in error.response &&
-        error.response.data &&
-        typeof error.response.data === "object" &&
-        "message" in error.response.data &&
-        typeof error.response.data.message === "string"
-      ) {
-        errorMessage = error.response.data.message;
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

@@ -28,8 +28,6 @@ const PurchaseHistoryPage = () => {
       setPurchaseHistory(data);
     } catch (error: unknown) {
       logError("구매내역 조회 실패:", error);
-      const msg = error instanceof Error ? error.message : String(error);
-      toast.error(`구매내역을 불러오는데 실패했습니다: ${msg}`);
     } finally {
       setIsLoading(false);
     }

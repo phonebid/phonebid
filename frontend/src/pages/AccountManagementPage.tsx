@@ -8,7 +8,7 @@ import type {
   Page,
 } from "types/MyPageTypes";
 import { BANK_LIST } from "types/MyPageTypes";
-import { getErrorMessage, logError } from "utils/errorUtils";
+import { logError } from "utils/errorUtils";
 
 const AccountManagementPage = () => {
   const navigate = useNavigate();
@@ -48,8 +48,6 @@ const AccountManagementPage = () => {
       setAccountsPage(data);
     } catch (error: unknown) {
       logError("계좌 목록 조회 실패:", error);
-      const errorMessage = getErrorMessage(error) || "계좌 목록을 불러오는데 실패했습니다.";
-      toast.error(errorMessage);
     } finally {
       setIsLoadingAccounts(false);
     }
@@ -143,8 +141,6 @@ const AccountManagementPage = () => {
       loadAccounts();
     } catch (error: unknown) {
       logError("계좌 등록 실패:", error);
-      const errorMessage = getErrorMessage(error) || "계좌 등록에 실패했습니다.";
-      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -161,8 +157,6 @@ const AccountManagementPage = () => {
       loadAccounts();
     } catch (error: unknown) {
       logError("계좌 삭제 실패:", error);
-      const errorMessage = getErrorMessage(error) || "계좌 삭제에 실패했습니다.";
-      toast.error(errorMessage);
     }
   };
 
