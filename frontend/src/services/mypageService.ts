@@ -1,4 +1,5 @@
 import { apiClient } from "./apiClient";
+import { toast } from "react-toastify";
 import type {
   ProfileResponseDto,
   ProfileUpdateRequestDto,
@@ -8,16 +9,36 @@ import type {
   AccountResponseDto,
   Page,
 } from "types/MyPageTypes";
+import { logError } from "utils/errorUtils";
+
+// API 엔드포인트 상수화
+const ENDPOINTS = {
+  PROFILE: "/mypage/profile",
+  PURCHASES: "/mypage/purchases",
+  ACCOUNTS: "/mypage/accounts",
+} as const;
 
 export const mypageService = {
   getProfile: async (): Promise<ProfileResponseDto> => {
-    return await apiClient.get<ProfileResponseDto>("/mypage/profile");
+    try {
+      return await apiClient.get<ProfileResponseDto>(ENDPOINTS.PROFILE);
+    } catch (error: unknown) {
+      logError("프로필 조회 실패:", error);
+      toast.error("프로필 정보를 불러오는데 실패했습니다.");
+      throw error;
+    }
   },
 
   updateProfile: async (
     data: ProfileUpdateRequestDto
   ): Promise<void> => {
-    return await apiClient.put<void>("/mypage/profile", data);
+    try {
+      return await apiClient.put<void>(ENDPOINTS.PROFILE, data);
+    } catch (error: unknown) {
+      logError("프로필 수정 실패:", error);
+      toast.error("프로필 수정에 실패했습니다.");
+      throw error;
+    }
   },
 
   getPurchaseHistory: async (
@@ -25,45 +46,75 @@ export const mypageService = {
     page: number = 0,
     size: number = 10
   ): Promise<Page<PurchaseHistoryResponseDto>> => {
-    const params = new URLSearchParams({
-      status,
-      page: page.toString(),
-      size: size.toString(),
-    });
-    return await apiClient.get<Page<PurchaseHistoryResponseDto>>(
-      `/mypage/purchases?${params.toString()}`
-    );
+    try {
+      const params = new URLSearchParams({
+        status,
+        page: page.toString(),
+        size: size.toString(),
+      });
+      return await apiClient.get<Page<PurchaseHistoryResponseDto>>(
+        `${ENDPOINTS.PURCHASES}?${params.toString()}`
+      );
+    } catch (error: unknown) {
+      logError("구매내역 조회 실패:", error);
+      toast.error("구매내역을 불러오는데 실패했습니다.");
+      throw error;
+    }
   },
 
   getPurchaseDetail: async (
     contractId: string
   ): Promise<PurchaseDetailResponseDto> => {
-    return await apiClient.get<PurchaseDetailResponseDto>(
-      `/mypage/purchases/${contractId}`
-    );
+    try {
+      return await apiClient.get<PurchaseDetailResponseDto>(
+        `${ENDPOINTS.PURCHASES}/${contractId}`
+      );
+    } catch (error: unknown) {
+      logError("구매내역 상세 조회 실패:", error);
+      toast.error("구매내역 상세 정보를 불러오는데 실패했습니다.");
+      throw error;
+    }
   },
 
   createAccount: async (
     data: AccountCreateRequestDto
   ): Promise<void> => {
-    return await apiClient.post<void>("/mypage/accounts", data);
+    try {
+      return await apiClient.post<void>(ENDPOINTS.ACCOUNTS, data);
+    } catch (error: unknown) {
+      logError("계좌 등록 실패:", error);
+      toast.error("계좌 등록에 실패했습니다.");
+      throw error;
+    }
   },
 
   getAccounts: async (
     page: number = 0,
     size: number = 10
   ): Promise<Page<AccountResponseDto>> => {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      size: size.toString(),
-    });
-    return await apiClient.get<Page<AccountResponseDto>>(
-      `/mypage/accounts?${params.toString()}`
-    );
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        size: size.toString(),
+      });
+      return await apiClient.get<Page<AccountResponseDto>>(
+        `${ENDPOINTS.ACCOUNTS}?${params.toString()}`
+      );
+    } catch (error: unknown) {
+      logError("계좌 목록 조회 실패:", error);
+      toast.error("계좌 목록을 불러오는데 실패했습니다.");
+      throw error;
+    }
   },
 
   deleteAccount: async (accountId: string): Promise<void> => {
-    return await apiClient.delete<void>(`/mypage/accounts/${accountId}`);
+    try {
+      return await apiClient.delete<void>(`${ENDPOINTS.ACCOUNTS}/${accountId}`);
+    } catch (error: unknown) {
+      logError("계좌 삭제 실패:", error);
+      toast.error("계좌 삭제에 실패했습니다.");
+      throw error;
+    }
   },
 };
 
