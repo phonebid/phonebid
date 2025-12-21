@@ -1,47 +1,54 @@
-export enum InquiryCategory {
-  PAYMENT = "PAYMENT",
-  DELIVERY = "DELIVERY",
-  ACCOUNT = "ACCOUNT",
-  PRODUCT = "PRODUCT",
-  ETC = "ETC",
-}
+export const INQUIRY_CATEGORY = {
+  PAYMENT: "PAYMENT",
+  DELIVERY: "DELIVERY",
+  ACCOUNT: "ACCOUNT",
+  PRODUCT: "PRODUCT",
+  ETC: "ETC",
+} as const;
+
+export type InquiryCategory =
+  typeof INQUIRY_CATEGORY[keyof typeof INQUIRY_CATEGORY];
 
 export const INQUIRY_CATEGORY_LABELS: Record<InquiryCategory, string> = {
-  [InquiryCategory.PAYMENT]: "결제",
-  [InquiryCategory.DELIVERY]: "배송",
-  [InquiryCategory.ACCOUNT]: "계정",
-  [InquiryCategory.PRODUCT]: "상품",
-  [InquiryCategory.ETC]: "기타",
+  [INQUIRY_CATEGORY.PAYMENT]: "결제",
+  [INQUIRY_CATEGORY.DELIVERY]: "배송",
+  [INQUIRY_CATEGORY.ACCOUNT]: "계정",
+  [INQUIRY_CATEGORY.PRODUCT]: "상품",
+  [INQUIRY_CATEGORY.ETC]: "기타",
 };
 
-export enum InquiryStatus {
-  PENDING = "PENDING",
-  ANSWERED = "ANSWERED",
-  CLOSED = "CLOSED",
-}
+export const INQUIRY_STATUS = {
+  PENDING: "PENDING",
+  ANSWERED: "ANSWERED",
+  CLOSED: "CLOSED",
+} as const;
+
+export type InquiryStatus = typeof INQUIRY_STATUS[keyof typeof INQUIRY_STATUS];
 
 export const INQUIRY_STATUS_LABELS: Record<InquiryStatus, string> = {
-  [InquiryStatus.PENDING]: "대기중",
-  [InquiryStatus.ANSWERED]: "답변완료",
-  [InquiryStatus.CLOSED]: "종료",
+  [INQUIRY_STATUS.PENDING]: "대기중",
+  [INQUIRY_STATUS.ANSWERED]: "답변완료",
+  [INQUIRY_STATUS.CLOSED]: "종료",
 };
 
-export enum FaqCategory {
-  SERVICE = "SERVICE",
-  PAYMENT = "PAYMENT",
-  DELIVERY = "DELIVERY",
-  ACCOUNT = "ACCOUNT",
-  PRODUCT = "PRODUCT",
-  ETC = "ETC",
-}
+export const FAQ_CATEGORY = {
+  SERVICE: "SERVICE",
+  PAYMENT: "PAYMENT",
+  DELIVERY: "DELIVERY",
+  ACCOUNT: "ACCOUNT",
+  PRODUCT: "PRODUCT",
+  ETC: "ETC",
+} as const;
+
+export type FaqCategory = typeof FAQ_CATEGORY[keyof typeof FAQ_CATEGORY];
 
 export const FAQ_CATEGORY_LABELS: Record<FaqCategory, string> = {
-  [FaqCategory.SERVICE]: "서비스 이용",
-  [FaqCategory.PAYMENT]: "결제/환불",
-  [FaqCategory.DELIVERY]: "배송",
-  [FaqCategory.ACCOUNT]: "계정",
-  [FaqCategory.PRODUCT]: "상품",
-  [FaqCategory.ETC]: "기타",
+  [FAQ_CATEGORY.SERVICE]: "서비스 이용",
+  [FAQ_CATEGORY.PAYMENT]: "결제/환불",
+  [FAQ_CATEGORY.DELIVERY]: "배송",
+  [FAQ_CATEGORY.ACCOUNT]: "계정",
+  [FAQ_CATEGORY.PRODUCT]: "상품",
+  [FAQ_CATEGORY.ETC]: "기타",
 };
 
 export interface InquiryCreateRequestDto {
