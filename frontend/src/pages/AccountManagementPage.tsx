@@ -283,7 +283,7 @@ const AccountManagementPage = () => {
               </label>
               <input
                 type="text"
-                placeholder="Enter your name"
+                placeholder="이름을 입력하세요"
                 value={formData.accountHolderName}
                 onChange={(e) =>
                   handleInputChange("accountHolderName", e.target.value)
