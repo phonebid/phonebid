@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { mypageService } from "services/mypageService";
 import { toast } from "react-toastify";
 import type { ProfileUpdateRequestDto } from "types/MyPageTypes";
+import { logError } from "utils/errorUtils";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -41,9 +42,10 @@ const ProfilePage = () => {
         email: "",
         phone: data.phone || "",
       });
-    } catch (error: any) {
-      console.error("프로필 조회 실패:", error);
-      toast.error("프로필 정보를 불러오는데 실패했습니다.");
+    } catch (error: unknown) {
+      logError("프로필 조회 실패:", error);
+      const msg = error instanceof Error ? error.message : String(error);
+      toast.error(msg || "프로필 정보를 불러오는데 실패했습니다.");
     } finally {
       setIsLoadingProfile(false);
     }
@@ -140,10 +142,25 @@ const ProfilePage = () => {
       await mypageService.updateProfile(updateData);
       toast.success("프로필이 수정되었습니다.");
       navigate("/mypage");
-    } catch (error: any) {
-      console.error("프로필 수정 실패:", error);
-      const errorMessage =
-        error.response?.data?.message || "프로필 수정에 실패했습니다.";
+    } catch (error: unknown) {
+      logError("프로필 수정 실패:", error);
+      let errorMessage = "프로필 수정에 실패했습니다.";
+      if (
+        error &&
+        typeof error === "object" &&
+        "response" in error &&
+        error.response &&
+        typeof error.response === "object" &&
+        "data" in error.response &&
+        error.response.data &&
+        typeof error.response.data === "object" &&
+        "message" in error.response.data &&
+        typeof error.response.data.message === "string"
+      ) {
+        errorMessage = error.response.data.message;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);

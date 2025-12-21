@@ -4,6 +4,7 @@ import { customerService } from "services/customerService";
 import { toast } from "react-toastify";
 import type { NoticeDetailResponseDto } from "types/CustomerServiceTypes";
 import { formatDateSimple } from "utils/formatters";
+import { logError } from "utils/errorUtils";
 
 const NoticeDetailPage = () => {
   const navigate = useNavigate();
@@ -24,9 +25,13 @@ const NoticeDetailPage = () => {
       setIsLoading(true);
       const data = await customerService.getNoticeDetail(noticeId);
       setNotice(data);
-    } catch (error: any) {
-      console.error("공지사항 상세 조회 실패:", error);
-      toast.error("공지사항 상세 정보를 불러오는데 실패했습니다.");
+    } catch (error: unknown) {
+      logError("공지사항 상세 조회 실패:", error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("공지사항 상세 정보를 불러오는데 실패했습니다.");
+      }
       navigate("/mypage/customer-service/notices");
     } finally {
       setIsLoading(false);

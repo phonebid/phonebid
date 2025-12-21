@@ -8,6 +8,7 @@ import {
   INQUIRY_STATUS_LABELS,
 } from "types/CustomerServiceTypes";
 import { formatDateSimple } from "utils/formatters";
+import { getErrorMessage, logError } from "utils/errorUtils";
 
 const InquiryDetailPage = () => {
   const navigate = useNavigate();
@@ -28,9 +29,10 @@ const InquiryDetailPage = () => {
       setIsLoading(true);
       const data = await customerService.getInquiryDetail(inquiryId);
       setInquiry(data);
-    } catch (error: any) {
-      console.error("문의 상세 조회 실패:", error);
-      toast.error("문의 상세 정보를 불러오는데 실패했습니다.");
+    } catch (error: unknown) {
+      logError("문의 상세 조회 실패:", error);
+      const errorMessage = getErrorMessage(error) || "문의 상세 정보를 불러오는데 실패했습니다.";
+      toast.error(errorMessage);
       navigate("/mypage/customer-service/inquiries/my");
     } finally {
       setIsLoading(false);

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { mypageService } from "services/mypageService";
 import { toast } from "react-toastify";
 import type { PurchaseDetailResponseDto } from "types/MyPageTypes";
+import { logError } from "utils/errorUtils";
 
 const PurchaseDetailPage = () => {
   const navigate = useNavigate();
@@ -24,9 +25,10 @@ const PurchaseDetailPage = () => {
       setIsLoading(true);
       const data = await mypageService.getPurchaseDetail(contractId);
       setPurchaseDetail(data);
-    } catch (error: any) {
-      console.error("구매내역 상세 조회 실패:", error);
-      toast.error("구매내역 상세 정보를 불러오는데 실패했습니다.");
+    } catch (error: unknown) {
+      logError("구매내역 상세 조회 실패:", error);
+      const msg = error instanceof Error ? error.message : String(error);
+      toast.error(`구매내역 상세 정보를 불러오는데 실패했습니다: ${msg}`);
       navigate("/mypage/purchases");
     } finally {
       setIsLoading(false);

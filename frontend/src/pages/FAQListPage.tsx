@@ -4,6 +4,7 @@ import { customerService } from "services/customerService";
 import { toast } from "react-toastify";
 import type { FaqResponseDto, Page } from "types/CustomerServiceTypes";
 import { FaqCategory, FAQ_CATEGORY_LABELS } from "types/CustomerServiceTypes";
+import { getErrorMessage, logError } from "utils/errorUtils";
 
 const FAQListPage = () => {
   const navigate = useNavigate();
@@ -29,9 +30,11 @@ const FAQListPage = () => {
       setIsLoading(true);
       const data = await customerService.getFaqs(selectedCategory, currentPage, 10);
       setFaqsPage(data);
-    } catch (error: any) {
-      console.error("FAQ 목록 조회 실패:", error);
-      toast.error("FAQ 목록을 불러오는데 실패했습니다.");
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logError("FAQ 목록 조회 실패:", err);
+      const errorMessage = getErrorMessage(error);
+      toast.error(`FAQ 목록을 불러오는데 실패했습니다: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }

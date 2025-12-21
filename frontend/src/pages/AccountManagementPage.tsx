@@ -8,6 +8,7 @@ import type {
   Page,
 } from "types/MyPageTypes";
 import { BANK_LIST } from "types/MyPageTypes";
+import { getErrorMessage, logError } from "utils/errorUtils";
 
 const AccountManagementPage = () => {
   const navigate = useNavigate();
@@ -45,9 +46,10 @@ const AccountManagementPage = () => {
       setIsLoadingAccounts(true);
       const data = await mypageService.getAccounts(currentPage, 1);
       setAccountsPage(data);
-    } catch (error: any) {
-      console.error("계좌 목록 조회 실패:", error);
-      toast.error("계좌 목록을 불러오는데 실패했습니다.");
+    } catch (error: unknown) {
+      logError("계좌 목록 조회 실패:", error);
+      const errorMessage = getErrorMessage(error) || "계좌 목록을 불러오는데 실패했습니다.";
+      toast.error(errorMessage);
     } finally {
       setIsLoadingAccounts(false);
     }
@@ -139,10 +141,9 @@ const AccountManagementPage = () => {
         accountHolderName: "",
       });
       loadAccounts();
-    } catch (error: any) {
-      console.error("계좌 등록 실패:", error);
-      const errorMessage =
-        error.response?.data?.message || "계좌 등록에 실패했습니다.";
+    } catch (error: unknown) {
+      logError("계좌 등록 실패:", error);
+      const errorMessage = getErrorMessage(error) || "계좌 등록에 실패했습니다.";
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -158,10 +159,9 @@ const AccountManagementPage = () => {
       await mypageService.deleteAccount(accountId);
       toast.success("계좌가 삭제되었습니다.");
       loadAccounts();
-    } catch (error: any) {
-      console.error("계좌 삭제 실패:", error);
-      const errorMessage =
-        error.response?.data?.message || "계좌 삭제에 실패했습니다.";
+    } catch (error: unknown) {
+      logError("계좌 삭제 실패:", error);
+      const errorMessage = getErrorMessage(error) || "계좌 삭제에 실패했습니다.";
       toast.error(errorMessage);
     }
   };

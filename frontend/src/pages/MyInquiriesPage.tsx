@@ -11,6 +11,7 @@ import {
   INQUIRY_STATUS_LABELS,
 } from "types/CustomerServiceTypes";
 import { formatDateSimple } from "utils/formatters";
+import { getErrorMessage, logError } from "utils/errorUtils";
 
 const MyInquiriesPage = () => {
   const navigate = useNavigate();
@@ -35,9 +36,10 @@ const MyInquiriesPage = () => {
       setIsLoading(true);
       const data = await customerService.getMyInquiries(currentPage, 10);
       setInquiriesPage(data);
-    } catch (error: any) {
-      console.error("문의 목록 조회 실패:", error);
-      toast.error("문의 목록을 불러오는데 실패했습니다.");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logError("문의 목록 조회 실패:", error);
+      toast.error(`문의 목록을 불러오는데 실패했습니다: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }

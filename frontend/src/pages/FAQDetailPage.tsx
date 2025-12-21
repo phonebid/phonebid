@@ -4,6 +4,7 @@ import { customerService } from "services/customerService";
 import { toast } from "react-toastify";
 import type { FaqDetailResponseDto } from "types/CustomerServiceTypes";
 import { FAQ_CATEGORY_LABELS } from "types/CustomerServiceTypes";
+import { getErrorMessage, logError } from "utils/errorUtils";
 
 const FAQDetailPage = () => {
   const navigate = useNavigate();
@@ -24,9 +25,10 @@ const FAQDetailPage = () => {
       setIsLoading(true);
       const data = await customerService.getFaqDetail(faqId);
       setFaq(data);
-    } catch (error: any) {
-      console.error("FAQ 상세 조회 실패:", error);
-      toast.error("FAQ 상세 정보를 불러오는데 실패했습니다.");
+    } catch (error: unknown) {
+      logError("FAQ 상세 조회 실패:", error);
+      const errorMessage = getErrorMessage(error) || "FAQ 상세 정보를 불러오는데 실패했습니다.";
+      toast.error(errorMessage);
       navigate("/mypage/customer-service/faqs");
     } finally {
       setIsLoading(false);

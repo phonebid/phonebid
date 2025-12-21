@@ -6,6 +6,7 @@ import type {
   PurchaseHistoryResponseDto,
   Page,
 } from "types/MyPageTypes";
+import { logError } from "utils/errorUtils";
 
 const PurchaseHistoryPage = () => {
   const navigate = useNavigate();
@@ -25,9 +26,10 @@ const PurchaseHistoryPage = () => {
       setIsLoading(true);
       const data = await mypageService.getPurchaseHistory(activeFilter);
       setPurchaseHistory(data);
-    } catch (error: any) {
-      console.error("구매내역 조회 실패:", error);
-      toast.error("구매내역을 불러오는데 실패했습니다.");
+    } catch (error: unknown) {
+      logError("구매내역 조회 실패:", error);
+      const msg = error instanceof Error ? error.message : String(error);
+      toast.error(`구매내역을 불러오는데 실패했습니다: ${msg}`);
     } finally {
       setIsLoading(false);
     }
