@@ -55,11 +55,12 @@ const ProfilePage = () => {
 
   const validateNickname = (nickname: string): string => {
     const nicknameRegex = /^[가-힣a-zA-Z0-9_-]+$/;
-    if (!nickname.trim()) return "닉네임을 입력해주세요.";
-    if (nickname.length < 2 || nickname.length > 10) {
+    const trimmedNickname = nickname.trim();
+    if (!trimmedNickname) return "닉네임을 입력해주세요.";
+    if (trimmedNickname.length < 2 || trimmedNickname.length > 10) {
       return "닉네임은 2자 이상 10자 이하여야 합니다.";
     }
-    if (!nicknameRegex.test(nickname)) {
+    if (!nicknameRegex.test(trimmedNickname)) {
       return "닉네임은 한글, 영문, 숫자, _, -만 사용 가능합니다.";
     }
     return "";
