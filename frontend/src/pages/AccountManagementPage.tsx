@@ -48,6 +48,8 @@ const AccountManagementPage = () => {
       setAccountsPage(data);
     } catch (error: unknown) {
       logError("계좌 목록 조회 실패:", error);
+      toast.error("계좌 목록을 불러오는 데 실패했습니다.");
+      throw error;
     } finally {
       setIsLoadingAccounts(false);
     }
