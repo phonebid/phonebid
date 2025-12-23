@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { customerService } from "services/customerService";
 import { toast } from "react-toastify";
-import type { FaqResponseDto, Page } from "types/CustomerServiceTypes";
-import { FaqCategory, FAQ_CATEGORY_LABELS } from "types/CustomerServiceTypes";
+import type { FaqResponseDto, Page, FaqCategory } from "types/CustomerServiceTypes";
+import { FAQ_CATEGORY, FAQ_CATEGORY_LABELS } from "types/CustomerServiceTypes";
 import { getErrorMessage, logError } from "utils/errorUtils";
 
 const FAQListPage = () => {
@@ -100,7 +100,7 @@ const FAQListPage = () => {
           >
             전체
           </button>
-          {Object.values(FaqCategory).map((category) => (
+          {Object.values(FAQ_CATEGORY).map((category) => (
             <button
               key={category}
               onClick={() => handleCategoryChange(category)}
