@@ -49,8 +49,8 @@ class ApiClient {
 
         // 토큰 관련 에러 처리 (401, 403)
         if (errorCode === 401 || errorCode === 403) {
-          // 인증 확인용 요청(/users/profile)이거나 이미 로그인 페이지에 있으면 forceLogout 호출 안 함
-          const isAuthCheckRequest = requestUrl.includes("/users/profile");
+          // 인증 확인용 요청(/mypage/profile)이거나 이미 로그인 페이지에 있으면 forceLogout 호출 안 함
+          const isAuthCheckRequest = requestUrl.includes("/mypage/profile");
           const isOnLoginPage = window.location.pathname === "/login";
 
           if (!isAuthCheckRequest && !isOnLoginPage) {

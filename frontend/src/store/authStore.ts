@@ -97,7 +97,7 @@ export const useAuthStore = create<AuthStore>()(
         checkAuth: async () => {
           try {
             // 쿠키에 토큰이 있는지 확인하기 위해 프로필 API 호출
-            const profile = await apiClient.get<ProfileResponseDto>("/users/profile");
+            const profile = await apiClient.get<ProfileResponseDto>("/mypage/profile");
             
             const user: User = {
               username: profile.username,
