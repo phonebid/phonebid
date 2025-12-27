@@ -27,6 +27,7 @@ import NoticeListPage from "pages/NoticeListPage";
 import NoticeDetailPage from "pages/NoticeDetailPage";
 import FAQListPage from "pages/FAQListPage";
 import FAQDetailPage from "pages/FAQDetailPage";
+import MyQuotesPage from "pages/MyQuotesPage";
 
 export const AppRouter: React.FC = () => {
   return (
@@ -49,6 +50,7 @@ export const AppRouter: React.FC = () => {
           element={<PurchaseDetailPage />}
         />
         <Route path="/mypage/accounts" element={<AccountManagementPage />} />
+        <Route path="/mypage/quotes" element={<MyQuotesPage />} />
         <Route path="/mypage/customer-service" element={<CustomerServicePage />} />
         <Route path="/mypage/customer-service/inquiry" element={<InquiryPage />} />
         <Route path="/mypage/customer-service/inquiries/my" element={<MyInquiriesPage />} />
