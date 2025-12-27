@@ -7,6 +7,7 @@ import com.phonebid.app.auction.domain.Quote;
 import com.phonebid.app.auction.domain.QuoteStatus;
 import com.phonebid.app.auction.dto.request.QuoteCreateRequestDto;
 import com.phonebid.app.auction.dto.response.QuoteResponseDto;
+import com.phonebid.app.auction.repository.BidRepository;
 import com.phonebid.app.auction.repository.QuoteRepository;
 import com.phonebid.app.member.domain.Role;
 import com.phonebid.app.member.domain.User;
@@ -21,6 +22,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
@@ -44,6 +47,12 @@ class QuoteServiceTest {
 
     @Mock
     private PhoneModelRepository phoneModelRepository;
+
+    @Mock
+    private BidRepository bidRepository;
+
+    @Mock
+    private BidService bidService;
 
     @InjectMocks
     private QuoteService quoteService;
@@ -191,16 +200,19 @@ class QuoteServiceTest {
     void getMyOpenQuotes_Success() {
         // given
         List<Quote> mockQuotes = Arrays.asList(testQuote1, testQuote2);
+        Page<Quote> mockPage = new PageImpl<>(mockQuotes, pageable, mockQuotes.size());
         when(quoteRepository.findByUserIdAndStatus(eq(testUser.getId()), eq(QuoteStatus.OPEN), eq(pageable)))
-                .thenReturn(mockQuotes);
+                .thenReturn(mockPage);
+        when(bidRepository.countByQuoteId(any(UUID.class))).thenReturn(0L);
+        when(bidService.getMinInstallmentPrincipal(any(UUID.class))).thenReturn(null);
 
         // when
-        List<QuoteResponseDto> result = quoteService.getMyOpenQuotes(testUser, pageable);
+        Page<QuoteResponseDto> result = quoteService.getMyOpenQuotes(testUser, pageable);
 
         // then
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).getPhoneModel().getModel()).isEqualTo("iPhone 16");
-        assertThat(result.get(1).getPhoneModel().getModel()).isEqualTo("Galaxy S24");
+        assertThat(result.getContent()).hasSize(2);
+        assertThat(result.getContent().get(0).getPhoneModel().getModel()).isEqualTo("iPhone 16");
+        assertThat(result.getContent().get(1).getPhoneModel().getModel()).isEqualTo("Galaxy S24");
         verify(quoteRepository).findByUserIdAndStatus(testUser.getId(), QuoteStatus.OPEN, pageable);
     }
 
@@ -208,14 +220,15 @@ class QuoteServiceTest {
     @DisplayName("getMyOpenQuotes - 빈 목록: 해당 사용자의 Quote가 없는 경우")
     void getMyOpenQuotes_EmptyList() {
         // given
+        Page<Quote> emptyPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
         when(quoteRepository.findByUserIdAndStatus(eq(testUser.getId()), eq(QuoteStatus.OPEN), eq(pageable)))
-                .thenReturn(Collections.emptyList());
+                .thenReturn(emptyPage);
 
         // when
-        List<QuoteResponseDto> result = quoteService.getMyOpenQuotes(testUser, pageable);
+        Page<QuoteResponseDto> result = quoteService.getMyOpenQuotes(testUser, pageable);
 
         // then
-        assertThat(result).isEmpty();
+        assertThat(result.getContent()).isEmpty();
         verify(quoteRepository).findByUserIdAndStatus(testUser.getId(), QuoteStatus.OPEN, pageable);
     }
 
