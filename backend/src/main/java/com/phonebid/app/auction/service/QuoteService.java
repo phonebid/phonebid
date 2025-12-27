@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +31,12 @@ public class QuoteService {
     private final QuoteRepository quoteRepository;
     private final PhoneModelRepository phoneModelRepository;
     private final BidRepository bidRepository;
+    private final BidService bidService;
 
+    /**
+     * 견적 생성
+     * 사용자가 요청한 조건에 맞는 견적을 생성합니다.
+     */
     @Transactional
     public void createQuote(QuoteCreateRequestDto quoteRequestDto, User user) {
         PhoneModel phoneModel = phoneModelRepository.findById(quoteRequestDto.getPhoneModelId())
@@ -56,24 +63,67 @@ public class QuoteService {
         quoteRepository.save(quote);
     }
 
+    /**
+     * 최신 진행중인 견적 목록 조회
+     * 상태가 OPEN인 최신 견적 목록을 조회합니다.
+     */
     public List<Quote> getLatestOpenQuotes(int limit) {
         return quoteRepository.findLatestQuotesByStatus(
                 QuoteStatus.OPEN);
     }
 
-    public List<QuoteResponseDto> getMyOpenQuotes(User user, Pageable pageable) {
-        List<Quote> quotes = quoteRepository.findByUserIdAndStatus(
+    /**
+     * 내 진행중인 견적 목록 조회
+     * 사용자의 진행중인 견적을 페이징하여 조회합니다.
+     */
+    public Page<QuoteResponseDto> getMyOpenQuotes(User user, Pageable pageable) {
+        Page<Quote> quotePage = quoteRepository.findByUserIdAndStatus(
                 user.getId(), QuoteStatus.OPEN, pageable);
-        return quotes.stream()
-                .map(QuoteResponseDto::from)
+        
+        List<QuoteResponseDto> content = quotePage.getContent().stream()
+                .map(quote -> {
+                    Long bidCount = bidRepository.countByQuoteId(quote.getId());
+                    Integer lowestPrice = bidService.getMinInstallmentPrincipal(quote.getId());
+                    return QuoteResponseDto.from(quote, bidCount, lowestPrice);
+                })
                 .collect(Collectors.toList());
+        
+        return new PageImpl<>(content, pageable, quotePage.getTotalElements());
     }
 
+    /**
+     * 내 완료된 견적 목록 조회
+     * 사용자의 완료된 견적(CLOSED, CONTRACTED)을 페이징하여 조회합니다.
+     */
+    public Page<QuoteResponseDto> getMyCompletedQuotes(User user, Pageable pageable) {
+        List<QuoteStatus> completedStatuses = List.of(QuoteStatus.CLOSED, QuoteStatus.CONTRACTED);
+        Page<Quote> quotePage = quoteRepository.findByUserIdAndStatusIn(
+                user.getId(), completedStatuses, pageable);
+        
+        List<QuoteResponseDto> content = quotePage.getContent().stream()
+                .map(quote -> {
+                    Long bidCount = bidRepository.countByQuoteId(quote.getId());
+                    Integer lowestPrice = bidService.getMinInstallmentPrincipal(quote.getId());
+                    return QuoteResponseDto.from(quote, bidCount, lowestPrice);
+                })
+                .collect(Collectors.toList());
+        
+        return new PageImpl<>(content, pageable, quotePage.getTotalElements());
+    }
+
+    /**
+     * 전체 진행중인 견적 목록 조회
+     * 모든 진행중인 견적을 조회합니다. 관리자 및 판매자 전용입니다.
+     */
     public List<QuoteResponseDto> getAllOpenQuotes() {
         List<Quote> quotes = quoteRepository.findLatestQuotesByStatus(
                 QuoteStatus.OPEN);
         return quotes.stream()
-                .map(QuoteResponseDto::from)
+                .map(quote -> {
+                    Long bidCount = bidRepository.countByQuoteId(quote.getId());
+                    Integer lowestPrice = bidService.getMinInstallmentPrincipal(quote.getId());
+                    return QuoteResponseDto.from(quote, bidCount, lowestPrice);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -92,7 +142,10 @@ public class QuoteService {
         // 입찰 개수 조회
         long bidCount = bidRepository.countByQuoteId(quoteId);
         
-        return QuoteResponseDto.from(quote, bidCount);
+        // 최저 할부원금 조회
+        Integer lowestPrice = bidService.getMinInstallmentPrincipal(quoteId);
+        
+        return QuoteResponseDto.from(quote, bidCount, lowestPrice);
     }
 
     /**
