@@ -51,4 +51,37 @@ export interface QuoteDetail extends QuoteSummary {
   bidCount: number;
 }
 
+export interface QuoteListItem {
+  id: string;
+  phoneModel: {
+    id: string;
+    brand: string;
+    model: string;
+  };
+  storage: PhoneOptionResponse | null;
+  color: PhoneOptionResponse | null;
+  carrier: Carrier;
+  status: "OPEN" | "CLOSED" | "CONTRACTED";
+  expiredAt: string;
+  purchaseMethod: PurchaseMethod;
+  currentCarrier?: Carrier;
+  activationMethod: ActivationMethod;
+  createdAt: string;
+  bidCount: number | null;
+  lowestPrice: number | null;
+}
+
+export interface BidListItem {
+  id: string;
+  sellerId: string;
+  sellerStoreName: string;
+  sellerRating: number | null;
+  installmentPrincipal: number;
+  totalMaintenanceCost: number;
+  pricePlanName: string | null;
+  pricePlanPrice: number | null;
+  status: "ACTIVE" | "SELECTED" | "REJECTED" | "WITHDRAWN";
+  createdAt: string;
+}
+
 export const DEFAULT_EXPIRED_HOURS = 24;
