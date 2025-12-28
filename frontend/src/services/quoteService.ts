@@ -60,6 +60,7 @@ export const getQuoteDetail = async (quoteId: string): Promise<QuoteDetail> => {
     activationMethod: response.activationMethod,
     currentCarrier: response.currentCarrier,
     bidCount: response.bidCount ?? 0,
+    lowestPrice: response.lowestPrice ?? null,
   };
 };
 
@@ -154,4 +155,11 @@ export const getBidsByQuoteId = async (
     status: item.status,
     createdAt: item.createdAt,
   }));
+};
+
+// TODO: 백엔드에 견적 종료 API가 구현되면 실제 API 호출로 변경 필요
+export const closeQuote = async (quoteId: string): Promise<void> => {
+  // TODO: 백엔드 API 구현 대기 중
+  // await apiClient.put(`${BASE_URL}/${quoteId}/close`);
+  throw new Error("견적 종료 API가 아직 구현되지 않았습니다.");
 };
