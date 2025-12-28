@@ -1,4 +1,4 @@
-import type { QuoteListItem, Carrier, PurchaseMethod, BidListItem } from "types/QuoteTypes";
+import type { QuoteListItem, Carrier, PurchaseMethod, BidListItem, ActivationMethod } from "types/QuoteTypes";
 
 export interface GroupedQuotes {
   date: string;
@@ -91,5 +91,16 @@ export const calculateRemainingTime = (expiredAt: string): string => {
 
 export const sortBidsByMaintenanceCost = (bids: BidListItem[]): BidListItem[] => {
   return [...bids].sort((a, b) => a.totalMaintenanceCost - b.totalMaintenanceCost);
+};
+
+export const getActivationMethodDisplayName = (
+  activationMethod: ActivationMethod
+): string => {
+  const methodMap: Record<ActivationMethod, string> = {
+    COMMON_SUBSIDY: "공시지원금",
+    SELECTIVE_SUBSIDY: "선택약정",
+    ANY: "상관없음",
+  };
+  return methodMap[activationMethod] || activationMethod;
 };
 
