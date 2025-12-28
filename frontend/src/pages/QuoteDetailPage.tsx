@@ -133,19 +133,19 @@ const QuoteDetailPage = () => {
 
         <div className="px-4 py-4 space-y-4">
           {/* Product Header Card */}
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <h2 className="text-xl font-bold text-gray-900 mb-2">
+          <div className="bg-white rounded-lg p-4 mb-1">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1 flex flex-col justify-center">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
                   {modelDisplayName}
                 </h2>
                 <div className="text-sm text-gray-500">
                   작성일 {formatDateSimple(quote.createdAt)}
                 </div>
               </div>
-              <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 ml-4">
+              <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
                 <svg
-                  className="w-16 h-16 text-gray-400"
+                  className="w-12 h-12 text-gray-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -162,23 +162,23 @@ const QuoteDetailPage = () => {
           </div>
 
           {/* Product Specifications Card */}
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <div className="space-y-2">
+          <div className="bg-gray-100 rounded-lg p-4">
+            <div className="flex items-center justify-between gap-4">
               <div className="flex items-center">
-                <span className="text-sm text-gray-600 w-20">통신사</span>
-                <span className="text-sm text-gray-900">
+                <span className="text-xs text-gray-600 mr-2">통신사</span>
+                <span className="text-xs text-gray-900">
                   {getCarrierDisplayName(quote.carrier)}
                 </span>
               </div>
               <div className="flex items-center">
-                <span className="text-sm text-gray-600 w-20">색상</span>
-                <span className="text-sm text-gray-900">
+                <span className="text-xs text-gray-600 mr-2">색상</span>
+                <span className="text-xs text-gray-900">
                   {quote.color ?? "상관없음"}
                 </span>
               </div>
               <div className="flex items-center">
-                <span className="text-sm text-gray-600 w-20">용량</span>
-                <span className="text-sm text-gray-900">
+                <span className="text-xs text-gray-600 mr-2">용량</span>
+                <span className="text-xs text-gray-900">
                   {quote.storage ?? "상관없음"}
                 </span>
               </div>
@@ -186,7 +186,7 @@ const QuoteDetailPage = () => {
           </div>
 
           {/* Auction Details Card */}
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
+          <div className="bg-gray-100 rounded-lg p-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">남은시간</span>
@@ -216,10 +216,10 @@ const QuoteDetailPage = () => {
           {/* Quotes Section */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-base font-semibold text-gray-900">
+              <h3 className="text-sm font-semibold text-gray-900">
                 받은 견적 총 {bids.length}개
               </h3>
-              <div className="flex items-center text-sm text-gray-600">
+              <div className="flex items-center text-xs text-gray-600">
                 <span>↓ 유지비 적은 순</span>
               </div>
             </div>
@@ -287,7 +287,7 @@ const QuoteDetailPage = () => {
               <button
                 onClick={handleCloseQuote}
                 disabled={isClosing}
-                className="w-full bg-gray-200 text-gray-900 font-semibold py-3 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gray-200 text-gray-900 text-sm font-semibold py-3 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isClosing ? "처리 중..." : "견적 그만받기"}
               </button>
