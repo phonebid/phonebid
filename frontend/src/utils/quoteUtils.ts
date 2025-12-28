@@ -1,4 +1,4 @@
-import type { QuoteListItem, Carrier, PurchaseMethod } from "types/QuoteTypes";
+import type { QuoteListItem, Carrier, PurchaseMethod, BidListItem } from "types/QuoteTypes";
 
 export interface GroupedQuotes {
   date: string;
@@ -71,5 +71,25 @@ export const getPurchaseMethodDisplayName = (
     ANY: "상관없음",
   };
   return methodMap[purchaseMethod] || purchaseMethod;
+};
+
+export const calculateRemainingTime = (expiredAt: string): string => {
+  const now = new Date().getTime();
+  const expired = new Date(expiredAt).getTime();
+  const diff = expired - now;
+
+  if (diff <= 0) {
+    return "00:00:00";
+  }
+
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+};
+
+export const sortBidsByMaintenanceCost = (bids: BidListItem[]): BidListItem[] => {
+  return [...bids].sort((a, b) => a.totalMaintenanceCost - b.totalMaintenanceCost);
 };
 
