@@ -66,6 +66,12 @@ const QuoteDetailPage = () => {
     navigate("/mypage/quotes");
   };
 
+  const handleBidClick = (bidId: string) => {
+    if (quoteId) {
+      navigate(`/mypage/quotes/${quoteId}/bids/${bidId}`);
+    }
+  };
+
   const handleCloseQuote = async () => {
     if (!quoteId) return;
 
@@ -233,7 +239,8 @@ const QuoteDetailPage = () => {
                 {bids.map((bid) => (
                   <div
                     key={bid.id}
-                    className="bg-gray-100 rounded-lg p-4 border border-gray-200"
+                    onClick={() => handleBidClick(bid.id)}
+                    className="bg-gray-100 rounded-lg p-4 border border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors"
                   >
                     <div className="flex items-start gap-4">
                       <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">

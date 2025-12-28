@@ -29,6 +29,7 @@ import FAQListPage from "pages/FAQListPage";
 import FAQDetailPage from "pages/FAQDetailPage";
 import MyQuotesPage from "pages/MyQuotesPage";
 import QuoteDetailPage from "pages/QuoteDetailPage";
+import BidDetailPage from "pages/BidDetailPage";
 
 export const AppRouter: React.FC = () => {
   return (
@@ -53,6 +54,7 @@ export const AppRouter: React.FC = () => {
         <Route path="/mypage/accounts" element={<AccountManagementPage />} />
         <Route path="/mypage/quotes" element={<MyQuotesPage />} />
         <Route path="/mypage/quotes/:quoteId" element={<QuoteDetailPage />} />
+        <Route path="/mypage/quotes/:quoteId/bids/:bidId" element={<BidDetailPage />} />
         <Route path="/mypage/customer-service" element={<CustomerServicePage />} />
         <Route path="/mypage/customer-service/inquiry" element={<InquiryPage />} />
         <Route path="/mypage/customer-service/inquiries/my" element={<MyInquiriesPage />} />
