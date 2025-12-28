@@ -105,4 +105,17 @@ public class QuoteController {
                 .body(ApiResponse.success(HttpStatus.OK, "완료된 견적 조회가 성공적으로 완료되었습니다.", quotes));
     }
 
+    /**
+     * 견적 종료
+     * - 견적 소유자만 종료 가능
+     * - OPEN 상태인 견적만 종료 가능
+     */
+    @PutMapping("/{quoteId}/close")
+    public ResponseEntity<ApiResponse<Void>> closeQuote(@PathVariable UUID quoteId,
+                                                        @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        quoteService.closeQuote(quoteId, userDetails.getUser());
+        return ResponseEntity.ok()
+                .body(ApiResponse.success(HttpStatus.OK, "견적이 성공적으로 종료되었습니다.", null));
+    }
+
 }

@@ -155,5 +155,38 @@ public class QuoteService {
         return bidRepository.countByQuoteId(quoteId);
     }
 
+    /**
+     * 견적 종료
+     * - 견적 소유자만 종료 가능
+     * - OPEN 상태인 견적만 종료 가능
+     */
+    @Transactional
+    public void closeQuote(UUID quoteId, User user) {
+        Quote quote = quoteRepository.findById(quoteId)
+                .orElseThrow(() -> new CustomException(AuctionErrorCode.QUOTE_NOT_FOUND));
+
+        // 삭제된 견적인지 확인
+        if (quote.getIsDelete() != null && quote.getIsDelete()) {
+            throw new CustomException(AuctionErrorCode.QUOTE_NOT_FOUND);
+        }
+
+        // 견적 소유자 확인
+        if (!quote.getUser().getId().equals(user.getId())) {
+            throw new CustomException(AuctionErrorCode.QUOTE_NOT_OWNED_BY_USER);
+        }
+
+        // 이미 종료되었거나 계약 완료된 견적인지 확인
+        if (quote.getStatus() == QuoteStatus.CLOSED) {
+            throw new CustomException(AuctionErrorCode.QUOTE_ALREADY_CLOSED);
+        }
+        if (quote.getStatus() == QuoteStatus.CONTRACTED) {
+            throw new CustomException(AuctionErrorCode.INVALID_QUOTE_STATUS);
+        }
+
+        // 견적 종료
+        quote.close();
+        quoteRepository.save(quote);
+    }
+
 }
 

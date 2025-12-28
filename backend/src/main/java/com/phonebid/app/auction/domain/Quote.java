@@ -109,4 +109,11 @@ public class Quote extends BaseEntity {
         String colorStr = color != null ? color.getDisplayLabel() : "상관없음";
         return String.format("%s %s %s %s", phoneModel.getFullModelName(), storageStr, carrier.getDisplayName(), colorStr);
     }
+
+    /**
+     * 견적 종료 (CLOSED 상태로 변경)
+     */
+    public void close() {
+        this.status = QuoteStatus.CLOSED;
+    }
 }
