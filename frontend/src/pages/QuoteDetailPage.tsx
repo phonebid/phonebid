@@ -125,7 +125,7 @@ const QuoteDetailPage = () => {
               </svg>
             </button>
             <h1 className="text-lg font-bold text-gray-900 flex-1">
-              받은 견적 상세
+              받은 견적
             </h1>
             <div className="w-9"></div>
           </div>
