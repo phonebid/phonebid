@@ -4,7 +4,6 @@ import { getMyOpenQuotes, getMyCompletedQuotes } from "services/quoteService";
 import type { QuoteListItem } from "types/QuoteTypes";
 import { groupQuotesByDate } from "utils/quoteUtils";
 import QuoteCard from "components/quote/QuoteCard";
-import BidListModal from "components/quote/BidListModal";
 import { logError } from "utils/errorUtils";
 
 const MyQuotesPage = () => {
@@ -12,8 +11,6 @@ const MyQuotesPage = () => {
   const [activeTab, setActiveTab] = useState<"open" | "completed">("open");
   const [isLoading, setIsLoading] = useState(true);
   const [quotes, setQuotes] = useState<QuoteListItem[]>([]);
-  const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     loadQuotes();
@@ -39,13 +36,7 @@ const MyQuotesPage = () => {
   };
 
   const handleViewBids = (quoteId: string) => {
-    setSelectedQuoteId(quoteId);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedQuoteId(null);
+    navigate(`/mypage/quotes/${quoteId}`);
   };
 
   const groupedQuotes = groupQuotesByDate(quotes);
@@ -138,14 +129,6 @@ const MyQuotesPage = () => {
           )}
         </div>
       </div>
-
-      {selectedQuoteId && (
-        <BidListModal
-          quoteId={selectedQuoteId}
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-        />
-      )}
     </div>
   );
 };

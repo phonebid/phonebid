@@ -49,6 +49,7 @@ export interface QuoteDetail extends QuoteSummary {
   activationMethod: ActivationMethod;
   currentCarrier?: Carrier;
   bidCount: number;
+  lowestPrice: number | null;
 }
 
 export interface QuoteListItem {
