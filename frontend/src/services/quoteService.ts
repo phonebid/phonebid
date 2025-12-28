@@ -4,6 +4,8 @@ import type {
   QuoteDetail,
   QuoteListItem,
   BidListItem,
+  BidDetail,
+  AdditionalService,
 } from "types/QuoteTypes";
 import type { PhoneModelResponse, PhoneOptionResponse } from "types/PhoneModelTypes";
 import type { Page } from "types/MyPageTypes";
@@ -159,4 +161,74 @@ export const getBidsByQuoteId = async (
 
 export const closeQuote = async (quoteId: string): Promise<void> => {
   await apiClient.put(`${BASE_URL}/${quoteId}/close`);
+};
+
+interface BidResponseDto {
+  id: string;
+  quoteId: string;
+  sellerId: string;
+  sellerStoreName: string;
+  sellerRating: number | null;
+  price: number;
+  installmentPrincipal: number;
+  additionalSubsidy: number | null;
+  totalMaintenanceCost: number;
+  pricePlanName: string | null;
+  pricePlanPrice: number | null;
+  additionalServices: Array<{
+    id: string;
+    serviceName: string;
+    servicePrice: number;
+    description: string | null;
+    mandatory: boolean;
+    cancellableAfterMonths: number | null;
+    cancellableDescription: string | null;
+  }>;
+  additionalServicesCount: number;
+  additionalServicesTotalPrice: number;
+  purchaseMethod: QuoteDetail["purchaseMethod"];
+  carrier: QuoteDetail["carrier"];
+  currentCarrier: QuoteDetail["carrier"] | null;
+  activationMethod: QuoteDetail["activationMethod"];
+  contractMonths: number | null;
+  deliveryDays: number;
+  status: "ACTIVE" | "SELECTED" | "REJECTED" | "WITHDRAWN";
+  createdAt: string;
+}
+
+export const getBidDetail = async (bidId: string): Promise<BidDetail> => {
+  const response = await apiClient.get<BidResponseDto>(`/auction/bids/${bidId}`);
+  
+  return {
+    id: response.id,
+    quoteId: response.quoteId,
+    sellerId: response.sellerId,
+    sellerStoreName: response.sellerStoreName,
+    sellerRating: response.sellerRating,
+    price: response.price,
+    installmentPrincipal: response.installmentPrincipal,
+    additionalSubsidy: response.additionalSubsidy,
+    totalMaintenanceCost: response.totalMaintenanceCost,
+    pricePlanName: response.pricePlanName,
+    pricePlanPrice: response.pricePlanPrice,
+    additionalServices: response.additionalServices.map((service) => ({
+      id: service.id,
+      serviceName: service.serviceName,
+      servicePrice: service.servicePrice,
+      description: service.description,
+      mandatory: service.mandatory,
+      cancellableAfterMonths: service.cancellableAfterMonths,
+      cancellableDescription: service.cancellableDescription,
+    })),
+    additionalServicesCount: response.additionalServicesCount,
+    additionalServicesTotalPrice: response.additionalServicesTotalPrice,
+    purchaseMethod: response.purchaseMethod,
+    carrier: response.carrier,
+    currentCarrier: response.currentCarrier,
+    activationMethod: response.activationMethod,
+    contractMonths: response.contractMonths,
+    deliveryDays: response.deliveryDays,
+    status: response.status,
+    createdAt: response.createdAt,
+  };
 };
