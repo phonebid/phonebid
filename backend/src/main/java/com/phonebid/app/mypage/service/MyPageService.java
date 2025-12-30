@@ -6,13 +6,17 @@ import com.phonebid.app.member.domain.User;
 import com.phonebid.app.member.repository.UserRepository;
 import com.phonebid.app.mypage.domain.Account;
 import com.phonebid.app.mypage.domain.Bank;
+import com.phonebid.app.mypage.domain.UserDeliveryAddress;
 import com.phonebid.app.mypage.dto.request.AccountCreateRequestDto;
+import com.phonebid.app.mypage.dto.request.DeliveryAddressCreateRequestDto;
 import com.phonebid.app.mypage.dto.request.ProfileUpdateRequestDto;
 import com.phonebid.app.mypage.dto.response.AccountResponseDto;
+import com.phonebid.app.mypage.dto.response.DeliveryAddressResponseDto;
 import com.phonebid.app.mypage.dto.response.ProfileResponseDto;
 import com.phonebid.app.mypage.dto.response.PurchaseDetailResponseDto;
 import com.phonebid.app.mypage.dto.response.PurchaseHistoryResponseDto;
 import com.phonebid.app.mypage.repository.AccountRepository;
+import com.phonebid.app.mypage.repository.UserDeliveryAddressRepository;
 import com.phonebid.app.trade.domain.Contract;
 import com.phonebid.app.trade.domain.ContractStatus;
 import com.phonebid.app.trade.domain.Delivery;
@@ -39,6 +43,7 @@ public class MyPageService {
     private final PaymentRepository paymentRepository;
     private final DeliveryRepository deliveryRepository;
     private final AccountRepository accountRepository;
+    private final UserDeliveryAddressRepository userDeliveryAddressRepository;
 
     /**
      * 프로필 조회
@@ -170,6 +175,93 @@ public class MyPageService {
             .orElseThrow(() -> new CustomException(CommonErrorCode.RESOURCE_NOT_FOUND));
         
         account.softDelete(username);
+    }
+
+    /**
+     * 기본 배송지 조회
+     * 사용자의 기본 배송지를 조회합니다. 기본 배송지가 없는 경우 예외를 발생시킵니다.
+     */
+    @Transactional(readOnly = true)
+    public DeliveryAddressResponseDto getDefaultDeliveryAddress(String username) {
+        UserDeliveryAddress address = userDeliveryAddressRepository.findDefaultByUsername(username)
+            .orElseThrow(() -> new CustomException(CommonErrorCode.DEFAULT_DELIVERY_ADDRESS_NOT_FOUND));
+        
+        return DeliveryAddressResponseDto.from(address);
+    }
+
+    /**
+     * 배송지 목록 조회
+     * 사용자의 배송지 목록을 페이징하여 조회합니다. 기본 배송지가 먼저 오고, 그 다음 등록일 기준 내림차순으로 정렬됩니다.
+     */
+    @Transactional(readOnly = true)
+    public Page<DeliveryAddressResponseDto> getDeliveryAddresses(String username, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<UserDeliveryAddress> addresses = userDeliveryAddressRepository.findByUsername(username, pageable);
+        
+        return addresses.map(DeliveryAddressResponseDto::from);
+    }
+
+    /**
+     * 배송지 저장
+     * 사용자의 배송지를 저장합니다. 기본 배송지로 저장하는 경우 기존 기본 배송지의 isDefault를 false로 변경합니다.
+     */
+    @Transactional
+    public void createDeliveryAddress(String username, DeliveryAddressCreateRequestDto requestDto) {
+        User user = loadActiveUser(username);
+        
+        Boolean saveAsDefault = requestDto.getSaveAsDefault() != null ? requestDto.getSaveAsDefault() : false;
+        
+        // 기본 배송지로 저장하는 경우 기존 기본 배송지 해제
+        if (saveAsDefault) {
+            userDeliveryAddressRepository.findDefaultByUsername(username).ifPresent(existingDefault -> {
+                existingDefault.setDefault(false);
+            });
+        }
+        
+        UserDeliveryAddress address = UserDeliveryAddress.builder()
+            .user(user)
+            .addressName(requestDto.getAddressName())
+            .recipientName(requestDto.getRecipientName())
+            .recipientPhone(requestDto.getPhone())
+            .postalCode(requestDto.getPostalCode())
+            .address(requestDto.getAddress())
+            .detailAddress(requestDto.getDetailAddress())
+            .isDefault(saveAsDefault)
+            .build();
+        
+        userDeliveryAddressRepository.save(address);
+    }
+
+    /**
+     * 기본 배송지 설정
+     * 특정 배송지를 기본 배송지로 설정합니다. 기존 기본 배송지의 isDefault를 false로 변경합니다.
+     */
+    @Transactional
+    public void setDefaultDeliveryAddress(String username, UUID addressId) {
+        UserDeliveryAddress address = userDeliveryAddressRepository.findByIdAndUsername(addressId, username)
+            .orElseThrow(() -> new CustomException(CommonErrorCode.DELIVERY_ADDRESS_NOT_FOUND));
+        
+        // 기존 기본 배송지 해제
+        userDeliveryAddressRepository.findDefaultByUsername(username).ifPresent(existingDefault -> {
+            if (!existingDefault.getId().equals(addressId)) {
+                existingDefault.setDefault(false);
+            }
+        });
+        
+        // 새 기본 배송지 설정
+        address.setDefault(true);
+    }
+
+    /**
+     * 배송지 삭제
+     * 사용자의 배송지를 소프트 삭제합니다. 본인의 배송지만 삭제할 수 있습니다.
+     */
+    @Transactional
+    public void deleteDeliveryAddress(String username, UUID addressId) {
+        UserDeliveryAddress address = userDeliveryAddressRepository.findByIdAndUsername(addressId, username)
+            .orElseThrow(() -> new CustomException(CommonErrorCode.DELIVERY_ADDRESS_NOT_FOUND));
+        
+        address.softDelete(username);
     }
 
     /**
