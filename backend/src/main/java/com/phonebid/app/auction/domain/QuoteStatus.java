@@ -32,4 +32,8 @@ public enum QuoteStatus {
     public boolean canSelectBid() {
         return this == OPEN;
     }
+
+    public boolean canClose() {
+        return this == OPEN;
+    }
 }
