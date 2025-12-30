@@ -158,7 +158,9 @@ const DeliveryAddressPage = () => {
       return;
     }
 
-    toast.info("구매 기능은 준비 중입니다.");
+    if (quoteId && bidId) {
+      navigate(`/mypage/quotes/${quoteId}/bids/${bidId}/complete`);
+    }
   };
 
   if (isLoading) {
