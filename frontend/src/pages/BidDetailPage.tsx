@@ -65,8 +65,8 @@ const BidDetailPage = () => {
   };
 
   const handlePurchase = () => {
-    if (!bid) return;
-    toast.info("구매 기능은 준비 중입니다.");
+    if (!quoteId || !bidId) return;
+    navigate(`/mypage/quotes/${quoteId}/bids/${bidId}/delivery`);
   };
 
   if (isLoading) {
