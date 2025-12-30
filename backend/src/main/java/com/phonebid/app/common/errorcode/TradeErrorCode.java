@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 public enum TradeErrorCode implements ErrorCode {
 
     MISSING_TRACKING_NUMBER(HttpStatus.BAD_REQUEST, "송장번호는 필수입니다."),
+    MISSING_ADDRESS_NAME(HttpStatus.BAD_REQUEST, "배송지명은 필수입니다."),
     MISSING_RECIPIENT_NAME(HttpStatus.BAD_REQUEST, "수령인 이름은 필수입니다."),
     MISSING_RECIPIENT_PHONE(HttpStatus.BAD_REQUEST, "수령인 전화번호는 필수입니다."),
     MISSING_POSTAL_CODE(HttpStatus.BAD_REQUEST, "우편번호는 필수입니다."),

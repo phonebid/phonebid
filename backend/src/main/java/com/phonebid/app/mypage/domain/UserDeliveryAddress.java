@@ -66,10 +66,10 @@ public class UserDeliveryAddress extends BaseEntity {
     public UserDeliveryAddress(User user, String addressName, String recipientName, 
                                String recipientPhone, String postalCode, String address, 
                                String detailAddress, Boolean isDefault) {
-        validateDeliveryAddress(recipientName, recipientPhone, postalCode, address);
+        validateDeliveryAddress(addressName, recipientName, recipientPhone, postalCode, address);
         
         this.user = user;
-        this.addressName = addressName != null ? addressName.trim() : null;
+        this.addressName = addressName.trim();
         this.recipientName = recipientName;
         this.recipientPhone = recipientPhone;
         this.postalCode = postalCode;
@@ -79,7 +79,8 @@ public class UserDeliveryAddress extends BaseEntity {
     }
 
     public void updateAddressName(String addressName) {
-        this.addressName = addressName != null ? addressName.trim() : null;
+        validateAddressName(addressName);
+        this.addressName = addressName.trim();
     }
 
     public void updateRecipientName(String recipientName) {
@@ -135,12 +136,19 @@ public class UserDeliveryAddress extends BaseEntity {
         return Boolean.TRUE.equals(this.isDelete);
     }
 
-    private void validateDeliveryAddress(String recipientName, String recipientPhone, 
+    private void validateDeliveryAddress(String addressName, String recipientName, String recipientPhone, 
                                        String postalCode, String address) {
+        validateAddressName(addressName);
         validateRecipientName(recipientName);
         validateRecipientPhone(recipientPhone);
         validatePostalCode(postalCode);
         validateAddress(address);
+    }
+
+    private void validateAddressName(String addressName) {
+        if (addressName == null || addressName.trim().isEmpty()) {
+            throw new CustomException(TradeErrorCode.MISSING_ADDRESS_NAME);
+        }
     }
 
     private void validateRecipientName(String recipientName) {
