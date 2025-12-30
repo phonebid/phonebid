@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getBidDetail, getQuoteDetail } from "services/quoteService";
+import { mypageService } from "services/mypageService";
 import type { BidDetail, QuoteDetail } from "types/QuoteTypes";
+import type { DeliveryAddressResponseDto } from "types/MyPageTypes";
 import {
   formatPrice,
   getCarrierDisplayName,
@@ -48,6 +50,7 @@ const DeliveryAddressPage = () => {
   const [bid, setBid] = useState<BidDetail | null>(null);
   const [quote, setQuote] = useState<QuoteDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [defaultAddress, setDefaultAddress] = useState<DeliveryAddressResponseDto | null>(null);
   const [formData, setFormData] = useState<DeliveryFormData>({
     addressType: "default",
     addressName: "",
@@ -71,12 +74,27 @@ const DeliveryAddressPage = () => {
 
     try {
       setIsLoading(true);
-      const [bidData, quoteData] = await Promise.all([
+      const [bidData, quoteData, defaultAddressData] = await Promise.all([
         getBidDetail(bidId),
         getQuoteDetail(quoteId),
+        mypageService.getDefaultDeliveryAddress(),
       ]);
       setBid(bidData);
       setQuote(quoteData);
+      setDefaultAddress(defaultAddressData);
+
+      // 기본 배송지가 있고 addressType이 default인 경우 폼에 채우기
+      if (defaultAddressData && formData.addressType === "default") {
+        setFormData((prev) => ({
+          ...prev,
+          addressName: defaultAddressData.addressName,
+          recipientName: defaultAddressData.recipientName,
+          postalCode: defaultAddressData.postalCode,
+          address: defaultAddressData.address,
+          detailAddress: defaultAddressData.detailAddress || "",
+          phone: defaultAddressData.phone,
+        }));
+      }
     } catch (error: unknown) {
       logError("견적 상세 조회 실패:", error);
       toast.error("견적 정보를 불러오는데 실패했습니다.");
@@ -95,7 +113,39 @@ const DeliveryAddressPage = () => {
   };
 
   const handleInputChange = (field: keyof DeliveryFormData, value: string | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      const newData = { ...prev, [field]: value };
+      
+      // addressType이 "default"로 변경되면 기본 배송지 정보로 채우기
+      if (field === "addressType" && value === "default" && defaultAddress) {
+        return {
+          ...newData,
+          addressName: defaultAddress.addressName,
+          recipientName: defaultAddress.recipientName,
+          postalCode: defaultAddress.postalCode,
+          address: defaultAddress.address,
+          detailAddress: defaultAddress.detailAddress || "",
+          phone: defaultAddress.phone,
+        };
+      }
+      
+      // addressType이 "new"로 변경되면 폼 초기화
+      if (field === "addressType" && value === "new") {
+        return {
+          ...newData,
+          addressName: "",
+          recipientName: "",
+          postalCode: "",
+          address: "",
+          detailAddress: "",
+          phone: "",
+          saveAsDefault: false,
+        };
+      }
+      
+      return newData;
+    });
+    
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
@@ -147,19 +197,44 @@ const DeliveryAddressPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateForm()) {
       toast.error("입력 정보를 확인해주세요.");
       return;
     }
 
     if (formData.addressType === "default") {
-      toast.info("기본 배송지 기능은 준비 중입니다.");
+      if (!defaultAddress) {
+        toast.error("기본 배송지가 없습니다. 신규 배송지를 입력해주세요.");
+        return;
+      }
+      // 기본 배송지 사용 시 바로 구매 완료 페이지로 이동
+      if (quoteId && bidId) {
+        navigate(`/mypage/quotes/${quoteId}/bids/${bidId}/complete`);
+      }
       return;
     }
 
-    if (quoteId && bidId) {
-      navigate(`/mypage/quotes/${quoteId}/bids/${bidId}/complete`);
+    try {
+      // 기본 배송지로 저장하기 체크박스가 체크된 경우 배송지 저장
+      if (formData.saveAsDefault) {
+        await mypageService.createDeliveryAddress({
+          addressName: formData.addressName,
+          recipientName: formData.recipientName,
+          phone: formData.phone,
+          postalCode: formData.postalCode,
+          address: formData.address,
+          detailAddress: formData.detailAddress || undefined,
+          saveAsDefault: true,
+        });
+      }
+
+      if (quoteId && bidId) {
+        navigate(`/mypage/quotes/${quoteId}/bids/${bidId}/complete`);
+      }
+    } catch (error: unknown) {
+      logError("배송지 저장 실패:", error);
+      // 에러는 이미 mypageService에서 toast로 표시됨
     }
   };
 
@@ -238,6 +313,140 @@ const DeliveryAddressPage = () => {
                 </label>
               </div>
             </div>
+
+            {/* 기본 배송지 표시 */}
+            {formData.addressType === "default" && defaultAddress && (
+              <div className="border-2 border-indigo-200 bg-indigo-50 rounded-lg p-5 space-y-4">
+                {/* 배송지명과 기본 배송지 뱃지 */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <svg
+                      className="w-5 h-5 text-indigo-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                      />
+                    </svg>
+                    <h3 className="text-base font-bold text-gray-900">
+                      {defaultAddress.addressName}
+                    </h3>
+                  </div>
+                  <span className="px-2 py-1 text-xs font-semibold text-indigo-700 bg-indigo-200 rounded-full">
+                    기본 배송지
+                  </span>
+                </div>
+
+                {/* 배송지 정보 */}
+                <div className="space-y-3 pt-2 border-t border-indigo-200">
+                  <div className="flex items-start gap-3">
+                    <svg
+                      className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500 mb-0.5">받는사람</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {defaultAddress.recipientName}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <svg
+                      className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500 mb-0.5">주소</p>
+                      <p className="text-sm text-gray-900 leading-relaxed">
+                        <span className="text-gray-600">({defaultAddress.postalCode})</span>{" "}
+                        {defaultAddress.address}
+                        {defaultAddress.detailAddress && (
+                          <>
+                            <br />
+                            <span className="text-gray-600">{defaultAddress.detailAddress}</span>
+                          </>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <svg
+                      className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                      />
+                    </svg>
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500 mb-0.5">연락처</p>
+                      <p className="text-sm font-medium text-gray-900">{defaultAddress.phone}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {formData.addressType === "default" && !defaultAddress && (
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <svg
+                  className="w-12 h-12 text-gray-400 mx-auto mb-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                  />
+                </svg>
+                <p className="text-sm font-medium text-gray-700 mb-1">
+                  기본 배송지가 없습니다
+                </p>
+                <p className="text-xs text-gray-500">
+                  신규 배송지를 입력해주세요
+                </p>
+              </div>
+            )}
 
             {/* 신규배송지 입력 필드 */}
             {formData.addressType === "new" && (
