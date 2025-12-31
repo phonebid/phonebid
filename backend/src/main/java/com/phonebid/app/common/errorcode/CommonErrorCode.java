@@ -62,7 +62,11 @@ public enum CommonErrorCode implements ErrorCode {
     INVALID_BANK_CODE(HttpStatus.BAD_REQUEST, "지원하지 않는 은행 코드입니다."),
 
     // 계좌 관련 에러
-    DUPLICATE_ACCOUNT(HttpStatus.CONFLICT, "이미 등록된 계좌입니다.");
+    DUPLICATE_ACCOUNT(HttpStatus.CONFLICT, "이미 등록된 계좌입니다."),
+
+    // 배송지 관련 에러
+    DELIVERY_ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "배송지를 찾을 수 없습니다."),
+    DEFAULT_DELIVERY_ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "기본 배송지가 없습니다.");
 
     private final HttpStatus status;
     private final String message;

@@ -83,6 +83,28 @@ export interface AccountResponseDto {
   createdAt: string;
 }
 
+export interface DeliveryAddressCreateRequestDto {
+  addressName: string;
+  recipientName: string;
+  phone: string;
+  postalCode: string;
+  address: string;
+  detailAddress?: string;
+  saveAsDefault?: boolean;
+}
+
+export interface DeliveryAddressResponseDto {
+  addressId: string;
+  addressName: string;
+  recipientName: string;
+  phone: string;
+  postalCode: string;
+  address: string;
+  detailAddress: string | null;
+  isDefault: boolean;
+  createdAt: string;
+}
+
 export const BANK_LIST = [
   "KB국민은행",
   "신한은행",

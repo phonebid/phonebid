@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -44,13 +45,13 @@ public class QuoteController {
     }
 
     @GetMapping("/my")
-    public ResponseEntity<ApiResponse<List<QuoteResponseDto>>> getMyOpenQuotes(
+    public ResponseEntity<ApiResponse<Page<QuoteResponseDto>>> getMyOpenQuotes(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
         
         Pageable pageable = PageRequest.of(page, size);
-        List<QuoteResponseDto> quotes = quoteService.getMyOpenQuotes(userDetails.getUser(), pageable);
+        Page<QuoteResponseDto> quotes = quoteService.getMyOpenQuotes(userDetails.getUser(), pageable);
         
         return ResponseEntity.ok()
                 .body(ApiResponse.success(HttpStatus.OK, "내 견적 조회가 성공적으로 완료되었습니다.", quotes));
@@ -89,6 +90,32 @@ public class QuoteController {
         List<BidListResponseDto> bids = bidService.getBidsByQuoteId(quoteId, userDetails.getUser());
         return ResponseEntity.ok()
                 .body(ApiResponse.success(HttpStatus.OK, "견적 별 입찰 목록 조회가 성공적으로 완료되었습니다.", bids));
+    }
+
+    @GetMapping("/my/completed")
+    public ResponseEntity<ApiResponse<Page<QuoteResponseDto>>> getMyCompletedQuotes(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<QuoteResponseDto> quotes = quoteService.getMyCompletedQuotes(userDetails.getUser(), pageable);
+        
+        return ResponseEntity.ok()
+                .body(ApiResponse.success(HttpStatus.OK, "완료된 견적 조회가 성공적으로 완료되었습니다.", quotes));
+    }
+
+    /**
+     * 견적 종료
+     * - 견적 소유자만 종료 가능
+     * - OPEN 상태인 견적만 종료 가능
+     */
+    @PutMapping("/{quoteId}/close")
+    public ResponseEntity<ApiResponse<Void>> closeQuote(@PathVariable UUID quoteId,
+                                                        @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        quoteService.closeQuote(quoteId, userDetails.getUser());
+        return ResponseEntity.ok()
+                .body(ApiResponse.success(HttpStatus.OK, "견적이 성공적으로 종료되었습니다.", null));
     }
 
 }

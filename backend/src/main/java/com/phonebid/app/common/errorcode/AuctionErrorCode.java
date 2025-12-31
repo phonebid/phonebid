@@ -9,6 +9,7 @@ public enum AuctionErrorCode implements ErrorCode {
     INVALID_QUOTE_STATUS(HttpStatus.BAD_REQUEST, "잘못된 견적 상태입니다."),
     QUOTE_NOT_FOUND(HttpStatus.NOT_FOUND, "견적을 찾을 수 없습니다."),
     QUOTE_ALREADY_CLOSED(HttpStatus.CONFLICT, "이미 종료된 견적입니다."),
+    QUOTE_CANNOT_CLOSE(HttpStatus.BAD_REQUEST, "현재 상태에서는 견적을 종료할 수 없습니다. 견적은 OPEN 상태에서만 종료할 수 있습니다."),
     INVALID_PURCHASE_METHOD(HttpStatus.BAD_REQUEST, "잘못된 구매 방법입니다."),
     INVALID_ACTIVATION_METHOD(HttpStatus.BAD_REQUEST, "잘못된 개통 방법입니다."),
     MISSING_CURRENT_CARRIER(HttpStatus.BAD_REQUEST, "기존 통신사 정보가 필요합니다."),

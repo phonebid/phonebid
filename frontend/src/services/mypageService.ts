@@ -7,6 +7,8 @@ import type {
   PurchaseDetailResponseDto,
   AccountCreateRequestDto,
   AccountResponseDto,
+  DeliveryAddressCreateRequestDto,
+  DeliveryAddressResponseDto,
   Page,
 } from "types/MyPageTypes";
 import { logError } from "utils/errorUtils";
@@ -16,6 +18,7 @@ const ENDPOINTS = {
   PROFILE: "/mypage/profile",
   PURCHASES: "/mypage/purchases",
   ACCOUNTS: "/mypage/accounts",
+  DELIVERY_ADDRESSES: "/mypage/delivery-addresses",
 } as const;
 
 export const mypageService = {
@@ -113,6 +116,35 @@ export const mypageService = {
     } catch (error: unknown) {
       logError("계좌 삭제 실패:", error);
       toast.error("계좌 삭제에 실패했습니다.");
+      throw error;
+    }
+  },
+
+  getDefaultDeliveryAddress: async (): Promise<DeliveryAddressResponseDto | null> => {
+    try {
+      return await apiClient.get<DeliveryAddressResponseDto>(
+        `${ENDPOINTS.DELIVERY_ADDRESSES}/default`
+      );
+    } catch (error: unknown) {
+      // 기본 배송지가 없는 경우 404 에러가 발생할 수 있으므로 null 반환
+      const errorCode = (error as { response?: { status?: number } })?.response?.status;
+      if (errorCode === 404) {
+        return null;
+      }
+      logError("기본 배송지 조회 실패:", error);
+      toast.error("기본 배송지를 불러오는데 실패했습니다.");
+      throw error;
+    }
+  },
+
+  createDeliveryAddress: async (
+    data: DeliveryAddressCreateRequestDto
+  ): Promise<void> => {
+    try {
+      return await apiClient.post<void>(ENDPOINTS.DELIVERY_ADDRESSES, data);
+    } catch (error: unknown) {
+      logError("배송지 등록 실패:", error);
+      toast.error("배송지 등록에 실패했습니다.");
       throw error;
     }
   },

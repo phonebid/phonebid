@@ -49,6 +49,75 @@ export interface QuoteDetail extends QuoteSummary {
   activationMethod: ActivationMethod;
   currentCarrier?: Carrier;
   bidCount: number;
+  lowestPrice: number | null;
+}
+
+export interface QuoteListItem {
+  id: string;
+  phoneModel: {
+    id: string;
+    brand: string;
+    model: string;
+  };
+  storage: PhoneOptionResponse | null;
+  color: PhoneOptionResponse | null;
+  carrier: Carrier;
+  status: "OPEN" | "CLOSED" | "CONTRACTED";
+  expiredAt: string;
+  purchaseMethod: PurchaseMethod;
+  currentCarrier?: Carrier;
+  activationMethod: ActivationMethod;
+  createdAt: string;
+  bidCount: number | null;
+  lowestPrice: number | null;
+}
+
+export interface BidListItem {
+  id: string;
+  sellerId: string;
+  sellerStoreName: string;
+  sellerRating: number | null;
+  installmentPrincipal: number;
+  totalMaintenanceCost: number;
+  pricePlanName: string | null;
+  pricePlanPrice: number | null;
+  status: "ACTIVE" | "SELECTED" | "REJECTED" | "WITHDRAWN";
+  createdAt: string;
+}
+
+export interface AdditionalService {
+  id: string;
+  serviceName: string;
+  servicePrice: number;
+  description: string | null;
+  mandatory: boolean;
+  cancellableAfterMonths: number | null;
+  cancellableDescription: string | null;
+}
+
+export interface BidDetail {
+  id: string;
+  quoteId: string;
+  sellerId: string;
+  sellerStoreName: string;
+  sellerRating: number | null;
+  price: number;
+  installmentPrincipal: number;
+  additionalSubsidy: number | null;
+  totalMaintenanceCost: number;
+  pricePlanName: string | null;
+  pricePlanPrice: number | null;
+  additionalServices: AdditionalService[];
+  additionalServicesCount: number;
+  additionalServicesTotalPrice: number;
+  purchaseMethod: PurchaseMethod;
+  carrier: Carrier;
+  currentCarrier: Carrier | null;
+  activationMethod: ActivationMethod;
+  contractMonths: number | null;
+  deliveryDays: number;
+  status: "ACTIVE" | "SELECTED" | "REJECTED" | "WITHDRAWN";
+  createdAt: string;
 }
 
 export const DEFAULT_EXPIRED_HOURS = 24;

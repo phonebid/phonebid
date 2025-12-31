@@ -2,6 +2,8 @@ package com.phonebid.app.auction.domain;
 
 
 import com.phonebid.app.common.domain.BaseEntity;
+import com.phonebid.app.common.errorcode.AuctionErrorCode;
+import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.member.domain.User;
 import com.phonebid.app.phone.domain.PhoneModel;
 import com.phonebid.app.phone.domain.PhoneOption;
@@ -108,5 +110,18 @@ public class Quote extends BaseEntity {
         String storageStr = storage != null ? storage.getDisplayLabel() : "상관없음";
         String colorStr = color != null ? color.getDisplayLabel() : "상관없음";
         return String.format("%s %s %s %s", phoneModel.getFullModelName(), storageStr, carrier.getDisplayName(), colorStr);
+    }
+
+    /**
+     * 견적 종료 (CLOSED 상태로 변경)
+     * 현재 상태가 OPEN인 경우에만 CLOSED로 변경 가능합니다.
+     * 
+     * @throws CustomException 현재 상태가 OPEN이 아닌 경우, AuctionErrorCode.QUOTE_CANNOT_CLOSE 예외 발생
+     */
+    public void close() {
+        if (!status.canClose()) {
+            throw new CustomException(AuctionErrorCode.QUOTE_CANNOT_CLOSE);
+        }
+        this.status = QuoteStatus.CLOSED;
     }
 }

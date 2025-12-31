@@ -2,8 +2,10 @@ package com.phonebid.app.mypage.controller;
 
 import com.phonebid.app.common.dto.ApiResponse;
 import com.phonebid.app.mypage.dto.request.AccountCreateRequestDto;
+import com.phonebid.app.mypage.dto.request.DeliveryAddressCreateRequestDto;
 import com.phonebid.app.mypage.dto.request.ProfileUpdateRequestDto;
 import com.phonebid.app.mypage.dto.response.AccountResponseDto;
+import com.phonebid.app.mypage.dto.response.DeliveryAddressResponseDto;
 import com.phonebid.app.mypage.dto.response.ProfileResponseDto;
 import com.phonebid.app.mypage.dto.response.PurchaseDetailResponseDto;
 import com.phonebid.app.mypage.dto.response.PurchaseHistoryResponseDto;
@@ -127,6 +129,75 @@ public class MyPageController {
         
         return ResponseEntity.ok()
                 .body(ApiResponse.success(HttpStatus.OK, "계좌 삭제가 성공적으로 완료되었습니다.", null));
+    }
+
+    /**
+     * 기본 배송지 조회
+     * 사용자의 기본 배송지를 조회합니다.
+     */
+    @GetMapping("/delivery-addresses/default")
+    public ResponseEntity<ApiResponse<DeliveryAddressResponseDto>> getDefaultDeliveryAddress(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+        
+        DeliveryAddressResponseDto responseDto = myPageService.getDefaultDeliveryAddress(userDetails.getUsername());
+        
+        return ResponseEntity.ok()
+                .body(ApiResponse.success(HttpStatus.OK, "기본 배송지 조회가 성공적으로 완료되었습니다.", responseDto));
+    }
+
+    /**
+     * 배송지 목록 조회
+     * 사용자의 배송지 목록을 페이징하여 조회합니다.
+     */
+    @GetMapping("/delivery-addresses")
+    public ResponseEntity<ApiResponse<Page<DeliveryAddressResponseDto>>> getDeliveryAddresses(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        Page<DeliveryAddressResponseDto> responseDto = myPageService.getDeliveryAddresses(
+            userDetails.getUsername(), page, size);
+        
+        return ResponseEntity.ok()
+                .body(ApiResponse.success(HttpStatus.OK, "배송지 목록 조회가 성공적으로 완료되었습니다.", responseDto));
+    }
+
+    /**
+     * 배송지 저장
+     * 사용자의 배송지를 저장합니다. 기본 배송지로 저장하는 경우 기존 기본 배송지가 해제됩니다.
+     */
+    @PostMapping("/delivery-addresses")
+    public ResponseEntity<ApiResponse<Void>> createDeliveryAddress(@AuthenticationPrincipal UserDetailsImpl userDetails,
+                                                                   @Valid @RequestBody DeliveryAddressCreateRequestDto requestDto) {
+        myPageService.createDeliveryAddress(userDetails.getUsername(), requestDto);
+        
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(HttpStatus.CREATED, "배송지 등록이 성공적으로 완료되었습니다.", null));
+    }
+
+    /**
+     * 기본 배송지 설정
+     * 특정 배송지를 기본 배송지로 설정합니다. 기존 기본 배송지가 해제됩니다.
+     */
+    @PutMapping("/delivery-addresses/{addressId}/set-default")
+    public ResponseEntity<ApiResponse<Void>> setDefaultDeliveryAddress(@AuthenticationPrincipal UserDetailsImpl userDetails,
+                                                                       @PathVariable UUID addressId) {
+        myPageService.setDefaultDeliveryAddress(userDetails.getUsername(), addressId);
+        
+        return ResponseEntity.ok()
+                .body(ApiResponse.success(HttpStatus.OK, "기본 배송지 설정이 성공적으로 완료되었습니다.", null));
+    }
+
+    /**
+     * 배송지 삭제
+     * 사용자의 배송지를 삭제합니다. 본인의 배송지만 삭제할 수 있습니다.
+     */
+    @DeleteMapping("/delivery-addresses/{addressId}")
+    public ResponseEntity<ApiResponse<Void>> deleteDeliveryAddress(@AuthenticationPrincipal UserDetailsImpl userDetails,
+                                                                   @PathVariable UUID addressId) {
+        myPageService.deleteDeliveryAddress(userDetails.getUsername(), addressId);
+        
+        return ResponseEntity.ok()
+                .body(ApiResponse.success(HttpStatus.OK, "배송지 삭제가 성공적으로 완료되었습니다.", null));
     }
 }
 
