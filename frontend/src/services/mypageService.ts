@@ -148,5 +148,48 @@ export const mypageService = {
       throw error;
     }
   },
+
+  getDeliveryAddresses: async (
+    page: number = 0,
+    size: number = 10
+  ): Promise<Page<DeliveryAddressResponseDto>> => {
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        size: size.toString(),
+      });
+      return await apiClient.get<Page<DeliveryAddressResponseDto>>(
+        `${ENDPOINTS.DELIVERY_ADDRESSES}?${params.toString()}`
+      );
+    } catch (error: unknown) {
+      logError("배송지 목록 조회 실패:", error);
+      toast.error("배송지 목록을 불러오는데 실패했습니다.");
+      throw error;
+    }
+  },
+
+  setDefaultDeliveryAddress: async (addressId: string): Promise<void> => {
+    try {
+      return await apiClient.put<void>(
+        `${ENDPOINTS.DELIVERY_ADDRESSES}/${addressId}/set-default`
+      );
+    } catch (error: unknown) {
+      logError("기본 배송지 설정 실패:", error);
+      toast.error("기본 배송지 설정에 실패했습니다.");
+      throw error;
+    }
+  },
+
+  deleteDeliveryAddress: async (addressId: string): Promise<void> => {
+    try {
+      return await apiClient.delete<void>(
+        `${ENDPOINTS.DELIVERY_ADDRESSES}/${addressId}`
+      );
+    } catch (error: unknown) {
+      logError("배송지 삭제 실패:", error);
+      toast.error("배송지 삭제에 실패했습니다.");
+      throw error;
+    }
+  },
 };
 
