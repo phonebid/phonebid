@@ -121,22 +121,22 @@ const DeliveryAddressCard = ({
       </div>
 
       {/* 액션 버튼 */}
-      <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-200">
-        {!isDefault && (
+      {!isDefault && (
+        <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-200">
           <button
             onClick={() => onSetDefault(address.addressId)}
             className="px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors"
           >
             기본 배송지로 설정
           </button>
-        )}
-        <button
-          onClick={() => onDelete(address.addressId)}
-          className="px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-        >
-          삭제
-        </button>
-      </div>
+          <button
+            onClick={() => onDelete(address.addressId)}
+            className="px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+          >
+            삭제
+          </button>
+        </div>
+      )}
     </div>
   );
 };
