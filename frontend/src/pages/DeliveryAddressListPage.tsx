@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { mypageService } from "services/mypageService";
 import { toast } from "react-toastify";
@@ -61,11 +61,7 @@ const DeliveryAddressListPage = () => {
 
   const [errors, setErrors] = useState<DeliveryFormErrors>({});
 
-  useEffect(() => {
-    loadAddresses();
-  }, [currentPage]);
-
-  const loadAddresses = async () => {
+  const loadAddresses = useCallback(async () => {
     try {
       setIsLoadingAddresses(true);
       const data = await mypageService.getDeliveryAddresses(currentPage, 10);
@@ -75,7 +71,11 @@ const DeliveryAddressListPage = () => {
     } finally {
       setIsLoadingAddresses(false);
     }
-  };
+  }, [currentPage]);
+
+  useEffect(() => {
+    loadAddresses();
+  }, [loadAddresses]);
 
   const validateForm = (): boolean => {
     const newErrors: DeliveryFormErrors = {};
