@@ -92,7 +92,7 @@ const MyPage = () => {
       id: "addresses",
       label: "배송주소록",
       path: "/mypage/addresses",
-      enabled: false,
+      enabled: true,
       icon: (
         <svg
           className="w-5 h-5"
