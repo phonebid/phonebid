@@ -31,6 +31,7 @@ import MyQuotesPage from "pages/MyQuotesPage";
 import QuoteDetailPage from "pages/QuoteDetailPage";
 import BidDetailPage from "pages/BidDetailPage";
 import DeliveryAddressPage from "pages/DeliveryAddressPage";
+import DeliveryAddressListPage from "pages/DeliveryAddressListPage";
 import PurchaseCompletePage from "pages/PurchaseCompletePage";
 
 export const AppRouter: React.FC = () => {
@@ -54,6 +55,7 @@ export const AppRouter: React.FC = () => {
           element={<PurchaseDetailPage />}
         />
         <Route path="/mypage/accounts" element={<AccountManagementPage />} />
+        <Route path="/mypage/addresses" element={<DeliveryAddressListPage />} />
         <Route path="/mypage/quotes" element={<MyQuotesPage />} />
         <Route path="/mypage/quotes/:quoteId" element={<QuoteDetailPage />} />
         <Route path="/mypage/quotes/:quoteId/bids/:bidId" element={<BidDetailPage />} />
