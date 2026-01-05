@@ -103,3 +103,19 @@ export const leaveChatRoom = async (chatRoomId: string): Promise<void> => {
   return await apiClient.delete<void>(`${BASE_URL}/${chatRoomId}`);
 };
 
+/**
+ * 채팅 이미지 업로드
+ */
+export const uploadChatImage = async (
+  chatRoomId: string,
+  file: File
+): Promise<{ imageUrl: string }> => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  return await apiClient.post<{ imageUrl: string }>(
+    `${BASE_URL}/${chatRoomId}/images/upload`,
+    formData
+  );
+};
+
