@@ -74,7 +74,7 @@ export function MessageBubble({
                   <img
                     src={message.content}
                     alt="전송된 이미지"
-                    className={`max-w-xs rounded-lg cursor-pointer ${
+                    className={`rounded-lg cursor-pointer ${
                       isImageExpanded ? "max-w-2xl" : "max-w-xs"
                     }`}
                     onClick={() => setIsImageExpanded(!isImageExpanded)}

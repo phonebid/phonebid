@@ -143,6 +143,7 @@ export function MessageInput({
         }
       } catch (error) {
         console.error("Failed to upload image", error);
+        toast.error("이미지 업로드에 실패했습니다.");
       } finally {
         setIsUploadingImage(false);
         if (fileInputRef.current) {

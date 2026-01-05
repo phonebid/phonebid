@@ -214,7 +214,9 @@ const PhoneModelManagePage = () => {
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [isLoadingImages, setIsLoadingImages] = useState(false);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imagePreviewsRef = useRef<string[]>([]);
+  const createFormFileInputRef = useRef<HTMLInputElement>(null);
+  const modelImageFileInputRef = useRef<HTMLInputElement>(null);
   const [editingModel, setEditingModel] = useState<PhoneModelResponse | null>(null);
   const [editForm, setEditForm] = useState<FormState>(DEFAULT_FORM);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -336,8 +338,8 @@ const PhoneModelManagePage = () => {
         toast.success("휴대폰 모델이 생성되었습니다.");
       }
 
-      setSelectedModelId(createdModel.id);
       resetForm();
+      setSelectedModelId(createdModel.id);
       await mutate("/phone/models");
       // 생성된 모델의 이미지 로드
       await loadModelImages(createdModel.id);
@@ -360,8 +362,12 @@ const PhoneModelManagePage = () => {
     }
   };
 
-  const handleImageUploadClick = () => {
-    fileInputRef.current?.click();
+  const handleCreateFormImageUploadClick = () => {
+    createFormFileInputRef.current?.click();
+  };
+
+  const handleModelImageUploadClick = () => {
+    modelImageFileInputRef.current?.click();
   };
 
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -408,8 +414,61 @@ const PhoneModelManagePage = () => {
     setImagePreviews((prev) => [...prev, ...newPreviews]);
 
     // 파일 input 초기화
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+    if (createFormFileInputRef.current) {
+      createFormFileInputRef.current.value = "";
+    }
+  };
+
+  const handleModelImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    if (!selectedModelId) {
+      toast.error("모델을 선택해주세요.");
+      return;
+    }
+
+    // 파일 유효성 검사
+    const allowedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ];
+    const invalidFiles = files.filter((file) => !allowedTypes.includes(file.type));
+    if (invalidFiles.length > 0) {
+      toast.error(
+        "지원하지 않는 파일 형식이 있습니다. (jpg, jpeg, png, gif, webp만 가능)"
+      );
+      return;
+    }
+
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const oversizedFiles = files.filter((file) => file.size > maxSize);
+    if (oversizedFiles.length > 0) {
+      toast.error("파일 크기는 5MB 이하여야 합니다.");
+      return;
+    }
+
+    const currentImageCount = modelImages.length;
+    if (currentImageCount + files.length > 10) {
+      toast.error("이미지는 최대 10개까지 업로드할 수 있습니다.");
+      return;
+    }
+
+    try {
+      setIsUploadingImages(true);
+      await uploadPhoneModelImages(selectedModelId, files);
+      toast.success("이미지가 업로드되었습니다.");
+      await loadModelImages(selectedModelId);
+    } catch (error) {
+      toast.error("이미지 업로드에 실패했습니다.");
+    } finally {
+      setIsUploadingImages(false);
+      if (modelImageFileInputRef.current) {
+        modelImageFileInputRef.current.value = "";
+      }
     }
   };
 
@@ -443,12 +502,17 @@ const PhoneModelManagePage = () => {
     }
   };
 
+  // imagePreviews 변경 시 ref 업데이트
+  useEffect(() => {
+    imagePreviewsRef.current = imagePreviews;
+  }, [imagePreviews]);
+
   // 컴포넌트 언마운트 시 미리보기 URL 정리
   useEffect(() => {
     return () => {
-      imagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
+      imagePreviewsRef.current.forEach((preview) => URL.revokeObjectURL(preview));
     };
-  }, [imagePreviews]);
+  }, []);
 
   // 모달 외부 클릭 시 닫기
   useEffect(() => {
@@ -729,14 +793,14 @@ const PhoneModelManagePage = () => {
               <Button
                 type="button"
                 variant="secondary"
-                onClick={handleImageUploadClick}
+                onClick={handleCreateFormImageUploadClick}
                 disabled={form.selectedImages.length >= 10}
               >
                 이미지 추가
               </Button>
             </div>
             <input
-              ref={fileInputRef}
+              ref={createFormFileInputRef}
               type="file"
               accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
               multiple
@@ -812,12 +876,12 @@ const PhoneModelManagePage = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <input
-              ref={fileInputRef}
+              ref={modelImageFileInputRef}
               type="file"
               accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
               multiple
               className="hidden"
-              onChange={handleImageFileChange}
+              onChange={handleModelImageUpload}
               disabled={isUploadingImages}
             />
             <div className="flex items-center justify-between">
@@ -827,7 +891,7 @@ const PhoneModelManagePage = () => {
               <Button
                 type="button"
                 variant="secondary"
-                onClick={handleImageUploadClick}
+                onClick={handleModelImageUploadClick}
                 disabled={isUploadingImages || modelImages.length >= 10}
               >
                 {isUploadingImages ? "업로드 중..." : "이미지 추가"}
