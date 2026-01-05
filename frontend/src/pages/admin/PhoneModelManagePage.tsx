@@ -218,6 +218,7 @@ const PhoneModelManagePage = () => {
   const [editingModel, setEditingModel] = useState<PhoneModelResponse | null>(null);
   const [editForm, setEditForm] = useState<FormState>(DEFAULT_FORM);
   const [isUpdating, setIsUpdating] = useState(false);
+  const modalCardRef = useRef<HTMLDivElement>(null);
 
   const {
     data: models,
@@ -448,6 +449,28 @@ const PhoneModelManagePage = () => {
       imagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
     };
   }, [imagePreviews]);
+
+  // 모달 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        editingModel &&
+        modalCardRef.current &&
+        !modalCardRef.current.contains(event.target as Node)
+      ) {
+        setEditingModel(null);
+        setEditForm(DEFAULT_FORM);
+      }
+    };
+
+    if (editingModel) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [editingModel]);
 
   const handleSelectModel = async (modelId: string) => {
     setSelectedModelId(modelId);
@@ -896,7 +919,8 @@ const PhoneModelManagePage = () => {
       {/* 수정 모달 */}
       {editingModel && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div ref={modalCardRef}>
+            <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <CardHeader>
               <CardTitle>모델 수정</CardTitle>
               <CardDescription>
@@ -973,6 +997,7 @@ const PhoneModelManagePage = () => {
               </div>
             </CardContent>
           </Card>
+          </div>
         </div>
       )}
     </div>
