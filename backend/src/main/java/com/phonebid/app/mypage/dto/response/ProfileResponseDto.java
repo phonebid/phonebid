@@ -12,6 +12,7 @@ public class ProfileResponseDto {
     private String nickname;
     private String phone;
     private String name;
+    private String profileImageUrl;
 
     public static ProfileResponseDto from(User user) {
         ProfileResponseDto dto = new ProfileResponseDto();
@@ -19,6 +20,7 @@ public class ProfileResponseDto {
         dto.nickname = user.getNickname();
         dto.phone = user.getPhone();
         dto.name = user.getName();
+        dto.profileImageUrl = user.getProfileImageUrl();
         return dto;
     }
 }
