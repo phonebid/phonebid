@@ -3,6 +3,7 @@ export interface ProfileResponseDto {
   nickname: string;
   phone: string | null;
   name: string;
+  profileImageUrl?: string | null;
 }
 
 export interface ProfileUpdateRequestDto {
