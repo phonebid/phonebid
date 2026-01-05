@@ -63,6 +63,110 @@ const OPTION_TYPE_OPTIONS: { label: string; value: PhoneOptionType }[] = [
   { label: "저장용량", value: "STORAGE" },
 ];
 
+// 모델 목록 아이템 컴포넌트
+const ModelListItem = ({
+  model,
+  selectedModelId,
+  onSelect,
+}: {
+  model: PhoneModelResponse;
+  selectedModelId: string | null;
+  onSelect: () => void;
+}) => {
+  const { data: images } = useSWR<PhoneModelImageResponse[]>(
+    `/phone/models/${model.id}/images`,
+    defaultSWRConfig
+  );
+
+  const firstImage = images && images.length > 0 ? images[0] : null;
+
+  return (
+    <div
+      className={`rounded-lg border p-4 cursor-pointer transition-colors ${
+        selectedModelId === model.id
+          ? "border-indigo-500 bg-indigo-50"
+          : "hover:bg-gray-50"
+      }`}
+      onClick={onSelect}
+    >
+      <div className="flex flex-col gap-4 md:flex-row md:items-start">
+        {/* 이미지 영역 */}
+        <div className="flex-shrink-0">
+          {firstImage ? (
+            <img
+              src={firstImage.imageUrl}
+              alt={model.model}
+              className="w-24 h-24 object-cover rounded-lg border"
+            />
+          ) : (
+            <div className="w-24 h-24 rounded-lg border bg-muted flex items-center justify-center">
+              <svg
+                className="w-12 h-12 text-muted-foreground"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+          )}
+        </div>
+
+        {/* 모델 정보 영역 */}
+        <div className="flex-1 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">
+              {model.brand}
+            </p>
+            <h3 className="text-lg font-semibold">{model.model}</h3>
+            {model.modelNumber && (
+              <p className="text-sm text-muted-foreground">
+                모델 번호: {model.modelNumber}
+              </p>
+            )}
+          </div>
+          <div className="text-sm text-muted-foreground">
+            {model.releasedPrice ? (
+              <p>출시가: {model.releasedPrice.toLocaleString()}원</p>
+            ) : (
+              <p>출시가 정보 없음</p>
+            )}
+            <p>
+              출시일:{" "}
+              {model.releasedAt
+                ? new Date(model.releasedAt).toLocaleDateString()
+                : "미입력"}
+            </p>
+          </div>
+        </div>
+      </div>
+      {model.options && model.options.length > 0 && (
+        <div className="mt-4 space-y-2">
+          <h4 className="text-sm font-semibold">옵션</h4>
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            {model.options.map((option) => (
+              <div
+                key={option.id}
+                className="flex items-center justify-between rounded-md bg-muted px-3 py-2 text-sm"
+              >
+                <span className="font-medium">{option.optionType}</span>
+                <span>
+                  {option.displayLabel || option.optionValue}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const PhoneModelManagePage = () => {
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -644,64 +748,12 @@ const PhoneModelManagePage = () => {
             <div className="space-y-6">
               {models && models.length > 0 ? (
                 models.map((model) => (
-                  <div
+                  <ModelListItem
                     key={model.id}
-                    className={`rounded-lg border p-4 cursor-pointer transition-colors ${
-                      selectedModelId === model.id
-                        ? "border-indigo-500 bg-indigo-50"
-                        : "hover:bg-gray-50"
-                    }`}
-                    onClick={() => handleSelectModel(model.id)}
-                  >
-                    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">
-                          {model.brand}
-                        </p>
-                        <h3 className="text-lg font-semibold">{model.model}</h3>
-                        {model.modelNumber && (
-                          <p className="text-sm text-muted-foreground">
-                            모델 번호: {model.modelNumber}
-                          </p>
-                        )}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {model.releasedPrice ? (
-                          <p>
-                            출시가: {model.releasedPrice.toLocaleString()}원
-                          </p>
-                        ) : (
-                          <p>출시가 정보 없음</p>
-                        )}
-                        <p>
-                          출시일:{" "}
-                          {model.releasedAt
-                            ? new Date(model.releasedAt).toLocaleDateString()
-                            : "미입력"}
-                        </p>
-                      </div>
-                    </div>
-                    {model.options && model.options.length > 0 && (
-                      <div className="mt-4 space-y-2">
-                        <h4 className="text-sm font-semibold">옵션</h4>
-                        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                          {model.options.map((option) => (
-                            <div
-                              key={option.id}
-                              className="flex items-center justify-between rounded-md bg-muted px-3 py-2 text-sm"
-                            >
-                              <span className="font-medium">
-                                {option.optionType}
-                              </span>
-                              <span>
-                                {option.displayLabel || option.optionValue}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                    model={model}
+                    selectedModelId={selectedModelId}
+                    onSelect={() => handleSelectModel(model.id)}
+                  />
                 ))
               ) : (
                 <p className="text-sm text-muted-foreground">
