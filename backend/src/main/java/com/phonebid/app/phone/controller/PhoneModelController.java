@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.UUID;
 
 import com.phonebid.app.phone.dto.request.PhoneModelCreateRequestDto;
-import com.phonebid.app.phone.dto.request.PhoneModelDeleteRequestDto;
 import com.phonebid.app.phone.dto.request.PhoneModelUpdateRequestDto;
 import com.phonebid.app.phone.dto.response.PhoneModelResponseDto;
 
@@ -54,17 +53,24 @@ public class PhoneModelController {
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "휴대폰 모델 생성이 성공적으로 완료되었습니다.", phoneModelService.createPhoneModel(requestDto)));
     }
 
-    // 휴대폰 모델 수정
-    @PutMapping
-    public ResponseEntity<ApiResponse<PhoneModelResponseDto>> updatePhoneModel(@RequestBody @Valid PhoneModelUpdateRequestDto requestDto) {
-        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "휴대폰 모델 수정이 성공적으로 완료되었습니다.", phoneModelService.updatePhoneModel(requestDto)));
+    /**
+     * 휴대폰 모델 수정
+     * PUT /api/v1/phone/models/{id}
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<PhoneModelResponseDto>> updatePhoneModel(@PathVariable UUID id,
+                                                                               @RequestBody @Valid PhoneModelUpdateRequestDto requestDto) {
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "휴대폰 모델 수정이 성공적으로 완료되었습니다.", phoneModelService.updatePhoneModel(id, requestDto)));
     }
 
-    // 휴대폰 모델 삭제
-    @DeleteMapping
-    public ResponseEntity<ApiResponse<Void>> deletePhoneModel(@RequestBody @Valid PhoneModelDeleteRequestDto requestDto) {
-        phoneModelService.deletePhoneModel(requestDto);
-        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "휴대폰 모델 삭제이 성공적으로 완료되었습니다.", null));
+    /**
+     * 휴대폰 모델 삭제
+     * DELETE /api/v1/phone/models/{id}
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deletePhoneModel(@PathVariable UUID id) {
+        phoneModelService.deletePhoneModel(id);
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "휴대폰 모델 삭제가 성공적으로 완료되었습니다.", null));
     }
 
     // 휴대폰 모델 상세 조회
