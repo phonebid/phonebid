@@ -1,13 +1,19 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import useSWR, { mutate } from "swr";
 import { defaultSWRConfig } from "services/swrConfig";
-import { createPhoneModel } from "services/phoneModelService";
+import {
+  createPhoneModel,
+  uploadPhoneModelImages,
+  getPhoneModelImages,
+  deletePhoneModelImage,
+} from "services/phoneModelService";
 import type {
   Brand,
   PhoneModelCreateRequest,
   PhoneModelOptionRequest,
   PhoneModelResponse,
   PhoneOptionType,
+  PhoneModelImageResponse,
 } from "types/PhoneModelTypes";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +33,7 @@ interface FormState {
   releasedPrice: string;
   releasedAt: string;
   options: FormOption[];
+  selectedImages: File[];
 }
 
 interface FormOption {
@@ -43,6 +50,7 @@ const DEFAULT_FORM: FormState = {
   releasedPrice: "",
   releasedAt: "",
   options: [],
+  selectedImages: [],
 };
 
 const BRAND_OPTIONS: { label: string; value: Brand }[] = [
@@ -58,6 +66,12 @@ const OPTION_TYPE_OPTIONS: { label: string; value: PhoneOptionType }[] = [
 const PhoneModelManagePage = () => {
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
+  const [modelImages, setModelImages] = useState<PhoneModelImageResponse[]>([]);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [isLoadingImages, setIsLoadingImages] = useState(false);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     data: models,
@@ -68,6 +82,9 @@ const PhoneModelManagePage = () => {
   // const { data: brands } = useSWR("/phone/brands");
   const resetForm = useCallback(() => {
     setForm(DEFAULT_FORM);
+    setImagePreviews([]);
+    setSelectedModelId(null);
+    setModelImages([]);
   }, []);
 
   const canSubmit = useMemo(() => {
@@ -155,16 +172,141 @@ const PhoneModelManagePage = () => {
           })),
       };
 
-      await createPhoneModel(payload);
+      const createdModel = await createPhoneModel(payload);
 
-      toast.success("휴대폰 모델이 생성되었습니다.");
+      // 모델 생성 후 선택된 이미지들 업로드
+      if (form.selectedImages.length > 0) {
+        try {
+          setIsUploadingImages(true);
+          await uploadPhoneModelImages(createdModel.id, form.selectedImages);
+          toast.success("휴대폰 모델과 이미지가 생성되었습니다.");
+        } catch (imageError) {
+          console.error("Failed to upload images", imageError);
+          toast.error("모델은 생성되었지만 이미지 업로드에 실패했습니다.");
+        } finally {
+          setIsUploadingImages(false);
+        }
+      } else {
+        toast.success("휴대폰 모델이 생성되었습니다.");
+      }
+
+      setSelectedModelId(createdModel.id);
       resetForm();
       await mutate("/phone/models");
+      // 생성된 모델의 이미지 로드
+      await loadModelImages(createdModel.id);
     } catch (submitError) {
       console.error("Failed to create phone model", submitError);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const loadModelImages = async (modelId: string) => {
+    try {
+      setIsLoadingImages(true);
+      const images = await getPhoneModelImages(modelId);
+      setModelImages(images);
+    } catch (error) {
+      console.error("Failed to load model images", error);
+    } finally {
+      setIsLoadingImages(false);
+    }
+  };
+
+  const handleImageUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    // 파일 유효성 검사
+    const allowedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ];
+    const invalidFiles = files.filter((file) => !allowedTypes.includes(file.type));
+    if (invalidFiles.length > 0) {
+      toast.error(
+        "지원하지 않는 파일 형식이 있습니다. (jpg, jpeg, png, gif, webp만 가능)"
+      );
+      return;
+    }
+
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const oversizedFiles = files.filter((file) => file.size > maxSize);
+    if (oversizedFiles.length > 0) {
+      toast.error("파일 크기는 5MB 이하여야 합니다.");
+      return;
+    }
+
+    const currentImageCount = form.selectedImages.length;
+    if (currentImageCount + files.length > 10) {
+      toast.error("이미지는 최대 10개까지 선택할 수 있습니다.");
+      return;
+    }
+
+    // 이미지 파일 추가
+    setForm((prev) => ({
+      ...prev,
+      selectedImages: [...prev.selectedImages, ...files],
+    }));
+
+    // 미리보기 생성
+    const newPreviews = files.map((file) => URL.createObjectURL(file));
+    setImagePreviews((prev) => [...prev, ...newPreviews]);
+
+    // 파일 input 초기화
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveSelectedImage = (index: number) => {
+    setForm((prev) => ({
+      ...prev,
+      selectedImages: prev.selectedImages.filter((_, i) => i !== index),
+    }));
+    setImagePreviews((prev) => {
+      const removedPreview = prev[index];
+      if (removedPreview) {
+        URL.revokeObjectURL(removedPreview);
+      }
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
+  const handleImageDelete = async (imageId: string) => {
+    if (!selectedModelId) return;
+
+    if (!window.confirm("이미지를 삭제하시겠습니까?")) {
+      return;
+    }
+
+    try {
+      await deletePhoneModelImage(selectedModelId, imageId);
+      setModelImages((prev) => prev.filter((img) => img.id !== imageId));
+      toast.success("이미지가 삭제되었습니다.");
+    } catch (error) {
+      console.error("Failed to delete image", error);
+    }
+  };
+
+  // 컴포넌트 언마운트 시 미리보기 URL 정리
+  useEffect(() => {
+    return () => {
+      imagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
+    };
+  }, [imagePreviews]);
+
+  const handleSelectModel = async (modelId: string) => {
+    setSelectedModelId(modelId);
+    await loadModelImages(modelId);
   };
 
   const renderOptions = () => {
@@ -323,6 +465,75 @@ const PhoneModelManagePage = () => {
             {renderOptions()}
           </div>
 
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold">모델 이미지</h3>
+                <p className="text-sm text-muted-foreground">
+                  모델 이미지를 업로드할 수 있습니다. (최대 10개, 선택사항)
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleImageUploadClick}
+                disabled={form.selectedImages.length >= 10}
+              >
+                이미지 추가
+              </Button>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+              multiple
+              className="hidden"
+              onChange={handleImageFileChange}
+            />
+            {form.selectedImages.length > 0 ? (
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">
+                {form.selectedImages.map((_, index) => (
+                  <div key={index} className="relative group">
+                    <img
+                      src={imagePreviews[index]}
+                      alt={`미리보기 ${index + 1}`}
+                      className="w-full h-32 object-cover rounded-lg border"
+                    />
+                    <button
+                      className="absolute top-1 right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => handleRemoveSelectedImage(index)}
+                      type="button"
+                      aria-label="이미지 제거"
+                    >
+                      <svg
+                        className="w-4 h-4 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                선택된 이미지가 없습니다. 이미지를 추가하려면 위 버튼을 클릭하세요.
+              </p>
+            )}
+            {form.selectedImages.length > 0 && (
+              <p className="text-sm text-muted-foreground">
+                선택된 이미지: {form.selectedImages.length} / 10
+              </p>
+            )}
+          </div>
+
           <div className="flex justify-end gap-3">
             <Button type="button" variant="ghost" onClick={resetForm}>
               초기화
@@ -337,6 +548,81 @@ const PhoneModelManagePage = () => {
           </div>
         </CardContent>
       </Card>
+
+      {selectedModelId && (
+        <Card>
+          <CardHeader>
+            <CardTitle>모델 이미지 관리</CardTitle>
+            <CardDescription>
+              생성된 모델의 이미지를 업로드할 수 있습니다. (최대 10개)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+              multiple
+              className="hidden"
+              onChange={handleImageFileChange}
+              disabled={isUploadingImages}
+            />
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                업로드된 이미지: {modelImages.length} / 10
+              </p>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleImageUploadClick}
+                disabled={isUploadingImages || modelImages.length >= 10}
+              >
+                {isUploadingImages ? "업로드 중..." : "이미지 추가"}
+              </Button>
+            </div>
+            {isLoadingImages ? (
+              <p className="text-sm text-muted-foreground">
+                이미지를 불러오는 중...
+              </p>
+            ) : modelImages.length > 0 ? (
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">
+                {modelImages.map((image) => (
+                  <div key={image.id} className="relative group">
+                    <img
+                      src={image.imageUrl}
+                      alt={`모델 이미지 ${image.displayOrder}`}
+                      className="w-full h-32 object-cover rounded-lg border"
+                    />
+                    <button
+                      className="absolute top-1 right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => handleImageDelete(image.id)}
+                      aria-label="이미지 삭제"
+                    >
+                      <svg
+                        className="w-4 h-4 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                업로드된 이미지가 없습니다.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
@@ -358,7 +644,15 @@ const PhoneModelManagePage = () => {
             <div className="space-y-6">
               {models && models.length > 0 ? (
                 models.map((model) => (
-                  <div key={model.id} className="rounded-lg border p-4">
+                  <div
+                    key={model.id}
+                    className={`rounded-lg border p-4 cursor-pointer transition-colors ${
+                      selectedModelId === model.id
+                        ? "border-indigo-500 bg-indigo-50"
+                        : "hover:bg-gray-50"
+                    }`}
+                    onClick={() => handleSelectModel(model.id)}
+                  >
                     <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">

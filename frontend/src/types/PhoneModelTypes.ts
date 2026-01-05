@@ -47,3 +47,13 @@ export interface PhoneModelUpdateRequest {
   releasedAt?: string;
   options?: PhoneModelOptionRequest[];
 }
+
+export interface PhoneModelImageResponse {
+  id: string;
+  imageUrl: string;
+  displayOrder: number;
+}
+
+export interface PhoneModelImageUploadResponse {
+  images: PhoneModelImageResponse[];
+}
