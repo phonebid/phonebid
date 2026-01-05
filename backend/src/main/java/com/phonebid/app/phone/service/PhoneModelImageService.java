@@ -2,7 +2,6 @@ package com.phonebid.app.phone.service;
 
 import com.phonebid.app.phone.domain.PhoneModel;
 import com.phonebid.app.phone.domain.PhoneModelImage;
-import com.phonebid.app.phone.dto.request.PhoneModelImageUploadRequestDto;
 import com.phonebid.app.phone.dto.response.PhoneModelImageResponseDto;
 import com.phonebid.app.phone.dto.response.PhoneModelImageUploadResponseDto;
 import com.phonebid.app.phone.repository.PhoneModelImageRepository;
@@ -48,11 +47,10 @@ public class PhoneModelImageService {
      * 관리자만 사용 가능합니다.
      */
     @Transactional
-    public PhoneModelImageUploadResponseDto uploadPhoneModelImages(UUID phoneModelId, PhoneModelImageUploadRequestDto requestDto) {
+    public PhoneModelImageUploadResponseDto uploadPhoneModelImages(UUID phoneModelId, List<MultipartFile> files) {
         PhoneModel phoneModel = phoneModelRepository.findById(phoneModelId)
                 .orElseThrow(() -> new CustomException(PhoneErrorCode.PHONE_MODEL_NOT_FOUND));
 
-        List<MultipartFile> files = requestDto.getFiles();
         if (files == null || files.isEmpty()) {
             throw new CustomException(MemberErrorCode.MISSING_FILE);
         }

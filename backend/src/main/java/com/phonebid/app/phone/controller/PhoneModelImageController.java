@@ -1,16 +1,17 @@
 package com.phonebid.app.phone.controller;
 
-import com.phonebid.app.phone.dto.request.PhoneModelImageUploadRequestDto;
 import com.phonebid.app.phone.dto.response.PhoneModelImageResponseDto;
 import com.phonebid.app.phone.dto.response.PhoneModelImageUploadResponseDto;
 import com.phonebid.app.phone.service.PhoneModelImageService;
 import com.phonebid.app.common.dto.ApiResponse;
-import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -29,10 +30,12 @@ public class PhoneModelImageController {
      */
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<PhoneModelImageUploadResponseDto>> uploadPhoneModelImages(@PathVariable UUID phoneModelId,
-                                                                                                @Valid @ModelAttribute PhoneModelImageUploadRequestDto requestDto) {
+    public ResponseEntity<ApiResponse<PhoneModelImageUploadResponseDto>> uploadPhoneModelImages(
+            @PathVariable UUID phoneModelId,
+            @RequestParam("files") @NotNull(message = "이미지 파일은 필수입니다.") 
+            @NotEmpty(message = "최소 1개 이상의 이미지 파일이 필요합니다.") List<MultipartFile> files) {
         
-        PhoneModelImageUploadResponseDto responseDto = phoneModelImageService.uploadPhoneModelImages(phoneModelId, requestDto);
+        PhoneModelImageUploadResponseDto responseDto = phoneModelImageService.uploadPhoneModelImages(phoneModelId, files);
         
         return ResponseEntity.ok()
                 .body(ApiResponse.success(HttpStatus.OK, "핸드폰 모델 이미지 업로드가 성공적으로 완료되었습니다.", responseDto));
