@@ -125,8 +125,11 @@ public class PhoneModelImageService {
         String imageUrl = phoneModelImage.getImageUrl();
 
         try {
-            phoneModelImageRepository.delete(phoneModelImage);
+            // S3에서 파일 삭제를 먼저 수행 (외부 서비스)
             s3Service.deleteFileByUrl(imageUrl);
+            
+            // S3 삭제 성공 후 DB에서 레코드 삭제
+            phoneModelImageRepository.delete(phoneModelImage);
             log.info("핸드폰 모델 이미지 삭제 완료: phoneModelId={}, imageId={}", phoneModelId, imageId);
         } catch (Exception e) {
             log.error("핸드폰 모델 이미지 삭제 실패: {}", imageUrl, e);
