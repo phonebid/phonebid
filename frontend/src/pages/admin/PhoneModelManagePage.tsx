@@ -3,6 +3,8 @@ import useSWR, { mutate } from "swr";
 import { defaultSWRConfig } from "services/swrConfig";
 import {
   createPhoneModel,
+  updatePhoneModel,
+  deletePhoneModel,
   uploadPhoneModelImages,
   getPhoneModelImages,
   deletePhoneModelImage,
@@ -10,6 +12,7 @@ import {
 import type {
   Brand,
   PhoneModelCreateRequest,
+  PhoneModelUpdateRequest,
   PhoneModelOptionRequest,
   PhoneModelResponse,
   PhoneOptionType,
@@ -25,6 +28,7 @@ import {
 } from "@/components/ui/card";
 import Input from "@/components/common/Input";
 import { toast } from "react-toastify";
+import { Pencil, Trash2 } from "lucide-react";
 
 interface FormState {
   brand: Brand | "";
@@ -68,10 +72,14 @@ const ModelListItem = ({
   model,
   selectedModelId,
   onSelect,
+  onEdit,
+  onDelete,
 }: {
   model: PhoneModelResponse;
   selectedModelId: string | null;
   onSelect: () => void;
+  onEdit: (model: PhoneModelResponse) => void;
+  onDelete: (modelId: string) => void;
 }) => {
   const { data: images } = useSWR<PhoneModelImageResponse[]>(
     `/phone/models/${model.id}/images`,
@@ -80,18 +88,29 @@ const ModelListItem = ({
 
   const firstImage = images && images.length > 0 ? images[0] : null;
 
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onEdit(model);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm(`"${model.brand} ${model.model}" 모델을 삭제하시겠습니까?`)) {
+      onDelete(model.id);
+    }
+  };
+
   return (
     <div
-      className={`rounded-lg border p-4 cursor-pointer transition-colors ${
+      className={`rounded-lg border p-4 transition-colors ${
         selectedModelId === model.id
           ? "border-indigo-500 bg-indigo-50"
           : "hover:bg-gray-50"
       }`}
-      onClick={onSelect}
     >
       <div className="flex flex-col gap-4 md:flex-row md:items-start">
         {/* 이미지 영역 */}
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 cursor-pointer" onClick={onSelect}>
           {firstImage ? (
             <img
               src={firstImage.imageUrl}
@@ -119,7 +138,7 @@ const ModelListItem = ({
 
         {/* 모델 정보 영역 */}
         <div className="flex-1 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div>
+          <div className="flex-1 cursor-pointer" onClick={onSelect}>
             <p className="text-sm font-medium text-muted-foreground">
               {model.brand}
             </p>
@@ -130,18 +149,38 @@ const ModelListItem = ({
               </p>
             )}
           </div>
-          <div className="text-sm text-muted-foreground">
-            {model.releasedPrice ? (
-              <p>출시가: {model.releasedPrice.toLocaleString()}원</p>
-            ) : (
-              <p>출시가 정보 없음</p>
-            )}
-            <p>
-              출시일:{" "}
-              {model.releasedAt
-                ? new Date(model.releasedAt).toLocaleDateString()
-                : "미입력"}
-            </p>
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-muted-foreground">
+              {model.releasedPrice ? (
+                <p>출시가: {model.releasedPrice.toLocaleString()}원</p>
+              ) : (
+                <p>출시가 정보 없음</p>
+              )}
+              <p>
+                출시일:{" "}
+                {model.releasedAt
+                  ? new Date(model.releasedAt).toLocaleDateString()
+                  : "미입력"}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleEditClick}
+                className="p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                aria-label="수정"
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteClick}
+                className="p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                aria-label="삭제"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -176,6 +215,9 @@ const PhoneModelManagePage = () => {
   const [isLoadingImages, setIsLoadingImages] = useState(false);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [editingModel, setEditingModel] = useState<PhoneModelResponse | null>(null);
+  const [editForm, setEditForm] = useState<FormState>(DEFAULT_FORM);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const {
     data: models,
@@ -411,6 +453,91 @@ const PhoneModelManagePage = () => {
   const handleSelectModel = async (modelId: string) => {
     setSelectedModelId(modelId);
     await loadModelImages(modelId);
+  };
+
+  const handleEditModel = (model: PhoneModelResponse) => {
+    setEditingModel(model);
+    let releasedAtValue: string = "";
+    if (model.releasedAt) {
+      try {
+        const dateStr = new Date(model.releasedAt).toISOString().split("T")[0];
+        releasedAtValue = dateStr || "";
+      } catch {
+        releasedAtValue = "";
+      }
+    }
+    setEditForm({
+      brand: model.brand,
+      model: model.model,
+      modelNumber: model.modelNumber ?? "",
+      releasedPrice: model.releasedPrice?.toString() ?? "",
+      releasedAt: releasedAtValue,
+      options: model.options
+        ? model.options.map((opt): FormOption => ({
+            id: opt.id,
+            type: opt.optionType,
+            value: opt.optionValue,
+            displayLabel: opt.displayLabel ?? "",
+          }))
+        : [],
+      selectedImages: [],
+    });
+  };
+
+  const handleUpdateModel = async () => {
+    if (!editingModel) return;
+
+    if (!editForm.brand || !editForm.model.trim()) {
+      toast.error("브랜드와 모델명은 필수입니다.");
+      return;
+    }
+
+    try {
+      setIsUpdating(true);
+      const payload: PhoneModelUpdateRequest = {
+        brand: editForm.brand as Brand,
+        model: editForm.model.trim(),
+        modelNumber: editForm.modelNumber.trim() || undefined,
+        releasedPrice: editForm.releasedPrice
+          ? Number.parseInt(editForm.releasedPrice, 10)
+          : undefined,
+        releasedAt: editForm.releasedAt || undefined,
+      };
+
+      await updatePhoneModel(editingModel.id, payload);
+      toast.success("모델이 수정되었습니다.");
+      setEditingModel(null);
+      setEditForm(DEFAULT_FORM);
+      await mutate("/phone/models");
+    } catch (error) {
+      console.error("Failed to update phone model", error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDeleteModel = async (modelId: string) => {
+    try {
+      await deletePhoneModel(modelId);
+      toast.success("모델이 삭제되었습니다.");
+      if (selectedModelId === modelId) {
+        setSelectedModelId(null);
+        setModelImages([]);
+      }
+      await mutate("/phone/models");
+    } catch (error) {
+      console.error("Failed to delete phone model", error);
+    }
+  };
+
+  const handleEditFormChange = <K extends keyof FormState>(
+    key: K,
+    value: FormState[K]
+  ) => {
+    setEditForm((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
   };
 
   const renderOptions = () => {
@@ -753,6 +880,8 @@ const PhoneModelManagePage = () => {
                     model={model}
                     selectedModelId={selectedModelId}
                     onSelect={() => handleSelectModel(model.id)}
+                    onEdit={handleEditModel}
+                    onDelete={handleDeleteModel}
                   />
                 ))
               ) : (
@@ -764,6 +893,89 @@ const PhoneModelManagePage = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* 수정 모달 */}
+      {editingModel && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <CardHeader>
+              <CardTitle>모델 수정</CardTitle>
+              <CardDescription>
+                모델 정보를 수정할 수 있습니다.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-sm font-medium">브랜드</label>
+                  <select
+                    className="w-full rounded-md border px-3 py-2"
+                    value={editForm.brand}
+                    onChange={(event) =>
+                      handleEditFormChange("brand", event.target.value as Brand | "")
+                    }
+                  >
+                    <option value="">브랜드 선택</option>
+                    {BRAND_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <Input
+                  label="모델명"
+                  required
+                  value={editForm.model}
+                  onChange={(value) => handleEditFormChange("model", value)}
+                />
+                <Input
+                  label="모델 번호"
+                  value={editForm.modelNumber}
+                  onChange={(value) => handleEditFormChange("modelNumber", value)}
+                />
+                <Input
+                  label="출시가"
+                  type="number"
+                  value={editForm.releasedPrice}
+                  onChange={(value) => handleEditFormChange("releasedPrice", value)}
+                />
+                <div>
+                  <label className="mb-1 block text-sm font-medium">출시일</label>
+                  <input
+                    type="date"
+                    className="w-full rounded-md border px-3 py-2"
+                    value={editForm.releasedAt || ""}
+                    onChange={(event) =>
+                      handleEditFormChange("releasedAt", event.target.value)
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setEditingModel(null);
+                    setEditForm(DEFAULT_FORM);
+                  }}
+                >
+                  취소
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleUpdateModel}
+                  disabled={isUpdating || !editForm.brand || !editForm.model.trim()}
+                >
+                  {isUpdating ? "수정 중..." : "수정 완료"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };
