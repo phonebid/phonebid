@@ -4,6 +4,7 @@ import { mypageService } from "services/mypageService";
 import { toast } from "react-toastify";
 import type { ProfileUpdateRequestDto } from "types/MyPageTypes";
 import { logError } from "utils/errorUtils";
+import { Trash2 } from "lucide-react";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -253,7 +254,7 @@ const ProfilePage = () => {
 
         {/* 프로필 사진 영역 */}
         <div className="flex justify-center mb-10">
-          <div className="relative">
+          <div className="relative group">
             <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-lg overflow-hidden">
               {profileImageUrl ? (
                 <img
@@ -286,14 +287,14 @@ const ProfilePage = () => {
               disabled={isUploadingImage}
             />
             <button
-              className="absolute bottom-0 right-0 w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="absolute bottom-0 right-0 w-7 h-7 bg-indigo-500 rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleImageUploadClick}
               disabled={isUploadingImage}
               aria-label="프로필 이미지 업로드"
             >
               {isUploadingImage ? (
                 <svg
-                  className="w-5 h-5 text-white animate-spin"
+                  className="w-4 h-4 text-white animate-spin"
                   fill="none"
                   viewBox="0 0 24 24"
                 >
@@ -313,7 +314,7 @@ const ProfilePage = () => {
                 </svg>
               ) : (
                 <svg
-                  className="w-5 h-5 text-white"
+                  className="w-4 h-4 text-white"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -335,24 +336,12 @@ const ProfilePage = () => {
             </button>
             {profileImageUrl && (
               <button
-                className="absolute top-0 right-0 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="absolute top-0 right-0 w-7 h-7 bg-gray-700/80 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-800/90 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleImageDelete}
                 disabled={isUploadingImage}
                 aria-label="프로필 이미지 삭제"
               >
-                <svg
-                  className="w-4 h-4 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <Trash2 className="w-3.5 h-3.5 text-white" />
               </button>
             )}
           </div>
