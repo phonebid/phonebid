@@ -555,6 +555,46 @@ const ChatRoomPage: React.FC = () => {
     [chatRoomId, user, chatRoom, sendWebSocketMessage]
   );
 
+  const handleSendImage = useCallback(
+    (imageUrl: string) => {
+      if (!chatRoomId || !user || !chatRoom) {
+        return;
+      }
+
+      // 현재 사용자 ID 확인 (채팅방 정보 사용)
+      const currentUserId = user.role === "CONSUMER" 
+        ? chatRoom.consumerId 
+        : chatRoom.sellerId;
+
+      // 임시 메시지 ID 생성 (서버 응답 전까지 사용)
+      const tempId = `temp-${Date.now()}-${Math.random()}`;
+      
+      // 즉시 로컬 상태에 추가 (isRead: false로 설정하여 "1" 표시)
+      const tempMessage: ChatMessage = {
+        id: tempId,
+        chatRoomId,
+        senderId: currentUserId,
+        messageType: MessageType.IMAGE,
+        content: imageUrl,
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      };
+
+      // 임시 메시지를 먼저 추가
+      setMessages((prev) => [...prev, tempMessage]);
+
+      const messageRequest = {
+        chatRoomId,
+        senderId: user.username,
+        messageType: MessageType.IMAGE,
+        content: imageUrl,
+      };
+
+      sendWebSocketMessage(messageRequest);
+    },
+    [chatRoomId, user, chatRoom, sendWebSocketMessage]
+  );
+
   // 타이핑 이벤트 전송 핸들러
   const handleTyping = useCallback(
     (isTyping: boolean) => {
@@ -764,8 +804,10 @@ const ChatRoomPage: React.FC = () => {
       <div className="flex-shrink-0 sticky bottom-0 bg-white">
         <MessageInput
           onSendMessage={handleSendMessage}
+          onSendImage={handleSendImage}
           onTyping={handleTyping}
           connectionStatus={connectionStatus}
+          chatRoomId={chatRoomId || undefined}
         />
       </div>
     </div>

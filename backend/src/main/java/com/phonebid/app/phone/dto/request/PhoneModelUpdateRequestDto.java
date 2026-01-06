@@ -2,25 +2,21 @@ package com.phonebid.app.phone.dto.request;
 
 import com.phonebid.app.phone.domain.Brand;
 
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
-import java.util.UUID;
 
 /**
  * 휴대폰 모델 수정 요청 DTO
+ * ID는 path variable로 전달되므로 DTO에서 제외
  */
 @Getter
 @Setter
 @NoArgsConstructor
 public class PhoneModelUpdateRequestDto {
-
-    @NotNull(message = "모델 ID는 필수입니다.")
-    private UUID id;
 
     private Brand brand;
 
@@ -33,9 +29,8 @@ public class PhoneModelUpdateRequestDto {
 
     private LocalDate releasedAt;
 
-    public PhoneModelUpdateRequestDto(UUID id, Brand brand, String model, String modelNumber, 
+    public PhoneModelUpdateRequestDto(Brand brand, String model, String modelNumber, 
                                     Integer releasedPrice, LocalDate releasedAt) {
-        this.id = id;
         this.brand = brand;
         this.model = model;
         this.modelNumber = modelNumber;

@@ -1,14 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { mypageService } from "services/mypageService";
 import { toast } from "react-toastify";
 import type { ProfileUpdateRequestDto } from "types/MyPageTypes";
 import { logError } from "utils/errorUtils";
+import { Trash2 } from "lucide-react";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     username: "",
@@ -40,6 +44,7 @@ const ProfilePage = () => {
         nickname: data.nickname || "",
         phone: data.phone || "",
       });
+      setProfileImageUrl(data.profileImageUrl || null);
     } catch (error: unknown) {
       logError("프로필 조회 실패:", error);
     } finally {
@@ -150,6 +155,66 @@ const ProfilePage = () => {
     navigate("/mypage");
   };
 
+  const handleImageUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // 파일 유효성 검사
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("지원하지 않는 파일 형식입니다. (jpg, jpeg, png, gif, webp만 가능)");
+      return;
+    }
+
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      toast.error("파일 크기는 5MB 이하여야 합니다.");
+      return;
+    }
+
+    try {
+      setIsUploadingImage(true);
+      const response = await mypageService.uploadProfileImage(file);
+      setProfileImageUrl(response.profileImageUrl);
+      toast.success("프로필 이미지가 업로드되었습니다.");
+      // 프로필 정보 갱신
+      await loadProfile();
+    } catch (error: unknown) {
+      logError("프로필 이미지 업로드 실패:", error);
+    } finally {
+      setIsUploadingImage(false);
+      // 파일 input 초기화
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleImageDelete = async () => {
+    if (!profileImageUrl) return;
+
+    if (!window.confirm("프로필 이미지를 삭제하시겠습니까?")) {
+      return;
+    }
+
+    try {
+      setIsUploadingImage(true);
+      await mypageService.deleteProfileImage();
+      setProfileImageUrl(null);
+      toast.success("프로필 이미지가 삭제되었습니다.");
+      // 프로필 정보 갱신
+      await loadProfile();
+    } catch (error: unknown) {
+      logError("프로필 이미지 삭제 실패:", error);
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   if (isLoadingProfile) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-200 via-purple-100 to-blue-200 flex items-center justify-center">
@@ -189,46 +254,96 @@ const ProfilePage = () => {
 
         {/* 프로필 사진 영역 */}
         <div className="flex justify-center mb-10">
-          <div className="relative">
-            <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-lg">
-              <svg
-                className="w-20 h-20 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+          <div className="relative group">
+            <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-lg overflow-hidden">
+              {profileImageUrl ? (
+                <img
+                  src={profileImageUrl}
+                  alt="프로필 이미지"
+                  className="w-full h-full object-cover"
                 />
-              </svg>
+              ) : (
+                <svg
+                  className="w-20 h-20 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
+              )}
             </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+              className="hidden"
+              onChange={handleImageFileChange}
+              disabled={isUploadingImage}
+            />
             <button
-              className="absolute bottom-0 right-0 w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-600 transition-colors"
-              onClick={() => toast.info("프로필 사진 변경 기능은 준비 중입니다.")}
+              className="absolute bottom-0 right-0 w-7 h-7 bg-indigo-500 rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleImageUploadClick}
+              disabled={isUploadingImage}
+              aria-label="프로필 이미지 업로드"
             >
-              <svg
-                className="w-5 h-5 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
+              {isUploadingImage ? (
+                <svg
+                  className="w-4 h-4 text-white animate-spin"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  className="w-4 h-4 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+              )}
             </button>
+            {profileImageUrl && (
+              <button
+                className="absolute top-0 right-0 w-7 h-7 bg-gray-700/80 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-800/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleImageDelete}
+                disabled={isUploadingImage}
+                aria-label="프로필 이미지 삭제"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-white" />
+              </button>
+            )}
           </div>
         </div>
 

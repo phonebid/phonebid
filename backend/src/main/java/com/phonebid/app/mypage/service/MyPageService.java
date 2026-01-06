@@ -2,6 +2,7 @@ package com.phonebid.app.mypage.service;
 
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.common.errorcode.CommonErrorCode;
+import com.phonebid.app.common.errorcode.MemberErrorCode;
 import com.phonebid.app.member.domain.User;
 import com.phonebid.app.member.repository.UserRepository;
 import com.phonebid.app.mypage.domain.Account;
@@ -12,11 +13,21 @@ import com.phonebid.app.mypage.dto.request.DeliveryAddressCreateRequestDto;
 import com.phonebid.app.mypage.dto.request.ProfileUpdateRequestDto;
 import com.phonebid.app.mypage.dto.response.AccountResponseDto;
 import com.phonebid.app.mypage.dto.response.DeliveryAddressResponseDto;
+import com.phonebid.app.mypage.dto.response.ProfileImageUploadResponseDto;
 import com.phonebid.app.mypage.dto.response.ProfileResponseDto;
 import com.phonebid.app.mypage.dto.response.PurchaseDetailResponseDto;
 import com.phonebid.app.mypage.dto.response.PurchaseHistoryResponseDto;
 import com.phonebid.app.mypage.repository.AccountRepository;
 import com.phonebid.app.mypage.repository.UserDeliveryAddressRepository;
+import com.phonebid.app.s3.service.S3Service;
+import org.springframework.web.multipart.MultipartFile;
+import lombok.extern.slf4j.Slf4j;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 import com.phonebid.app.trade.domain.Contract;
 import com.phonebid.app.trade.domain.ContractStatus;
 import com.phonebid.app.trade.domain.Delivery;
@@ -32,8 +43,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
-import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MyPageService {
@@ -44,6 +55,13 @@ public class MyPageService {
     private final DeliveryRepository deliveryRepository;
     private final AccountRepository accountRepository;
     private final UserDeliveryAddressRepository userDeliveryAddressRepository;
+    private final S3Service s3Service;
+
+    private static final List<String> ALLOWED_IMAGE_EXTENSIONS = Arrays.asList(
+            "jpg", "jpeg", "png", "gif", "webp", "JPG", "JPEG", "PNG", "GIF", "WEBP"
+    );
+
+    private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 
     /**
      * 프로필 조회
@@ -265,13 +283,141 @@ public class MyPageService {
     }
 
     /**
+     * 프로필 이미지 업로드
+     * 기존 프로필 이미지가 있으면 S3에서 삭제하고 새 이미지를 업로드합니다.
+     */
+    @Transactional
+    public ProfileImageUploadResponseDto uploadProfileImage(String username, MultipartFile file) {
+        User user = loadActiveUser(username);
+
+        validateImageFile(file);
+
+        String uploadedFileUrl = null;
+        try {
+            String previousImageUrl = user.getProfileImageUrl();
+
+            String fileName = generateProfileImageFileName(user.getId(), file.getOriginalFilename());
+            uploadedFileUrl = s3Service.uploadFile(fileName, file);
+
+            try {
+                user.updateProfileImageUrl(uploadedFileUrl);
+                userRepository.save(user);
+
+                if (previousImageUrl != null) {
+                    try {
+                        s3Service.deleteFileByUrl(previousImageUrl);
+                        log.info("기존 프로필 이미지 삭제 완료: {}", previousImageUrl);
+                    } catch (Exception e) {
+                        log.warn("기존 프로필 이미지 삭제 실패(무시): {}", previousImageUrl, e);
+                    }
+                }
+
+                return ProfileImageUploadResponseDto.from(uploadedFileUrl);
+            } catch (Exception dbException) {
+                log.error("DB 저장 실패로 업로드 파일 롤백 시작: {}", uploadedFileUrl, dbException);
+                try {
+                    s3Service.deleteFileByUrl(uploadedFileUrl);
+                    log.info("업로드 실패 파일 롤백 완료: {}", uploadedFileUrl);
+                } catch (CustomException ce) {
+                    log.warn("업로드 실패 파일 롤백 실패(무시): {}", uploadedFileUrl, ce);
+                }
+                throw new CustomException(MemberErrorCode.FILE_UPLOAD_FAILED);
+            }
+
+        } catch (IOException e) {
+            log.error("프로필 이미지 업로드 실패: {}", e.getMessage(), e);
+            throw new CustomException(MemberErrorCode.FILE_UPLOAD_FAILED);
+        }
+    }
+
+    /**
+     * 프로필 이미지 삭제
+     * S3에서 이미지를 삭제하고 User 엔티티의 profileImageUrl을 null로 설정합니다.
+     */
+    @Transactional
+    public void deleteProfileImage(String username) {
+        User user = loadActiveUser(username);
+
+        String imageUrl = user.getProfileImageUrl();
+        if (imageUrl == null || imageUrl.trim().isEmpty()) {
+            throw new CustomException(CommonErrorCode.RESOURCE_NOT_FOUND);
+        }
+
+        try {
+            s3Service.deleteFileByUrl(imageUrl);
+            user.updateProfileImageUrl(null);
+            userRepository.save(user);
+            log.info("프로필 이미지 삭제 완료: {}", imageUrl);
+        } catch (Exception e) {
+            log.error("프로필 이미지 삭제 실패: {}", imageUrl, e);
+            throw new CustomException(MemberErrorCode.FILE_DELETE_FAILED);
+        }
+    }
+
+    /**
+     * 이미지 파일 검증
+     */
+    private void validateImageFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new CustomException(MemberErrorCode.MISSING_FILE);
+        }
+
+        if (file.getSize() > MAX_IMAGE_SIZE) {
+            throw new CustomException(MemberErrorCode.FILE_SIZE_EXCEEDED);
+        }
+
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null || originalFilename.trim().isEmpty()) {
+            throw new CustomException(MemberErrorCode.INVALID_FILE_NAME);
+        }
+
+        String extension = getFileExtension(originalFilename);
+        if (!ALLOWED_IMAGE_EXTENSIONS.contains(extension)) {
+            throw new CustomException(MemberErrorCode.INVALID_FILE_TYPE);
+        }
+    }
+
+    /**
+     * 파일 확장자 추출
+     */
+    private String getFileExtension(String fileName) {
+        int lastDotIndex = fileName.lastIndexOf('.');
+        if (lastDotIndex == -1) {
+            return "";
+        }
+        return fileName.substring(lastDotIndex + 1);
+    }
+
+    /**
+     * 프로필 이미지 파일명 생성
+     */
+    private String generateProfileImageFileName(UUID userId, String originalFilename) {
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        String sanitizedFilename = sanitizeFilename(originalFilename);
+        return String.format("profiles/%s/%s_%s", userId, timestamp, sanitizedFilename);
+    }
+
+    /**
+     * 파일명 보안 정리
+     */
+    private String sanitizeFilename(String filename) {
+        if (filename == null || filename.trim().isEmpty()) {
+            return "unnamed.jpg";
+        }
+        return filename.trim()
+                .replaceAll("[^a-zA-Z0-9가-힣._-]", "_")
+                .replaceAll("_{2,}", "_")
+                .replaceAll("^_+|_+$", "");
+    }
+
+    /**
      * 활성 사용자 조회
      * 삭제되지 않은 활성 사용자만 조회하며, 사용자가 없거나 삭제된 경우 예외를 발생시킵니다.
      */
     private User loadActiveUser(String username) {
         return userRepository.findByUsername(username)
-            .filter(user -> !user.isDeleted())
-            .orElseThrow(() -> new CustomException(CommonErrorCode.USER_NOT_FOUND));
+                .filter(user -> !user.isDeleted())
+                .orElseThrow(() -> new CustomException(CommonErrorCode.USER_NOT_FOUND));
     }
 }
 

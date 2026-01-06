@@ -1,5 +1,7 @@
 import type { ChatMessage } from "types/ChatTypes";
+import { MessageType } from "types/ChatTypes";
 import { ChatAvatar } from "components/chat/ChatAvatar";
+import { useState } from "react";
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -21,6 +23,9 @@ export function MessageBubble({
   senderName,
   senderAvatar,
 }: MessageBubbleProps) {
+  const [imageError, setImageError] = useState(false);
+  const [isImageExpanded, setIsImageExpanded] = useState(false);
+
   const formatTime = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleTimeString("ko-KR", {
@@ -29,6 +34,8 @@ export function MessageBubble({
       hour12: true,
     });
   };
+
+  const isImageMessage = message.messageType === MessageType.IMAGE;
 
   // 상대방 메시지: 왼쪽 정렬, 흰색 말풍선
   // 내 메시지: 오른쪽 정렬, 회색 말풍선
@@ -57,18 +64,49 @@ export function MessageBubble({
                 : "bg-white text-gray-900 rounded-bl-sm border-gray-200 shadow-sm"
             }`}
           >
-            <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
-              {message.content}
-            </p>
-            <div className="flex items-center justify-end gap-1.5 mt-1.5">
-              <p
-                className={`text-xs ${
-                  isCurrentUser ? "text-gray-500" : "text-gray-400"
-                }`}
-              >
-                {formatTime(message.createdAt)}
-              </p>
-            </div>
+            {isImageMessage ? (
+              <div className="space-y-2">
+                {imageError ? (
+                  <div className="flex items-center justify-center w-64 h-48 bg-gray-100 rounded-lg">
+                    <p className="text-sm text-gray-500">이미지를 불러올 수 없습니다.</p>
+                  </div>
+                ) : (
+                  <img
+                    src={message.content}
+                    alt="전송된 이미지"
+                    className={`rounded-lg cursor-pointer ${
+                      isImageExpanded ? "max-w-2xl" : "max-w-xs"
+                    }`}
+                    onClick={() => setIsImageExpanded(!isImageExpanded)}
+                    onError={() => setImageError(true)}
+                  />
+                )}
+                <div className="flex items-center justify-end gap-1.5">
+                  <p
+                    className={`text-xs ${
+                      isCurrentUser ? "text-gray-500" : "text-gray-400"
+                    }`}
+                  >
+                    {formatTime(message.createdAt)}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
+                  {message.content}
+                </p>
+                <div className="flex items-center justify-end gap-1.5 mt-1.5">
+                  <p
+                    className={`text-xs ${
+                      isCurrentUser ? "text-gray-500" : "text-gray-400"
+                    }`}
+                  >
+                    {formatTime(message.createdAt)}
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

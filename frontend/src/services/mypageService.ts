@@ -191,5 +191,31 @@ export const mypageService = {
       throw error;
     }
   },
+
+  uploadProfileImage: async (file: File): Promise<{ profileImageUrl: string }> => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      
+      return await apiClient.post<{ profileImageUrl: string }>(
+        `${ENDPOINTS.PROFILE}/image`,
+        formData
+      );
+    } catch (error: unknown) {
+      logError("프로필 이미지 업로드 실패:", error);
+      toast.error("프로필 이미지 업로드에 실패했습니다.");
+      throw error;
+    }
+  },
+
+  deleteProfileImage: async (): Promise<void> => {
+    try {
+      return await apiClient.delete<void>(`${ENDPOINTS.PROFILE}/image`);
+    } catch (error: unknown) {
+      logError("프로필 이미지 삭제 실패:", error);
+      toast.error("프로필 이미지 삭제에 실패했습니다.");
+      throw error;
+    }
+  },
 };
 

@@ -14,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 import com.phonebid.app.phone.repository.PhoneModelRepository;
 import com.phonebid.app.phone.dto.request.PhoneModelCreateRequestDto;
 import com.phonebid.app.phone.dto.request.PhoneModelCreateRequestDto.OptionItem;
-import com.phonebid.app.phone.dto.request.PhoneModelDeleteRequestDto;
 import com.phonebid.app.phone.dto.request.PhoneModelUpdateRequestDto;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.common.errorcode.PhoneErrorCode;
@@ -58,8 +57,9 @@ public class PhoneModelService {
         return PhoneModelResponseDto.from(savedModel);
     }
     
-    public PhoneModelResponseDto updatePhoneModel(PhoneModelUpdateRequestDto requestDto) {
-        PhoneModel existingModel = phoneModelRepository.findById(requestDto.getId())
+    @Transactional
+    public PhoneModelResponseDto updatePhoneModel(UUID id, PhoneModelUpdateRequestDto requestDto) {
+        PhoneModel existingModel = phoneModelRepository.findById(id)
             .orElseThrow(() -> new CustomException(PhoneErrorCode.PHONE_MODEL_NOT_FOUND));
         
         // 브랜드와 모델명 조합의 중복 확인 (둘 다 업데이트되는 경우)
@@ -118,11 +118,11 @@ public class PhoneModelService {
     }
 
     
-    public void deletePhoneModel(PhoneModelDeleteRequestDto requestDto) {
-        if (phoneModelRepository.findById(requestDto.getId()).isEmpty()) {
-            throw new CustomException(PhoneErrorCode.PHONE_MODEL_NOT_FOUND);
-        }
-        phoneModelRepository.deleteById(requestDto.getId());
+    @Transactional
+    public void deletePhoneModel(UUID id) {
+        PhoneModel model = phoneModelRepository.findById(id)
+            .orElseThrow(() -> new CustomException(PhoneErrorCode.PHONE_MODEL_NOT_FOUND));
+        phoneModelRepository.delete(model);
     }
     
     public PhoneModelResponseDto getPhoneModel(UUID id) {

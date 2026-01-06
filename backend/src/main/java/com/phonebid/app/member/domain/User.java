@@ -70,8 +70,12 @@ public class User extends BaseEntity {
     @Comment("소셜 로그인 고유 ID")
     private String providerId;
 
+    @Column(name = "profile_image_url", nullable = true)
+    @Comment("프로필 사진 URL")
+    private String profileImageUrl;
+
     @Builder
-    public User(String username, String password, String email, String name, String nickname, String phone, Role role, Provider provider, String providerId) {
+    public User(String username, String password, String email, String name, String nickname, String phone, Role role, Provider provider, String providerId, String profileImageUrl) {
         this.username = username;
         this.password = password;
         this.email = email;
@@ -81,6 +85,7 @@ public class User extends BaseEntity {
         this.role = role;
         this.provider = provider;
         this.providerId = providerId;
+        this.profileImageUrl = profileImageUrl;
     }
 
     // 비즈니스 메서드
@@ -126,6 +131,10 @@ public class User extends BaseEntity {
 
     public void updateProviderId(String providerId) {
         this.providerId = providerId;
+    }
+
+    public void updateProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 
     // 논리적 삭제

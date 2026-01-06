@@ -6,10 +6,12 @@ import com.phonebid.app.mypage.dto.request.DeliveryAddressCreateRequestDto;
 import com.phonebid.app.mypage.dto.request.ProfileUpdateRequestDto;
 import com.phonebid.app.mypage.dto.response.AccountResponseDto;
 import com.phonebid.app.mypage.dto.response.DeliveryAddressResponseDto;
+import com.phonebid.app.mypage.dto.response.ProfileImageUploadResponseDto;
 import com.phonebid.app.mypage.dto.response.ProfileResponseDto;
 import com.phonebid.app.mypage.dto.response.PurchaseDetailResponseDto;
 import com.phonebid.app.mypage.dto.response.PurchaseHistoryResponseDto;
 import com.phonebid.app.mypage.service.MyPageService;
+import org.springframework.web.multipart.MultipartFile;
 import com.phonebid.app.security.UserDetailsImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -198,6 +200,33 @@ public class MyPageController {
         
         return ResponseEntity.ok()
                 .body(ApiResponse.success(HttpStatus.OK, "배송지 삭제가 성공적으로 완료되었습니다.", null));
+    }
+
+    /**
+     * 프로필 이미지 업로드
+     * 로그인한 사용자의 프로필 사진을 업로드합니다. 기존 프로필 사진이 있으면 자동으로 삭제됩니다.
+     */
+    @PostMapping("/profile/image")
+    public ResponseEntity<ApiResponse<ProfileImageUploadResponseDto>> uploadProfileImage(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam("file") MultipartFile file) {
+        
+        ProfileImageUploadResponseDto responseDto = myPageService.uploadProfileImage(userDetails.getUsername(), file);
+        
+        return ResponseEntity.ok()
+                .body(ApiResponse.success(HttpStatus.OK, "프로필 이미지 업로드가 성공적으로 완료되었습니다.", responseDto));
+    }
+
+    /**
+     * 프로필 이미지 삭제
+     * 로그인한 사용자의 프로필 사진을 삭제합니다.
+     */
+    @DeleteMapping("/profile/image")
+    public ResponseEntity<ApiResponse<Void>> deleteProfileImage(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+        myPageService.deleteProfileImage(userDetails.getUsername());
+        
+        return ResponseEntity.ok()
+                .body(ApiResponse.success(HttpStatus.OK, "프로필 이미지 삭제가 성공적으로 완료되었습니다.", null));
     }
 }
 

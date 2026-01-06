@@ -105,8 +105,9 @@ const DeliveryAddressListPage = () => {
   const handleInputChange = (field: keyof DeliveryFormData, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
+    const errorField = field as keyof DeliveryFormErrors;
+    if (errorField in errors && errors[errorField]) {
+      setErrors((prev) => ({ ...prev, [errorField]: "" }));
     }
   };
 
