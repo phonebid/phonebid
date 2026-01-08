@@ -112,11 +112,17 @@ public class ChatRoomService {
         // 구매자 이름 (닉네임 사용)
         String consumerName = chatRoom.getConsumer().getNickname();
         
+        // 판매자 프로필 이미지 URL
+        String sellerProfileImageUrl = chatRoom.getSeller().getUser().getProfileImageUrl();
+        
+        // 구매자 프로필 이미지 URL
+        String consumerProfileImageUrl = chatRoom.getConsumer().getProfileImageUrl();
+        
         // 읽지 않은 메시지 수
         long unreadCount = chatMessageRepository.countUnreadMessagesByChatRoomIdAndUserId(
                 chatRoomId, requesterId);
         
-        return ChatRoomResponse.from(chatRoom, sellerName, consumerName, null, null, unreadCount);
+        return ChatRoomResponse.from(chatRoom, sellerName, consumerName, sellerProfileImageUrl, consumerProfileImageUrl, null, null, unreadCount);
     }
 
     /**
@@ -234,6 +240,12 @@ public class ChatRoomService {
             // 구매자 이름 (닉네임 사용)
             String consumerName = chatRoom.getConsumer().getNickname();
             
+            // 판매자 프로필 이미지 URL
+            String sellerProfileImageUrl = chatRoom.getSeller().getUser().getProfileImageUrl();
+            
+            // 구매자 프로필 이미지 URL
+            String consumerProfileImageUrl = chatRoom.getConsumer().getProfileImageUrl();
+            
             // 마지막 메시지
             Optional<ChatMessage> lastMessageOpt = chatMessageRepository
                     .findFirstByChatRoomIdOrderByCreatedAtDesc(chatRoom.getId());
@@ -255,7 +267,7 @@ public class ChatRoomService {
             // 읽지 않은 메시지 수 (상대방이 보낸 메시지 중 읽지 않은 메시지)
             long unreadCount = chatMessageRepository.countUnreadMessagesByChatRoomIdAndUserId(chatRoom.getId(), userId);
             
-            return ChatRoomResponse.from(chatRoom, sellerName, consumerName, lastMessage, totalPrice, unreadCount);
+            return ChatRoomResponse.from(chatRoom, sellerName, consumerName, sellerProfileImageUrl, consumerProfileImageUrl, lastMessage, totalPrice, unreadCount);
         });
     }
 
