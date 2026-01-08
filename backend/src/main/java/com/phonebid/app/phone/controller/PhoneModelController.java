@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import com.phonebid.app.phone.service.PhoneModelService;
 
@@ -47,8 +48,10 @@ public class PhoneModelController {
 
     /**
      * 휴대폰 모델 생성
+     * 관리자만 사용 가능합니다.
      */
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<PhoneModelResponseDto>> createPhoneModel(@RequestBody @Valid PhoneModelCreateRequestDto requestDto) {
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "휴대폰 모델 생성이 성공적으로 완료되었습니다.", phoneModelService.createPhoneModel(requestDto)));
     }
@@ -56,8 +59,10 @@ public class PhoneModelController {
     /**
      * 휴대폰 모델 수정
      * PUT /api/v1/phone/models/{id}
+     * 관리자만 사용 가능합니다.
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<PhoneModelResponseDto>> updatePhoneModel(@PathVariable UUID id,
                                                                                @RequestBody @Valid PhoneModelUpdateRequestDto requestDto) {
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "휴대폰 모델 수정이 성공적으로 완료되었습니다.", phoneModelService.updatePhoneModel(id, requestDto)));
@@ -66,8 +71,10 @@ public class PhoneModelController {
     /**
      * 휴대폰 모델 삭제
      * DELETE /api/v1/phone/models/{id}
+     * 관리자만 사용 가능합니다.
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deletePhoneModel(@PathVariable UUID id) {
         phoneModelService.deletePhoneModel(id);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "휴대폰 모델 삭제가 성공적으로 완료되었습니다.", null));
