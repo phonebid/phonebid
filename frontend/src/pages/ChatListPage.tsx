@@ -5,9 +5,11 @@ import { getChatRooms } from "services/chatService";
 import { realtimeDataConfig } from "services/swrConfig";
 import type { PaginatedChatRooms } from "types/ChatTypes";
 import { ChatRoomCard } from "components/chat/ChatRoomCard";
+import { useAuthStore } from "store/authStore";
 
 const ChatListPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
 
   useEffect(() => {
     document.title = "채팅 목록 | PhoneBid";
@@ -170,13 +172,21 @@ const ChatListPage: React.FC = () => {
           </div>
         ) : (
           <div className="divide-y divide-gray-100 bg-white">
-            {chatRooms.map((room) => (
-              <ChatRoomCard
-                key={room.id}
-                room={room}
-                unreadCount={unreadCounts[room.id] || 0}
-              />
-            ))}
+            {chatRooms.map((room) => {
+              // 현재 사용자 역할에 따라 상대방 프로필 이미지 선택
+              const otherUserProfileImageUrl = user?.role === "CONSUMER"
+                ? room.sellerProfileImageUrl
+                : room.consumerProfileImageUrl;
+              
+              return (
+                <ChatRoomCard
+                  key={room.id}
+                  room={room}
+                  unreadCount={unreadCounts[room.id] || 0}
+                  sellerAvatar={otherUserProfileImageUrl}
+                />
+              );
+            })}
           </div>
         )}
       </div>
