@@ -307,34 +307,12 @@ const QuoteCreateWizardPage: React.FC = () => {
             {phoneModels.map((model) => {
               const selected = draft.model === model.id;
               return (
-                <SelectionCard
+                <PhoneModelCard
                   key={model.id}
+                  model={model}
                   selected={selected}
-                  onClick={() => handleSelectPhone(model)}
-                  className="py-3"
-                  showCheckIcon
-                >
-                  <CardContent className="flex w-full items-center gap-4 py-2">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 via-primary/20 to-primary/10 text-xs font-medium text-primary">
-                      {model.brand}
-                    </div>
-                    <div className="flex flex-1 flex-col gap-1">
-                      <CardTitle className="text-base font-semibold">
-                        {model.model}
-                      </CardTitle>
-                      {model.modelNumber ? (
-                        <span className="text-xs text-muted-foreground">
-                          모델 번호 {model.modelNumber}
-                        </span>
-                      ) : null}
-                      {model.releasedPrice ? (
-                        <span className="text-sm font-medium text-primary">
-                          출시가 {model.releasedPrice.toLocaleString()}원
-                        </span>
-                      ) : null}
-                    </div>
-                  </CardContent>
-                </SelectionCard>
+                  onSelect={() => handleSelectPhone(model)}
+                />
               );
             })}
           </div>
@@ -683,6 +661,57 @@ const getPurchasePlanLabel = (value?: PurchaseMethod) => {
     return "상관 없음";
   }
   return "선택되지 않음";
+};
+
+const PhoneModelCard = ({
+  model,
+  selected,
+  onSelect,
+}: {
+  model: PhoneModelResponse;
+  selected: boolean;
+  onSelect: () => void;
+}) => {
+  return (
+    <SelectionCard
+      selected={selected}
+      onClick={onSelect}
+      className="py-3"
+      showCheckIcon
+    >
+      <CardContent className="flex w-full items-center gap-4 py-2">
+        <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-primary/10 via-primary/20 to-primary/10">
+          {model.thumbnailImageUrl ? (
+            <img
+              src={model.thumbnailImageUrl}
+              alt={model.model}
+              className="h-full w-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <span className="text-xs font-medium text-primary">
+              {model.brand}
+            </span>
+          )}
+        </div>
+        <div className="flex flex-1 flex-col gap-1">
+          <CardTitle className="text-base font-semibold">
+            {model.model}
+          </CardTitle>
+          {model.modelNumber ? (
+            <span className="text-xs text-muted-foreground">
+              모델 번호 {model.modelNumber}
+            </span>
+          ) : null}
+          {model.releasedPrice ? (
+            <span className="text-sm font-medium text-primary">
+              출시가 {model.releasedPrice.toLocaleString()}원
+            </span>
+          ) : null}
+        </div>
+      </CardContent>
+    </SelectionCard>
+  );
 };
 
 const ArrowLeftIcon = () => (

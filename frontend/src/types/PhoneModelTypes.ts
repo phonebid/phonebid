@@ -20,6 +20,7 @@ export interface PhoneModelResponse {
   releasedPrice?: number | null;
   releasedAt?: string | null;
   options?: PhoneOptionResponse[];
+  thumbnailImageUrl?: string | null;
   createdAt: string;
   updatedAt: string;
 }
