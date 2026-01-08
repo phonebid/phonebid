@@ -27,13 +27,22 @@ export function ChatAvatar({
     lg: "w-8 h-8",
   };
 
+  const pixelSizes = {
+    sm: 32,
+    md: 40,
+    lg: 48,
+  };
+
   return (
     <div className={`flex-shrink-0 ${sizeClasses[size]}`}>
       {avatar ? (
         <img
           src={avatar}
           alt={alt || name || "사용자"}
+          width={pixelSizes[size]}
+          height={pixelSizes[size]}
           className={`${sizeClasses[size]} rounded-full object-cover`}
+          fetchPriority="high"
         />
       ) : (
         <div
