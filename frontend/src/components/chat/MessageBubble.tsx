@@ -50,7 +50,7 @@ export function MessageBubble({
         <ChatAvatar avatar={senderAvatar} name={senderName} alt={senderName || "상대방"} />
       )}
 
-      <div className={`flex flex-col max-w-[70%] ${isCurrentUser ? "items-end" : "items-start"} relative`}>
+      <div className={`flex flex-col ${isImageMessage ? "max-w-[85%]" : "max-w-[70%]"} ${isCurrentUser ? "items-end" : "items-start"} relative`}>
         <div className="flex items-end gap-2">
           {/* 읽음 표시 (내 메시지이고 읽지 않았을 때만, 말풍선 밖 왼쪽 하단) */}
           {isCurrentUser && !message.isRead && (
@@ -58,7 +58,7 @@ export function MessageBubble({
           )}
 
           <div
-            className={`px-4 py-2.5 rounded-2xl border ${
+            className={`${isImageMessage ? "p-1" : "px-4 py-2.5"} rounded-2xl border ${
               isCurrentUser
                 ? "bg-[#E0E7FF] text-gray-900 rounded-br-sm border-indigo-200"
                 : "bg-white text-gray-900 rounded-bl-sm border-gray-200 shadow-sm"
@@ -74,8 +74,10 @@ export function MessageBubble({
                   <img
                     src={message.content}
                     alt="전송된 이미지"
-                    className={`rounded-lg cursor-pointer ${
-                      isImageExpanded ? "max-w-2xl" : "max-w-xs"
+                    className={`rounded-lg cursor-pointer w-full h-auto object-contain ${
+                      isImageExpanded 
+                        ? "max-w-2xl max-h-[80vh]" 
+                        : "max-w-[280px] sm:max-w-[320px] max-h-[60vh]"
                     }`}
                     onClick={() => setIsImageExpanded(!isImageExpanded)}
                     onError={() => setImageError(true)}
