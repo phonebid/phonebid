@@ -1,7 +1,6 @@
 package com.phonebid.app.phone.service;
 
 import com.phonebid.app.common.exception.CustomException;
-import com.phonebid.app.common.errorcode.PhoneErrorCode;
 import com.phonebid.app.phone.domain.Brand;
 import com.phonebid.app.phone.domain.PhoneModel;
 import com.phonebid.app.phone.domain.PhoneOption.OptionType;
@@ -10,7 +9,9 @@ import com.phonebid.app.phone.dto.request.PhoneModelCreateRequestDto.OptionItem;
 import com.phonebid.app.phone.dto.request.PhoneModelUpdateRequestDto;
 import com.phonebid.app.phone.dto.response.PhoneModelResponseDto;
 import com.phonebid.app.phone.repository.PhoneModelRepository;
+import com.phonebid.app.phone.repository.PhoneModelImageRepository;
 import com.phonebid.app.phone.repository.PhoneOptionRepository;
+import com.phonebid.app.s3.service.S3Service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,12 @@ class PhoneModelServiceTest {
 
     @Mock
     private PhoneOptionRepository phoneOptionRepository;
+
+    @Mock
+    private PhoneModelImageRepository phoneModelImageRepository;
+
+    @Mock
+    private S3Service s3Service;
 
     @InjectMocks
     private PhoneModelService phoneModelService;
@@ -70,7 +77,6 @@ class PhoneModelServiceTest {
 
         // 업데이트 요청
         validUpdateRequest = new PhoneModelUpdateRequestDto(
-            modelId,
             Brand.SAMSUNG,
             "Galaxy S24",
             "SM-S921",
@@ -153,6 +159,8 @@ class PhoneModelServiceTest {
         // given
         List<PhoneModel> models = Arrays.asList(savedModel);
         when(phoneModelRepository.findAll()).thenReturn(models);
+        when(phoneModelImageRepository.findByPhoneModelIdInOrderByDisplayOrder(anyList()))
+            .thenReturn(Collections.emptyList());
 
         // when
         List<PhoneModelResponseDto> result = phoneModelService.getPhoneModels();
@@ -161,6 +169,7 @@ class PhoneModelServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getModel()).isEqualTo("iPhone 16");
         verify(phoneModelRepository, times(1)).findAll();
+        verify(phoneModelImageRepository, times(1)).findByPhoneModelIdInOrderByDisplayOrder(anyList());
     }
 
     @Test
@@ -180,6 +189,8 @@ class PhoneModelServiceTest {
         // given
         when(phoneModelRepository.findById(modelId))
             .thenReturn(Optional.of(savedModel));
+        when(phoneModelImageRepository.findByPhoneModelIdOrderByDisplayOrder(modelId))
+            .thenReturn(Collections.emptyList());
 
         // when
         PhoneModelResponseDto result = phoneModelService.getPhoneModel(modelId);
@@ -188,6 +199,7 @@ class PhoneModelServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getModel()).isEqualTo("iPhone 16");
         verify(phoneModelRepository, times(1)).findById(modelId);
+        verify(phoneModelImageRepository, times(1)).findByPhoneModelIdOrderByDisplayOrder(modelId);
     }
 
     @Test
@@ -214,7 +226,7 @@ class PhoneModelServiceTest {
             .thenReturn(savedModel);
 
         // when
-        PhoneModelResponseDto result = phoneModelService.updatePhoneModel(validUpdateRequest);
+        PhoneModelResponseDto result = phoneModelService.updatePhoneModel(modelId, validUpdateRequest);
 
         // then
         assertThat(result).isNotNull();
@@ -229,7 +241,7 @@ class PhoneModelServiceTest {
             .thenReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> phoneModelService.updatePhoneModel(validUpdateRequest))
+        assertThatThrownBy(() -> phoneModelService.updatePhoneModel(modelId, validUpdateRequest))
             .isInstanceOf(CustomException.class);
     }
 }
