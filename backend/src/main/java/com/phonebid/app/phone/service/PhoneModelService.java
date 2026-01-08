@@ -18,15 +18,19 @@ import com.phonebid.app.phone.dto.request.PhoneModelCreateRequestDto.OptionItem;
 import com.phonebid.app.phone.dto.request.PhoneModelUpdateRequestDto;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.common.errorcode.PhoneErrorCode;
+import com.phonebid.app.common.errorcode.MemberErrorCode;
 import com.phonebid.app.phone.dto.response.PhoneModelResponseDto;
 import com.phonebid.app.phone.domain.PhoneModel;
 import com.phonebid.app.phone.domain.Brand;
 import com.phonebid.app.phone.domain.PhoneOption;
 import com.phonebid.app.phone.domain.PhoneModelImage;
 import com.phonebid.app.phone.repository.PhoneOptionRepository;
+import com.phonebid.app.s3.service.S3Service;
+import lombok.extern.slf4j.Slf4j;
 import java.util.stream.Collectors;
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PhoneModelService {
@@ -34,6 +38,7 @@ public class PhoneModelService {
     private final PhoneModelRepository phoneModelRepository;
     private final PhoneOptionRepository phoneOptionRepository;
     private final PhoneModelImageRepository phoneModelImageRepository;
+    private final S3Service s3Service;
 
     /**
      * 휴대폰 모델 목록 조회
@@ -148,11 +153,40 @@ public class PhoneModelService {
     }
 
     
+    /**
+     * 휴대폰 모델 삭제
+     * 해당 모델의 모든 이미지를 S3에서 삭제한 후 DB에서도 삭제합니다.
+     */
     @Transactional
     public void deletePhoneModel(UUID id) {
         PhoneModel model = phoneModelRepository.findById(id)
             .orElseThrow(() -> new CustomException(PhoneErrorCode.PHONE_MODEL_NOT_FOUND));
+        
+        // 해당 모델의 모든 이미지 조회
+        List<PhoneModelImage> images = phoneModelImageRepository.findByPhoneModelIdOrderByDisplayOrder(id);
+        
+        // S3에서 이미지 파일 삭제
+        for (PhoneModelImage image : images) {
+            try {
+                String imageUrl = image.getImageUrl();
+                if (imageUrl != null && !imageUrl.trim().isEmpty()) {
+                    s3Service.deleteFileByUrl(imageUrl);
+                    log.info("휴대폰 모델 이미지 S3 삭제 완료: modelId={}, imageUrl={}", id, imageUrl);
+                }
+            } catch (Exception e) {
+                log.error("휴대폰 모델 이미지 S3 삭제 실패: modelId={}, imageUrl={}", id, image.getImageUrl(), e);
+                throw new CustomException(MemberErrorCode.FILE_DELETE_FAILED);
+            }
+        }
+        
+        // DB에서 이미지 삭제
+        if (!images.isEmpty()) {
+            phoneModelImageRepository.deleteAll(images);
+        }
+        
+        // DB에서 모델 삭제
         phoneModelRepository.delete(model);
+        log.info("휴대폰 모델 삭제 완료: modelId={}, modelName={}", id, model.getFullModelName());
     }
     
     public PhoneModelResponseDto getPhoneModel(UUID id) {
