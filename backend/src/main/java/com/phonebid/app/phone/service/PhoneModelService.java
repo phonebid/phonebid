@@ -18,7 +18,6 @@ import com.phonebid.app.phone.dto.request.PhoneModelCreateRequestDto.OptionItem;
 import com.phonebid.app.phone.dto.request.PhoneModelUpdateRequestDto;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.common.errorcode.PhoneErrorCode;
-import com.phonebid.app.common.errorcode.MemberErrorCode;
 import com.phonebid.app.phone.dto.response.PhoneModelResponseDto;
 import com.phonebid.app.phone.domain.PhoneModel;
 import com.phonebid.app.phone.domain.Brand;
@@ -173,9 +172,16 @@ public class PhoneModelService {
                     s3Service.deleteFileByUrl(imageUrl);
                     log.info("휴대폰 모델 이미지 S3 삭제 완료: modelId={}, imageUrl={}", id, imageUrl);
                 }
-            } catch (Exception e) {
-                log.error("휴대폰 모델 이미지 S3 삭제 실패: modelId={}, imageUrl={}", id, image.getImageUrl(), e);
-                throw new CustomException(MemberErrorCode.FILE_DELETE_FAILED);
+            } catch (CustomException e) {
+                // S3Service에서 발생한 CustomException의 원인 예외를 로그에 기록
+                Throwable cause = e.getCause();
+                if (cause != null) {
+                    log.error("휴대폰 모델 이미지 S3 삭제 실패: modelId={}, imageUrl={}", id, image.getImageUrl(), cause);
+                } else {
+                    log.error("휴대폰 모델 이미지 S3 삭제 실패: modelId={}, imageUrl={}, errorCode={}, message={}", 
+                            id, image.getImageUrl(), e.getErrorCode(), e.getMessage(), e);
+                }
+                throw new CustomException(PhoneErrorCode.IMAGE_DELETE_FAILED);
             }
         }
         
