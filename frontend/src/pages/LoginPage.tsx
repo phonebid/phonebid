@@ -165,6 +165,7 @@ const LoginPage = () => {
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
+                    aria-hidden="true"
                   >
                     <path
                       strokeLinecap="round"
@@ -200,6 +201,7 @@ const LoginPage = () => {
                     <button
                       onClick={() => setShowOAuthError(false)}
                       className="text-xs text-yellow-600 hover:text-yellow-800 mt-2 underline"
+                      aria-label="소셜 로그인 안내 닫기"
                     >
                       닫기
                     </button>
