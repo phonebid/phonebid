@@ -11,7 +11,7 @@ import com.phonebid.app.member.domain.User;
 import com.phonebid.app.member.domain.Role;
 import com.phonebid.app.member.dto.request.SellerRegisterRequestDto;
 import com.phonebid.app.member.dto.request.SellerProfileUpdateRequestDto;
-import com.phonebid.app.member.dto.request.SignupRequestDto;
+import com.phonebid.app.member.dto.request.SellerUserInfoDto;
 import com.phonebid.app.member.dto.response.SellerProfileResponseDto;
 import com.phonebid.app.member.repository.SellerDocumentRepository;
 import com.phonebid.app.member.repository.SellerRepository;
@@ -48,7 +48,7 @@ public class SellerService {
      */
     @Transactional
     public void registerSeller(SellerRegisterRequestDto requestDto) {
-        SignupRequestDto userInfo = requestDto.getUserInfo();
+        SellerUserInfoDto userInfo = requestDto.getUserInfo();
         
         // 1. User 생성
         // 아이디 중복 확인
