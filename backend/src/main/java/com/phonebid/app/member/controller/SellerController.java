@@ -25,14 +25,13 @@ public class SellerController {
     private final SellerService sellerService;
 
     /**
-     * 판매자 신청(등록)
+     * 판매자 신청(등록) - 회원가입 포함
+     * 인증 없이 접근 가능 (회원가입 단계이므로)
      */
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<Void>> registerSeller(
-            @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @Valid @RequestBody SellerRegisterRequestDto requestDto) {
+    public ResponseEntity<ApiResponse<Void>> registerSeller(@Valid @RequestBody SellerRegisterRequestDto requestDto) {
         
-        sellerService.registerSeller(userDetails.getUsername(), requestDto);
+        sellerService.registerSeller(requestDto);
         
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(HttpStatus.CREATED, "판매자 신청이 성공적으로 등록되었습니다.", null));
@@ -42,8 +41,7 @@ public class SellerController {
      * 판매자 프로필 조회
      */
     @GetMapping("/profile")
-    public ResponseEntity<ApiResponse<SellerProfileResponseDto>> getSellerProfile(
-            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+    public ResponseEntity<ApiResponse<SellerProfileResponseDto>> getSellerProfile(@AuthenticationPrincipal UserDetailsImpl userDetails) {
         
         SellerProfileResponseDto responseDto = sellerService.getSellerProfile(userDetails.getUsername());
         
@@ -55,9 +53,8 @@ public class SellerController {
      * 판매자 프로필 수정
      */
     @PutMapping("/profile")
-    public ResponseEntity<ApiResponse<Void>> updateSellerProfile(
-            @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @Valid @RequestBody SellerProfileUpdateRequestDto requestDto) {
+    public ResponseEntity<ApiResponse<Void>> updateSellerProfile(@AuthenticationPrincipal UserDetailsImpl userDetails,
+                                                                 @Valid @RequestBody SellerProfileUpdateRequestDto requestDto) {
         
         sellerService.updateSellerProfile(userDetails.getUsername(), requestDto);
         

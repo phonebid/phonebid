@@ -1,19 +1,27 @@
 package com.phonebid.app.member.service;
 
 import com.phonebid.app.common.domain.Address;
+import com.phonebid.app.common.errorcode.CommonErrorCode;
 import com.phonebid.app.common.errorcode.MemberErrorCode;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.member.domain.Seller;
+import com.phonebid.app.member.domain.SellerDocument;
+import com.phonebid.app.member.domain.DocumentType;
 import com.phonebid.app.member.domain.User;
 import com.phonebid.app.member.domain.Role;
-import com.phonebid.app.member.domain.ApprovalStatus;
 import com.phonebid.app.member.dto.request.SellerRegisterRequestDto;
 import com.phonebid.app.member.dto.request.SellerProfileUpdateRequestDto;
+import com.phonebid.app.member.dto.request.SignupRequestDto;
 import com.phonebid.app.member.dto.response.SellerProfileResponseDto;
+import com.phonebid.app.member.repository.SellerDocumentRepository;
 import com.phonebid.app.member.repository.SellerRepository;
 import com.phonebid.app.member.repository.UserRepository;
+import com.phonebid.app.mypage.domain.Account;
+import com.phonebid.app.mypage.domain.Bank;
+import com.phonebid.app.mypage.repository.AccountRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,19 +37,31 @@ public class SellerService {
 
     private final SellerRepository sellerRepository;
     private final UserRepository userRepository;
+    private final AccountRepository accountRepository;
+    private final SellerDocumentRepository sellerDocumentRepository;
+    private final PasswordEncoder passwordEncoder;
 
     /**
-     * 판매자 등록
+     * 판매자 등록 (회원가입 포함)
      */
     @Transactional
-    public void registerSeller(String username, SellerRegisterRequestDto requestDto) {
-        // 사용자 존재 여부 확인
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new CustomException(MemberErrorCode.USER_NOT_FOUND));
+    public void registerSeller(SellerRegisterRequestDto requestDto) {
+        SignupRequestDto userInfo = requestDto.getUserInfo();
+        
+        // 1. User 생성
+        // 아이디 중복 확인
+        if (userRepository.findByUsername(userInfo.getUsername()).isPresent()) {
+            throw new CustomException(CommonErrorCode.DUPLICATE_USERNAME);
+        }
 
-        // 이미 판매자로 등록된 사용자인지 확인
-        if (sellerRepository.existsByUsername(username)) {
-            throw new CustomException(MemberErrorCode.SELLER_ALREADY_EXISTS);
+        // 이메일 중복 확인
+        if (userRepository.findByEmail(requestDto.getEmail()).isPresent()) {
+            throw new CustomException(CommonErrorCode.DUPLICATE_EMAIL);
+        }
+
+        // 닉네임 중복 확인
+        if (userRepository.findByNickname(userInfo.getNickname()).isPresent()) {
+            throw new CustomException(CommonErrorCode.DUPLICATE_NICKNAME);
         }
 
         // 사업자등록번호 중복 확인
@@ -49,21 +69,67 @@ public class SellerService {
             throw new CustomException(MemberErrorCode.BUSINESS_NUMBER_ALREADY_EXISTS);
         }
 
-        // 사용자 역할을 판매자로 변경하고 저장
-        user.updateRole(Role.SELLER);
-        userRepository.save(user);
+        // User 생성
+        String encodedPassword = passwordEncoder.encode(userInfo.getPassword());
+        User user = User.builder()
+                .username(userInfo.getUsername())
+                .password(encodedPassword)
+                .email(requestDto.getEmail())
+                .name(userInfo.getName())
+                .nickname(userInfo.getNickname())
+                .phone(requestDto.getRepresentativePhone().replace("-", "")) // 하이픈 제거
+                .role(Role.SELLER)
+                .build();
+        user = userRepository.save(user);
 
-        // 판매자 엔티티 생성 (주소는 null로 설정)
+        // 2. Seller 생성
+        Address businessAddress = requestDto.getBusinessAddress().toEntity();
+        Address storeAddress = requestDto.getStoreAddress().toEntity();
+        
         Seller seller = Seller.builder()
                 .user(user)
                 .businessNumber(requestDto.getBusinessNumber())
                 .storeName(requestDto.getStoreName())
-                .storeAddress(null) // 주소는 별도 API로 관리
+                .storeAddress(storeAddress)
+                .isAgent(requestDto.getIsAgent())
+                .representativeName(requestDto.getRepresentativeName())
+                .businessAddress(businessAddress)
+                .consentNumber(requestDto.getConsentNumber())
+                .customerServicePhone(requestDto.getCustomerServicePhone())
                 .build();
+        seller = sellerRepository.save(seller);
 
-        // 판매자 저장
-        sellerRepository.save(seller);
-    
+        // 3. Account 생성 (정산 계좌)
+        Bank bank = requestDto.getSettlementAccount().getBank();
+        String accountNumber = requestDto.getSettlementAccount().getAccountNumber().trim();
+        String accountHolderName = requestDto.getSettlementAccount().getAccountHolderName().trim();
+        
+        Account account = Account.builder()
+                .user(user)
+                .bank(bank)
+                .accountNumber(accountNumber)
+                .accountHolderName(accountHolderName)
+                .build();
+        accountRepository.save(account);
+
+        // 4. SellerDocument 생성 (사업자등록증)
+        SellerDocument businessLicense = SellerDocument.builder()
+                .seller(seller)
+                .type(DocumentType.BUSINESS_LICENSE)
+                .fileUrl(requestDto.getBusinessLicenseFileUrl())
+                .build();
+        sellerDocumentRepository.save(businessLicense);
+
+        // 5. SellerDocument 생성 (사전승낙서 - 대리점이 아닌 경우만)
+        if (!requestDto.getIsAgent() && requestDto.getConsentFormFileUrl() != null 
+                && !requestDto.getConsentFormFileUrl().trim().isEmpty()) {
+            SellerDocument consentForm = SellerDocument.builder()
+                    .seller(seller)
+                    .type(DocumentType.CONSENT_FORM)
+                    .fileUrl(requestDto.getConsentFormFileUrl())
+                    .build();
+            sellerDocumentRepository.save(consentForm);
+        }
     }
 
     /**
