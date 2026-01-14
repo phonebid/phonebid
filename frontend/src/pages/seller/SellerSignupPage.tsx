@@ -376,9 +376,9 @@ const SellerSignupPage = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col bg-white">
+    <div className="min-h-screen w-full flex flex-col bg-gradient-to-b from-sky-50 via-sky-50/50 to-white">
       {/* 헤더 */}
-      <header className="w-full px-6 py-4 flex items-center justify-between border-b border-gray-200">
+      <header className="w-full px-6 py-4 flex items-center justify-between border-b border-gray-200 bg-white">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-600 rounded flex items-center justify-center">
             <svg
@@ -419,39 +419,73 @@ const SellerSignupPage = () => {
         </nav>
       </header>
 
-      {/* 메인 콘텐츠 */}
-      <div className="flex-1 flex flex-col lg:flex-row">
-        {/* 좌측: 회원가입 폼 */}
-        <div className="lg:w-2/3 p-8 lg:p-12 overflow-y-auto">
-          <div className="max-w-3xl mx-auto">
-            {/* 진행 표시 */}
-            <div className="flex items-center gap-4 mb-8">
+      {/* 진행 표시 바 */}
+      <div className="w-full bg-white border-b border-gray-200 py-6">
+        <div className="max-w-7xl mx-auto px-8 lg:px-12">
+          <div className="flex items-center gap-20 max-w-md">
+            {/* 1단계 */}
+            <div className="flex items-center gap-3">
               <div
-                className={`flex-1 h-1 rounded ${
-                  step >= 1 ? "bg-blue-600" : "bg-gray-300"
+                className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  step === 1 ? "bg-blue-600" : "bg-gray-300"
                 }`}
-              />
-              <div className="text-sm font-medium">
+              >
                 <span
-                  className={step === 1 ? "text-blue-600" : "text-gray-400"}
+                  className={`text-sm font-bold ${
+                    step === 1 ? "text-white" : "text-gray-600"
+                  }`}
                 >
-                  1 사업자 정보 입력
+                  1
                 </span>
               </div>
-              <div className="flex-1 h-1 rounded bg-gray-300" />
-              <div className="text-sm font-medium">
-                <span
-                  className={step === 2 ? "text-blue-600" : "text-gray-400"}
-                >
-                  2 회원 정보 입력
-                </span>
-              </div>
-              <div
-                className={`flex-1 h-1 rounded ${
-                  step >= 2 ? "bg-blue-600" : "bg-gray-300"
+              <span
+                className={`text-sm font-medium whitespace-nowrap ${
+                  step === 1 ? "text-blue-600" : "text-gray-600"
                 }`}
-              />
+              >
+                사업자 정보 입력
+              </span>
             </div>
+            
+            {/* 연결선 */}
+            <div
+              className={`flex-1 h-1 rounded-full min-w-[160px] ${
+                step >= 2 ? "bg-blue-600" : "bg-gray-300"
+              }`}
+            />
+            
+            {/* 2단계 */}
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  step === 2 ? "bg-blue-600" : "bg-gray-300"
+                }`}
+              >
+                <span
+                  className={`text-sm font-bold ${
+                    step === 2 ? "text-white" : "text-gray-600"
+                  }`}
+                >
+                  2
+                </span>
+              </div>
+              <span
+                className={`text-sm font-medium whitespace-nowrap ${
+                  step === 2 ? "text-blue-600" : "text-gray-600"
+                }`}
+              >
+                회원 정보 입력
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 메인 콘텐츠 */}
+      <div className="flex-1 flex flex-col lg:flex-row bg-gray-50">
+        {/* 좌측: 회원가입 폼 */}
+        <div className="lg:w-3/5 p-8 lg:p-12 overflow-y-auto bg-white lg:pr-2">
+          <div className="max-w-3xl mx-auto">
 
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
               판매자 회원가입
@@ -463,7 +497,7 @@ const SellerSignupPage = () => {
             {step === 1 ? (
               <div className="space-y-8">
                 {/* 대리점 여부 */}
-                <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
                   <label className="flex items-center gap-2">
                     <input
                       type="checkbox"
@@ -481,74 +515,113 @@ const SellerSignupPage = () => {
                     </span>
                   </label>
                   <p className="text-xs text-gray-600 mt-2 ml-6">
-                    대리점일 경우 사전승낙서가 필요하지 않습니다
+                    대리점의 경우 사전승낙서가 필요하지 않습니다
                   </p>
                 </div>
 
                 {/* 사업자 정보 */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    사업자 정보
-                  </h3>
+                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
+                    <svg
+                      className="w-5 h-5 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                      />
+                    </svg>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      사업자 정보
+                    </h3>
+                  </div>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         사업자 등록번호 <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        type="text"
-                        placeholder="123-45-67890"
-                        value={step1Data.businessNumber}
-                        onChange={(e) =>
-                          setStep1Data((prev) => ({
-                            ...prev,
-                            businessNumber: formatBusinessNumber(
-                              e.target.value
-                            ),
-                          }))
-                        }
-                        className={`w-full px-3 py-2 border rounded-md ${
-                          errors.businessNumber
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        }`}
-                      />
+                      <div className="flex items-start gap-2">
+                        <input
+                          type="text"
+                          placeholder="123-45-67890"
+                          value={step1Data.businessNumber}
+                          onChange={(e) =>
+                            setStep1Data((prev) => ({
+                              ...prev,
+                              businessNumber: formatBusinessNumber(
+                                e.target.value
+                              ),
+                            }))
+                          }
+                          className={`flex-1 px-3 py-2 border rounded-md ${
+                            errors.businessNumber
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
+                        />
+                        <div className="flex flex-col">
+                          <input
+                            type="file"
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            onChange={(e) =>
+                              handleFileChange(e, "businessLicense")
+                            }
+                            className="hidden"
+                            id="businessLicense"
+                          />
+                          <label
+                            htmlFor="businessLicense"
+                            className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-200 text-sm text-gray-700 flex items-center gap-2 whitespace-nowrap"
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                              />
+                            </svg>
+                            파일 첨부
+                          </label>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2 mt-1">
+                        <svg
+                          className="w-4 h-4 text-gray-500 mt-0.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        <p className="text-xs text-gray-500">
+                          사업자등록증을 첨부해주세요 (PDF, JPG, JPEG, PNG, 최대 10MB)
+                        </p>
+                      </div>
+                      {step1Data.businessLicenseFile && (
+                        <p className="mt-1 text-sm text-gray-600">
+                          {step1Data.businessLicenseFile?.name}
+                        </p>
+                      )}
                       {errors.businessNumber && (
                         <p className="mt-1 text-sm text-red-600">
                           {errors.businessNumber}
                         </p>
                       )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        사업자등록증 첨부 <span className="text-red-500">*</span>
-                      </label>
-                      <div className="flex items-center gap-4">
-                        <input
-                          type="file"
-                          accept=".pdf,.jpg,.jpeg,.png"
-                          onChange={(e) =>
-                            handleFileChange(e, "businessLicense")
-                          }
-                          className="hidden"
-                          id="businessLicense"
-                        />
-                        <label
-                          htmlFor="businessLicense"
-                          className="px-4 py-2 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50"
-                        >
-                          파일 첨부
-                        </label>
-                        {step1Data.businessLicenseFile && (
-                          <span className="text-sm text-gray-600">
-                            {step1Data.businessLicenseFile.name}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        (PDF, JPG, PNG)
-                      </p>
                       {errors.businessLicenseFile && (
                         <p className="mt-1 text-sm text-red-600">
                           {errors.businessLicenseFile}
@@ -558,7 +631,7 @@ const SellerSignupPage = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        상호명 (예정명) <span className="text-red-500">*</span>
+                        상호명 (매장명) <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -658,10 +731,25 @@ const SellerSignupPage = () => {
 
                 {/* 사전승낙서 정보 */}
                 {!step1Data.isAgent && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                      사전승낙서 정보
-                    </h3>
+                  <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                    <div className="flex items-center gap-2 mb-4">
+                      <svg
+                        className="w-5 h-5 text-blue-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        사전승낙서 정보
+                      </h3>
+                    </div>
                     <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -788,13 +876,13 @@ const SellerSignupPage = () => {
                               클릭하여 파일 선택
                             </p>
                             <p className="text-xs text-gray-500 mt-1">
-                              JPG, PNG, PDF (최대 10MB)
+                              PDF, JPG, JPEG, PNG (최대 10MB)
                             </p>
                           </label>
                         </div>
                         {step1Data.consentFormFile && (
                           <p className="mt-2 text-sm text-gray-600">
-                            {step1Data.consentFormFile.name}
+                            {step1Data.consentFormFile?.name}
                           </p>
                         )}
                         {errors.consentFormFile && (
@@ -808,10 +896,25 @@ const SellerSignupPage = () => {
                 )}
 
                 {/* 연락처 정보 */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    연락처 정보
-                  </h3>
+                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
+                    <svg
+                      className="w-5 h-5 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                      />
+                    </svg>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      연락처 정보
+                    </h3>
+                  </div>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -893,10 +996,25 @@ const SellerSignupPage = () => {
                 </div>
 
                 {/* 정산 계좌 정보 */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    정산 계좌 정보
-                  </h3>
+                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
+                    <svg
+                      className="w-5 h-5 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                      />
+                    </svg>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      정산 계좌 정보
+                    </h3>
+                  </div>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1211,14 +1329,14 @@ const SellerSignupPage = () => {
         </div>
 
         {/* 우측: 정보 섹션 */}
-        <div className="lg:w-1/3 bg-gray-50 p-8 lg:p-12">
-          <div className="max-w-md mx-auto space-y-8">
+        <div className="lg:w-2/5 bg-gray-50 p-8 lg:p-12 lg:pl-2">
+          <div className="max-w-md mx-auto space-y-6">
             {/* 판매자 가입 혜택 */}
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+            <div className="shadow-lg">
+              <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg p-6 mb-4">
+                <div className="flex items-center gap-2">
                   <svg
-                    className="w-5 h-5 text-white"
+                    className="w-6 h-6 text-white"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -1230,31 +1348,43 @@ const SellerSignupPage = () => {
                       d="M13 10V3L4 14h7v7l9-11h-7z"
                     />
                   </svg>
+                  <h3 className="text-lg font-semibold text-white">
+                    판매자 가입 혜택
+                  </h3>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  판매자 가입 혜택
-                </h3>
               </div>
-              <div className="space-y-4">
+              <div className="bg-white rounded-lg p-6 shadow-sm space-y-5">
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-blue-600 text-xs font-bold">%</span>
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-blue-600 text-lg font-bold">%</span>
                   </div>
                   <div>
-                    <h4 className="text-sm font-medium text-gray-900">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-1">
                       낮은 수수료
                     </h4>
                     <p className="text-xs text-gray-600">
-                      판매금액의 5% 수수료로 부담
+                      판매금액의 5%만 수수료로 부과
                     </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-green-600 text-xs font-bold">✓</span>
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg
+                      className="w-5 h-5 text-green-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
                   </div>
                   <div>
-                    <h4 className="text-sm font-medium text-gray-900">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-1">
                       빠른 정산
                     </h4>
                     <p className="text-xs text-gray-600">
@@ -1263,11 +1393,23 @@ const SellerSignupPage = () => {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-purple-600 text-xs font-bold">📊</span>
+                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg
+                      className="w-5 h-5 text-purple-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                      />
+                    </svg>
                   </div>
                   <div>
-                    <h4 className="text-sm font-medium text-gray-900">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-1">
                       판매 분석
                     </h4>
                     <p className="text-xs text-gray-600">
@@ -1276,11 +1418,23 @@ const SellerSignupPage = () => {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-orange-600 text-xs font-bold">🎧</span>
+                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg
+                      className="w-5 h-5 text-orange-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"
+                      />
+                    </svg>
                   </div>
                   <div>
-                    <h4 className="text-sm font-medium text-gray-900">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-1">
                       전담 지원
                     </h4>
                     <p className="text-xs text-gray-600">
@@ -1292,73 +1446,103 @@ const SellerSignupPage = () => {
             </div>
 
             {/* 가입 절차 */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                가입 절차
-              </h3>
+            <div className="bg-white rounded-lg p-6 shadow-lg">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <svg
+                    className="w-5 h-5 text-blue-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  가입 절차
+                </h3>
+              </div>
               <div className="space-y-3">
-                <div
-                  className={`p-3 rounded-lg ${
-                    step === 1 ? "bg-blue-50 border-2 border-blue-600" : "bg-white border border-gray-200"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-blue-600">1</span>
-                    <span className="text-sm font-medium text-gray-900">
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      step === 1
+                        ? "bg-blue-600"
+                        : "bg-gray-200"
+                    }`}
+                  >
+                    <span
+                      className={`text-sm font-bold ${
+                        step === 1 ? "text-white" : "text-gray-600"
+                      }`}
+                    >
+                      1
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-0.5">
                       정보 입력
-                    </span>
+                    </h4>
+                    <p className="text-xs text-gray-600">
+                      사업자 정보 및 계좌 입력
+                    </p>
                   </div>
-                  <p className="text-xs text-gray-600 mt-1 ml-6">
-                    사업자 정보 및 계좌 입력
-                  </p>
                 </div>
-                <div className="p-3 rounded-lg bg-white border border-gray-200">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-gray-400">2</span>
-                    <span className="text-sm font-medium text-gray-900">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-bold text-gray-600">2</span>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-0.5">
                       서류 심사
-                    </span>
+                    </h4>
+                    <p className="text-xs text-gray-600">
+                      1-2 영업일 소요
+                    </p>
                   </div>
-                  <p className="text-xs text-gray-600 mt-1 ml-6">
-                    1-2 영업일 소요
-                  </p>
                 </div>
-                <div className="p-3 rounded-lg bg-white border border-gray-200">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-gray-400">3</span>
-                    <span className="text-sm font-medium text-gray-900">
-                      승인 완료
-                    </span>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-bold text-gray-600">3</span>
                   </div>
-                  <p className="text-xs text-gray-600 mt-1 ml-6">
-                    판매 시작
-                  </p>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-0.5">
+                      승인 완료
+                    </h4>
+                    <p className="text-xs text-gray-600">
+                      판매 시작
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="border-t border-gray-200 mt-4 pt-4">
+                <div className="flex items-center gap-3">
+                  <svg
+                    className="w-6 h-6 text-blue-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                    />
+                  </svg>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">가입 문의</p>
+                    <p className="text-base font-bold text-gray-900">1588-1234</p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* 가입 문의 */}
-            <div className="bg-white p-4 rounded-lg border border-gray-200">
-              <div className="flex items-center gap-3">
-                <svg
-                  className="w-6 h-6 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                  />
-                </svg>
-                <div>
-                  <p className="text-sm font-medium text-gray-900">가입 문의</p>
-                  <p className="text-lg font-bold text-blue-600">1588-1234</p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
