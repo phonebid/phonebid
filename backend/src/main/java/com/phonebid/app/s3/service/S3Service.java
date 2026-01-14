@@ -98,36 +98,64 @@ public class S3Service {
      * @return 복사된 파일의 URL
      */
     public String copyFile(String sourceFileUrl, String destinationFileName) {
+        Logger logger = LoggerFactory.getLogger(S3Service.class);
+        
         if (sourceFileUrl == null || sourceFileUrl.trim().isEmpty()) {
             throw new CustomException(MemberErrorCode.MISSING_FILE_URL);
         }
         
         try {
-            // 원본 파일의 key 추출
-            AmazonS3URI sourceS3Uri = new AmazonS3URI(sourceFileUrl);
-            String sourceBucket = sourceS3Uri.getBucket();
-            String sourceKey = sourceS3Uri.getKey();
+            String sourceKey;
             
-            if (sourceBucket == null || sourceKey == null || sourceKey.trim().isEmpty()) {
-                throw new CustomException(MemberErrorCode.INVALID_FILE_NAME);
+            // URL에서 key 추출 시도
+            try {
+                AmazonS3URI sourceS3Uri = new AmazonS3URI(sourceFileUrl);
+                String sourceBucket = sourceS3Uri.getBucket();
+                sourceKey = sourceS3Uri.getKey();
+                
+                if (sourceBucket == null || sourceKey == null || sourceKey.trim().isEmpty()) {
+                    throw new CustomException(MemberErrorCode.INVALID_FILE_NAME);
+                }
+                
+                if (!bucket.equals(sourceBucket)) {
+                    throw new CustomException(MemberErrorCode.FILE_DELETE_FAILED);
+                }
+            } catch (Exception e) {
+                // AmazonS3URI 파싱 실패 시 직접 URL 파싱
+                // https://bucket.s3.region.amazonaws.com/key 형식 파싱
+                String urlPattern = "https?://[^/]+/(.+)";
+                if (sourceFileUrl.matches(urlPattern)) {
+                    sourceKey = sourceFileUrl.replaceFirst("https?://[^/]+/", "");
+                } else {
+                    logger.error("URL 형식을 파싱할 수 없습니다: {}", sourceFileUrl);
+                    throw new CustomException(MemberErrorCode.INVALID_FILE_NAME);
+                }
             }
             
-            if (!bucket.equals(sourceBucket)) {
-                throw new CustomException(MemberErrorCode.FILE_DELETE_FAILED);
+            // URL 인코딩된 key를 디코딩 (이미 디코딩된 경우를 대비해 try-catch)
+            String decodedSourceKey;
+            try {
+                decodedSourceKey = URLDecoder.decode(sourceKey, StandardCharsets.UTF_8);
+            } catch (Exception e) {
+                // 이미 디코딩된 경우 원본 사용
+                decodedSourceKey = sourceKey;
             }
-            
-            // URL 인코딩된 key를 디코딩
-            String decodedSourceKey = URLDecoder.decode(sourceKey, StandardCharsets.UTF_8);
             
             // 파일 복사
             s3Client.copyObject(bucket, decodedSourceKey, bucket, destinationFileName);
             
             // 복사된 파일의 URL 반환
-            return s3Client.getUrl(bucket, destinationFileName).toString();
+            String resultUrl = s3Client.getUrl(bucket, destinationFileName).toString();
+            
+            return resultUrl;
             
         } catch (CustomException e) {
+            logger.error("S3 파일 복사 실패 (CustomException): sourceUrl={}, destination={}", 
+                    sourceFileUrl, destinationFileName, e);
             throw e;
         } catch (Exception e) {
+            logger.error("S3 파일 복사 실패: sourceUrl={}, destination={}", 
+                    sourceFileUrl, destinationFileName, e);
             throw new CustomException(MemberErrorCode.FILE_UPLOAD_FAILED);
         }
     }
