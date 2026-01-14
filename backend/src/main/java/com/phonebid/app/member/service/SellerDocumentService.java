@@ -47,6 +47,44 @@ public class SellerDocumentService {
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
 
     /**
+     * 임시 파일 업로드 (회원가입 단계용, 인증 불필요)
+     * S3에만 업로드하고 DB에는 저장하지 않음
+     */
+    public String uploadTempFile(SellerDocumentUploadRequestDto requestDto) {
+        MultipartFile file = requestDto.getFile();
+        DocumentType documentType = requestDto.getDocumentType();
+
+        // 파일 검증
+        validateFile(file);
+
+        try {
+            // 임시 파일명 생성 (UUID 기반)
+            String tempFileName = generateTempFileName(documentType, file.getOriginalFilename());
+            String uploadedFileUrl = s3Service.uploadFile(tempFileName, file);
+            
+            log.info("임시 파일 업로드 완료: documentType={}, fileName={}, url={}", 
+                    documentType, file.getOriginalFilename(), uploadedFileUrl);
+            
+            return uploadedFileUrl;
+        } catch (Exception e) {
+            log.error("임시 파일 업로드 실패: documentType={}, fileName={}", 
+                    documentType, file.getOriginalFilename(), e);
+            throw new CustomException(MemberErrorCode.FILE_UPLOAD_FAILED);
+        }
+    }
+
+    /**
+     * 임시 파일명 생성
+     */
+    private String generateTempFileName(DocumentType documentType, String originalFilename) {
+        String sanitizedFilename = sanitizeFilename(originalFilename);
+        return String.format("temp/seller-documents/%s/%s-%s", 
+                documentType.name().toLowerCase(), 
+                UUID.randomUUID(), 
+                sanitizedFilename);
+    }
+
+    /**
      * 판매자 서류 업로드
      */
     public SellerDocumentUploadResponseDto uploadDocument(String username, SellerDocumentUploadRequestDto requestDto) {

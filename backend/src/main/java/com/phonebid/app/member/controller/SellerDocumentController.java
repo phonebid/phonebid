@@ -31,6 +31,27 @@ public class SellerDocumentController {
     private final SellerDocumentService sellerDocumentService;
 
     /**
+     * 임시 파일 업로드 (회원가입 단계용, 인증 불필요)
+     * POST /api/v1/sellers/documents/temp
+     */
+    @PostMapping(value = "/temp", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<String>> uploadTempFile(
+            @RequestParam("documentType") DocumentType documentType,
+            @RequestParam("file") MultipartFile file) {
+        
+        SellerDocumentUploadRequestDto requestDto = SellerDocumentUploadRequestDto.builder()
+                .documentType(documentType)
+                .file(file)
+                .build();
+
+        String fileUrl = sellerDocumentService.uploadTempFile(requestDto);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(HttpStatus.CREATED, 
+                        "임시 파일 업로드가 성공적으로 완료되었습니다.", fileUrl));
+    }
+
+    /**
      * 판매자 서류 업로드
      * POST /api/v1/sellers/documents
      */
