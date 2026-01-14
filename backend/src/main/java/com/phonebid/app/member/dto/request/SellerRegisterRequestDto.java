@@ -74,5 +74,5 @@ public class SellerRegisterRequestDto {
     // 회원 정보
     @Valid
     @NotNull(message = "회원 정보는 필수입니다")
-    private SignupRequestDto userInfo;
+    private SellerUserInfoDto userInfo;
 } 
