@@ -238,7 +238,7 @@ const SellerLoginPage = () => {
             <p className="text-gray-600 mb-8">판매자 계정으로 로그인하세요</p>
 
             {/* 구매자로 로그인된 경우 안내 메시지 */}
-            {isAuthenticated && user?.role !== "SELLER" && (
+            {isAuthenticated && user && user.role === "CONSUMER" && (
               <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <div className="flex items-start gap-3">
                   <svg
