@@ -5,6 +5,7 @@ import Layout from "components/layout/Layout";
 import LoginPage from "pages/LoginPage";
 import SignupPage from "pages/SignupPage";
 import AuthCallbackPage from "pages/AuthCallbackPage";
+import SellerLoginPage from "pages/seller/SellerLoginPage";
 import ConfettiTestPage from "pages/ConfettiPage";
 import AuctionListPage from "pages/AuctionListPage";
 import WeeklyRankingPage from "pages/WeeklyRankingPage";
@@ -40,6 +41,7 @@ export const AppRouter: React.FC = () => {
       <Routes>
         {/* 전체화면 페이지들 (Layout 없음) */}
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/seller/login" element={<SellerLoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/confetti" element={<ConfettiTestPage />} />
