@@ -39,6 +39,8 @@ export const useAuthStore = create<AuthStore>()(
 
         logout: () => {
           localStorage.removeItem("userData");
+          // persist 스토리지도 정리
+          localStorage.removeItem("auth-storage");
           // 쿠키는 백엔드에서 삭제해야 함 (프론트엔드에서는 HttpOnly 쿠키 접근 불가)
 
           set(
@@ -135,11 +137,17 @@ export const useAuthStore = create<AuthStore>()(
       }),
       {
         name: "auth-storage",
-        partialize: (state) => ({
-          isAuthenticated: state.isAuthenticated,
-          user: state.user,
-          accessToken: state.accessToken,
-        }),
+        partialize: (state) => {
+          // 로그아웃 상태일 때는 저장하지 않음
+          if (!state.isAuthenticated) {
+            return {};
+          }
+          return {
+            isAuthenticated: state.isAuthenticated,
+            user: state.user,
+            accessToken: state.accessToken,
+          };
+        },
       }
     ),
     {
