@@ -47,12 +47,43 @@ public class Seller extends BaseEntity {
     @Embedded
     private Address storeAddress;
 
+    @Column(name = "is_agent", nullable = false)
+    @Comment("대리점 여부")
+    private Boolean isAgent;
+
+    @Column(name = "representative_name", nullable = false)
+    @Comment("대표자명")
+    private String representativeName;
+
+    @Embedded
+    @AttributeOverrides({
+        @AttributeOverride(name = "postalCode", column = @Column(name = "business_postal_code")),
+        @AttributeOverride(name = "address", column = @Column(name = "business_address")),
+        @AttributeOverride(name = "detailAddress", column = @Column(name = "business_detail_address"))
+    })
+    private Address businessAddress;
+
+    @Column(name = "consent_number", nullable = true)
+    @Comment("승낙번호")
+    private String consentNumber;
+
+    @Column(name = "customer_service_phone", nullable = true)
+    @Comment("고객센터 전화번호")
+    private String customerServicePhone;
+
     @Builder
-    public Seller(User user, String businessNumber, String storeName, Address storeAddress) {
+    public Seller(User user, String businessNumber, String storeName, Address storeAddress, 
+                  Boolean isAgent, String representativeName, Address businessAddress, 
+                  String consentNumber, String customerServicePhone) {
         this.user = user;
         this.businessNumber = businessNumber;
         this.storeName = storeName;
         this.storeAddress = storeAddress;
+        this.isAgent = isAgent != null ? isAgent : false;
+        this.representativeName = representativeName;
+        this.businessAddress = businessAddress;
+        this.consentNumber = consentNumber;
+        this.customerServicePhone = customerServicePhone;
         this.approvalStatus = ApprovalStatus.PENDING; // 기본값: 승인 대기
     }
 
