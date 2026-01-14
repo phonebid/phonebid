@@ -19,7 +19,8 @@ public enum PhoneErrorCode implements ErrorCode {
 
     // 휴대폰 모델 이미지 관련 에러
     PHONE_MODEL_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "휴대폰 모델 이미지를 찾을 수 없습니다."),
-    PHONE_MODEL_IMAGE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "휴대폰 모델 이미지는 최대 10개까지 업로드할 수 있습니다.");
+    PHONE_MODEL_IMAGE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "휴대폰 모델 이미지는 최대 10개까지 업로드할 수 있습니다."),
+    IMAGE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 파일 삭제에 실패했습니다.");
 
     private final HttpStatus status;
     private final String message;

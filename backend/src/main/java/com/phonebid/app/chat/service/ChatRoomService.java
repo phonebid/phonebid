@@ -107,16 +107,31 @@ public class ChatRoomService {
         validateParticipantByUserChatRoom(chatRoomId, requesterId);
         
         // 판매자 가게 이름
-        String sellerName = chatRoom.getSeller().getStoreName();
+        String sellerName = Optional.ofNullable(chatRoom.getSeller())
+                .map(Seller::getStoreName)
+                .orElse("");
         
         // 구매자 이름 (닉네임 사용)
-        String consumerName = chatRoom.getConsumer().getNickname();
+        String consumerName = Optional.ofNullable(chatRoom.getConsumer())
+                .map(User::getNickname)
+                .orElse("");
+        
+        // 판매자 프로필 이미지 URL
+        String sellerProfileImageUrl = Optional.ofNullable(chatRoom.getSeller())
+                .map(Seller::getUser)
+                .map(User::getProfileImageUrl)
+                .orElse("");
+        
+        // 구매자 프로필 이미지 URL
+        String consumerProfileImageUrl = Optional.ofNullable(chatRoom.getConsumer())
+                .map(User::getProfileImageUrl)
+                .orElse("");
         
         // 읽지 않은 메시지 수
         long unreadCount = chatMessageRepository.countUnreadMessagesByChatRoomIdAndUserId(
                 chatRoomId, requesterId);
         
-        return ChatRoomResponse.from(chatRoom, sellerName, consumerName, null, null, unreadCount);
+        return ChatRoomResponse.from(chatRoom, sellerName, consumerName, sellerProfileImageUrl, consumerProfileImageUrl, null, null, unreadCount);
     }
 
     /**
@@ -229,10 +244,25 @@ public class ChatRoomService {
             ChatRoom chatRoom = userChatRoom.getChatRoom();
             
             // 판매자 가게 이름
-            String sellerName = chatRoom.getSeller().getStoreName();
+            String sellerName = Optional.ofNullable(chatRoom.getSeller())
+                    .map(Seller::getStoreName)
+                    .orElse("");
             
             // 구매자 이름 (닉네임 사용)
-            String consumerName = chatRoom.getConsumer().getNickname();
+            String consumerName = Optional.ofNullable(chatRoom.getConsumer())
+                    .map(User::getNickname)
+                    .orElse("");
+            
+            // 판매자 프로필 이미지 URL
+            String sellerProfileImageUrl = Optional.ofNullable(chatRoom.getSeller())
+                    .map(Seller::getUser)
+                    .map(User::getProfileImageUrl)
+                    .orElse("");
+            
+            // 구매자 프로필 이미지 URL
+            String consumerProfileImageUrl = Optional.ofNullable(chatRoom.getConsumer())
+                    .map(User::getProfileImageUrl)
+                    .orElse("");
             
             // 마지막 메시지
             Optional<ChatMessage> lastMessageOpt = chatMessageRepository
@@ -255,7 +285,7 @@ public class ChatRoomService {
             // 읽지 않은 메시지 수 (상대방이 보낸 메시지 중 읽지 않은 메시지)
             long unreadCount = chatMessageRepository.countUnreadMessagesByChatRoomIdAndUserId(chatRoom.getId(), userId);
             
-            return ChatRoomResponse.from(chatRoom, sellerName, consumerName, lastMessage, totalPrice, unreadCount);
+            return ChatRoomResponse.from(chatRoom, sellerName, consumerName, sellerProfileImageUrl, consumerProfileImageUrl, lastMessage, totalPrice, unreadCount);
         });
     }
 

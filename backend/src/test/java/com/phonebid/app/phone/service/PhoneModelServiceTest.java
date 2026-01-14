@@ -4,13 +4,16 @@ import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.common.errorcode.PhoneErrorCode;
 import com.phonebid.app.phone.domain.Brand;
 import com.phonebid.app.phone.domain.PhoneModel;
+import com.phonebid.app.phone.domain.PhoneModelImage;
 import com.phonebid.app.phone.domain.PhoneOption.OptionType;
 import com.phonebid.app.phone.dto.request.PhoneModelCreateRequestDto;
 import com.phonebid.app.phone.dto.request.PhoneModelCreateRequestDto.OptionItem;
 import com.phonebid.app.phone.dto.request.PhoneModelUpdateRequestDto;
 import com.phonebid.app.phone.dto.response.PhoneModelResponseDto;
 import com.phonebid.app.phone.repository.PhoneModelRepository;
+import com.phonebid.app.phone.repository.PhoneModelImageRepository;
 import com.phonebid.app.phone.repository.PhoneOptionRepository;
+import com.phonebid.app.s3.service.S3Service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,6 +39,12 @@ class PhoneModelServiceTest {
 
     @Mock
     private PhoneOptionRepository phoneOptionRepository;
+
+    @Mock
+    private PhoneModelImageRepository phoneModelImageRepository;
+
+    @Mock
+    private S3Service s3Service;
 
     @InjectMocks
     private PhoneModelService phoneModelService;
@@ -70,7 +79,6 @@ class PhoneModelServiceTest {
 
         // 업데이트 요청
         validUpdateRequest = new PhoneModelUpdateRequestDto(
-            modelId,
             Brand.SAMSUNG,
             "Galaxy S24",
             "SM-S921",
@@ -153,6 +161,8 @@ class PhoneModelServiceTest {
         // given
         List<PhoneModel> models = Arrays.asList(savedModel);
         when(phoneModelRepository.findAll()).thenReturn(models);
+        when(phoneModelImageRepository.findByPhoneModelIdInOrderByDisplayOrder(anyList()))
+            .thenReturn(Collections.emptyList());
 
         // when
         List<PhoneModelResponseDto> result = phoneModelService.getPhoneModels();
@@ -161,6 +171,7 @@ class PhoneModelServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getModel()).isEqualTo("iPhone 16");
         verify(phoneModelRepository, times(1)).findAll();
+        verify(phoneModelImageRepository, times(1)).findByPhoneModelIdInOrderByDisplayOrder(anyList());
     }
 
     @Test
@@ -180,6 +191,8 @@ class PhoneModelServiceTest {
         // given
         when(phoneModelRepository.findById(modelId))
             .thenReturn(Optional.of(savedModel));
+        when(phoneModelImageRepository.findByPhoneModelIdOrderByDisplayOrder(modelId))
+            .thenReturn(Collections.emptyList());
 
         // when
         PhoneModelResponseDto result = phoneModelService.getPhoneModel(modelId);
@@ -188,6 +201,7 @@ class PhoneModelServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getModel()).isEqualTo("iPhone 16");
         verify(phoneModelRepository, times(1)).findById(modelId);
+        verify(phoneModelImageRepository, times(1)).findByPhoneModelIdOrderByDisplayOrder(modelId);
     }
 
     @Test
@@ -214,7 +228,7 @@ class PhoneModelServiceTest {
             .thenReturn(savedModel);
 
         // when
-        PhoneModelResponseDto result = phoneModelService.updatePhoneModel(validUpdateRequest);
+        PhoneModelResponseDto result = phoneModelService.updatePhoneModel(modelId, validUpdateRequest);
 
         // then
         assertThat(result).isNotNull();
@@ -229,7 +243,124 @@ class PhoneModelServiceTest {
             .thenReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> phoneModelService.updatePhoneModel(validUpdateRequest))
+        assertThatThrownBy(() -> phoneModelService.updatePhoneModel(modelId, validUpdateRequest))
             .isInstanceOf(CustomException.class);
+    }
+
+    @Test
+    @DisplayName("모델 삭제 - 이미지가 있는 경우 성공")
+    void deletePhoneModel_WithImages_Success() {
+        // given
+        String imageUrl1 = "https://s3.amazonaws.com/bucket/image1.jpg";
+        String imageUrl2 = "https://s3.amazonaws.com/bucket/image2.jpg";
+        
+        PhoneModelImage image1 = PhoneModelImage.builder()
+            .phoneModel(savedModel)
+            .imageUrl(imageUrl1)
+            .displayOrder(1)
+            .build();
+        
+        PhoneModelImage image2 = PhoneModelImage.builder()
+            .phoneModel(savedModel)
+            .imageUrl(imageUrl2)
+            .displayOrder(2)
+            .build();
+        
+        List<PhoneModelImage> images = Arrays.asList(image1, image2);
+        
+        when(phoneModelRepository.findById(modelId))
+            .thenReturn(Optional.of(savedModel));
+        when(phoneModelImageRepository.findByPhoneModelIdOrderByDisplayOrder(modelId))
+            .thenReturn(images);
+        doNothing().when(s3Service).deleteFileByUrl(anyString());
+
+        // when
+        phoneModelService.deletePhoneModel(modelId);
+
+        // then
+        verify(phoneModelRepository, times(1)).findById(modelId);
+        verify(phoneModelImageRepository, times(1)).findByPhoneModelIdOrderByDisplayOrder(modelId);
+        verify(s3Service, times(1)).deleteFileByUrl(imageUrl1);
+        verify(s3Service, times(1)).deleteFileByUrl(imageUrl2);
+        verify(phoneModelImageRepository, times(1)).deleteAll(images);
+        verify(phoneModelRepository, times(1)).delete(savedModel);
+    }
+
+    @Test
+    @DisplayName("모델 삭제 - 이미지가 없는 경우 성공")
+    void deletePhoneModel_NoImages_Success() {
+        // given
+        when(phoneModelRepository.findById(modelId))
+            .thenReturn(Optional.of(savedModel));
+        when(phoneModelImageRepository.findByPhoneModelIdOrderByDisplayOrder(modelId))
+            .thenReturn(Collections.emptyList());
+
+        // when
+        phoneModelService.deletePhoneModel(modelId);
+
+        // then
+        verify(phoneModelRepository, times(1)).findById(modelId);
+        verify(phoneModelImageRepository, times(1)).findByPhoneModelIdOrderByDisplayOrder(modelId);
+        verify(s3Service, never()).deleteFileByUrl(anyString());
+        verify(phoneModelImageRepository, never()).deleteAll(anyList());
+        verify(phoneModelRepository, times(1)).delete(savedModel);
+    }
+
+    @Test
+    @DisplayName("모델 삭제 - 모델을 찾을 수 없음 실패")
+    void deletePhoneModel_NotFoundFail() {
+        // given
+        when(phoneModelRepository.findById(modelId))
+            .thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> phoneModelService.deletePhoneModel(modelId))
+            .isInstanceOf(CustomException.class)
+            .satisfies(exception -> {
+                CustomException customException = (CustomException) exception;
+                assertThat(customException.getErrorCode()).isEqualTo(PhoneErrorCode.PHONE_MODEL_NOT_FOUND);
+            });
+        
+        verify(phoneModelRepository, times(1)).findById(modelId);
+        verify(phoneModelImageRepository, never()).findByPhoneModelIdOrderByDisplayOrder(any(UUID.class));
+        verify(s3Service, never()).deleteFileByUrl(anyString());
+        verify(phoneModelImageRepository, never()).deleteAll(anyList());
+        verify(phoneModelRepository, never()).delete(any(PhoneModel.class));
+    }
+
+    @Test
+    @DisplayName("모델 삭제 - S3 삭제 실패")
+    void deletePhoneModel_S3DeleteFail() {
+        // given
+        String imageUrl = "https://s3.amazonaws.com/bucket/image1.jpg";
+        
+        PhoneModelImage image = PhoneModelImage.builder()
+            .phoneModel(savedModel)
+            .imageUrl(imageUrl)
+            .displayOrder(1)
+            .build();
+        
+        List<PhoneModelImage> images = Arrays.asList(image);
+        
+        when(phoneModelRepository.findById(modelId))
+            .thenReturn(Optional.of(savedModel));
+        when(phoneModelImageRepository.findByPhoneModelIdOrderByDisplayOrder(modelId))
+            .thenReturn(images);
+        doThrow(new CustomException(PhoneErrorCode.IMAGE_DELETE_FAILED))
+            .when(s3Service).deleteFileByUrl(imageUrl);
+
+        // when & then
+        assertThatThrownBy(() -> phoneModelService.deletePhoneModel(modelId))
+            .isInstanceOf(CustomException.class)
+            .satisfies(exception -> {
+                CustomException customException = (CustomException) exception;
+                assertThat(customException.getErrorCode()).isEqualTo(PhoneErrorCode.IMAGE_DELETE_FAILED);
+            });
+        
+        verify(phoneModelRepository, times(1)).findById(modelId);
+        verify(phoneModelImageRepository, times(1)).findByPhoneModelIdOrderByDisplayOrder(modelId);
+        verify(s3Service, times(1)).deleteFileByUrl(imageUrl);
+        verify(phoneModelImageRepository, never()).deleteAll(anyList());
+        verify(phoneModelRepository, never()).delete(any(PhoneModel.class));
     }
 }

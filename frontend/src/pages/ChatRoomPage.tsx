@@ -724,6 +724,7 @@ const ChatRoomPage: React.FC = () => {
                 quote={quote}
                 bidPrice={chatRoom.totalPrice}
                 sellerName={chatRoom.sellerName}
+                sellerAvatar={chatRoom.sellerProfileImageUrl}
               />
             )}
             <div className="text-center text-gray-500 py-12">
@@ -764,6 +765,7 @@ const ChatRoomPage: React.FC = () => {
                     quote={quote}
                     bidPrice={chatRoom.totalPrice}
                     sellerName={chatRoom.sellerName}
+                    sellerAvatar={chatRoom.sellerProfileImageUrl}
                   />
                 )}
 
@@ -776,6 +778,13 @@ const ChatRoomPage: React.FC = () => {
                       ? (user?.role === "CONSUMER"
                           ? chatRoom.sellerName
                           : chatRoom.consumerName)
+                      : undefined
+                  }
+                  senderAvatar={
+                    !isCurrentUserMessage
+                      ? (user?.role === "CONSUMER"
+                          ? chatRoom.sellerProfileImageUrl
+                          : chatRoom.consumerProfileImageUrl)
                       : undefined
                   }
                 />
@@ -793,7 +802,11 @@ const ChatRoomPage: React.FC = () => {
                 ? chatRoom.sellerName
                 : chatRoom.consumerName
             }
-            senderAvatar={undefined}
+            senderAvatar={
+              user?.role === "CONSUMER"
+                ? chatRoom.sellerProfileImageUrl
+                : chatRoom.consumerProfileImageUrl
+            }
           />
         )}
 

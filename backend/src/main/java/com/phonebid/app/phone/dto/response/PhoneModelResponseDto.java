@@ -26,13 +26,14 @@ public class PhoneModelResponseDto {
     private Integer releasedPrice;
     private LocalDate releasedAt;
     private List<PhoneOptionResponseDto> options;
+    private String thumbnailImageUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     // 옵션 정보는 별도 API로 조회하거나 PhoneModelWithOptionsResponseDto 사용
 
     public PhoneModelResponseDto(UUID id, Brand brand, String model, String modelNumber, 
                                Integer releasedPrice, LocalDate releasedAt, List<PhoneOptionResponseDto> options,
-                               LocalDateTime createdAt, LocalDateTime updatedAt) {
+                               String thumbnailImageUrl, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.brand = brand;
         this.model = model;
@@ -40,6 +41,7 @@ public class PhoneModelResponseDto {
         this.releasedPrice = releasedPrice;
         this.releasedAt = releasedAt;
         this.options = options;
+        this.thumbnailImageUrl = thumbnailImageUrl;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -64,6 +66,7 @@ public class PhoneModelResponseDto {
             phoneModel.getReleasedPrice(),
             phoneModel.getReleasedAt(),
             optionDtos,
+            null, // thumbnailImageUrl은 별도로 설정
             phoneModel.getCreatedAt(),
             phoneModel.getUpdatedAt()
         );
@@ -82,6 +85,32 @@ public class PhoneModelResponseDto {
             phoneModel.getReleasedPrice(),
             phoneModel.getReleasedAt(),
             null, // options는 null로 설정하여 순환 참조 방지
+            null, // thumbnailImageUrl은 별도로 설정
+            phoneModel.getCreatedAt(),
+            phoneModel.getUpdatedAt()
+        );
+    }
+
+    /**
+     * Entity를 DTO로 변환하는 정적 메서드 (썸네일 이미지 URL 포함)
+     */
+    public static PhoneModelResponseDto from(PhoneModel phoneModel, String thumbnailImageUrl) {
+        List<PhoneOptionResponseDto> optionDtos = null;
+        if (phoneModel.getOptions() != null) {
+            optionDtos = phoneModel.getOptions().stream()
+                .map(PhoneOptionResponseDto::from)
+                .collect(Collectors.toList());
+        }
+        
+        return new PhoneModelResponseDto(
+            phoneModel.getId(),
+            phoneModel.getBrand(),
+            phoneModel.getModel(),
+            phoneModel.getModelNumber(),
+            phoneModel.getReleasedPrice(),
+            phoneModel.getReleasedAt(),
+            optionDtos,
+            thumbnailImageUrl,
             phoneModel.getCreatedAt(),
             phoneModel.getUpdatedAt()
         );
