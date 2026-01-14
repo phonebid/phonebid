@@ -16,6 +16,7 @@ import com.phonebid.app.member.dto.response.SellerProfileResponseDto;
 import com.phonebid.app.member.repository.SellerDocumentRepository;
 import com.phonebid.app.member.repository.SellerRepository;
 import com.phonebid.app.member.repository.UserRepository;
+import com.phonebid.app.member.service.SellerDocumentService;
 import com.phonebid.app.mypage.domain.Account;
 import com.phonebid.app.mypage.domain.Bank;
 import com.phonebid.app.mypage.repository.AccountRepository;
@@ -39,6 +40,7 @@ public class SellerService {
     private final UserRepository userRepository;
     private final AccountRepository accountRepository;
     private final SellerDocumentRepository sellerDocumentRepository;
+    private final SellerDocumentService sellerDocumentService;
     private final PasswordEncoder passwordEncoder;
 
     /**
@@ -113,20 +115,34 @@ public class SellerService {
         accountRepository.save(account);
 
         // 4. SellerDocument 생성 (사업자등록증)
+        // 임시 파일을 실제 경로로 이동
+        String businessLicenseFileUrl = sellerDocumentService.moveTempFileToFinalLocation(
+                requestDto.getBusinessLicenseFileUrl(),
+                seller.getSellerId(),
+                DocumentType.BUSINESS_LICENSE
+        );
+        
         SellerDocument businessLicense = SellerDocument.builder()
                 .seller(seller)
                 .type(DocumentType.BUSINESS_LICENSE)
-                .fileUrl(requestDto.getBusinessLicenseFileUrl())
+                .fileUrl(businessLicenseFileUrl)
                 .build();
         sellerDocumentRepository.save(businessLicense);
 
         // 5. SellerDocument 생성 (사전승낙서 - 대리점이 아닌 경우만)
         if (!requestDto.getIsAgent() && requestDto.getConsentFormFileUrl() != null 
                 && !requestDto.getConsentFormFileUrl().trim().isEmpty()) {
+            // 임시 파일을 실제 경로로 이동
+            String consentFormFileUrl = sellerDocumentService.moveTempFileToFinalLocation(
+                    requestDto.getConsentFormFileUrl(),
+                    seller.getSellerId(),
+                    DocumentType.CONSENT_FORM
+            );
+            
             SellerDocument consentForm = SellerDocument.builder()
                     .seller(seller)
                     .type(DocumentType.CONSENT_FORM)
-                    .fileUrl(requestDto.getConsentFormFileUrl())
+                    .fileUrl(consentFormFileUrl)
                     .build();
             sellerDocumentRepository.save(consentForm);
         }
