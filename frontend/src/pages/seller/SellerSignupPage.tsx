@@ -307,11 +307,18 @@ const SellerSignupPage = () => {
         detailAddress: step1Data.businessDetailAddress,
       };
 
-      const storeAddress: AddressDto = {
-        postalCode: step1Data.storePostalCode,
-        address: step1Data.storeAddress,
-        detailAddress: step1Data.storeDetailAddress,
-      };
+      // 대리점인 경우 판매점 주소를 사업장 주소와 동일하게 설정
+      const storeAddress: AddressDto = step1Data.isAgent
+        ? {
+            postalCode: step1Data.businessPostalCode,
+            address: step1Data.businessAddress,
+            detailAddress: step1Data.businessDetailAddress,
+          }
+        : {
+            postalCode: step1Data.storePostalCode,
+            address: step1Data.storeAddress,
+            detailAddress: step1Data.storeDetailAddress,
+          };
 
       const settlementAccount: SettlementAccountDto = {
         bankName: step1Data.bankName,
