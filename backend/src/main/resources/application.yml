@@ -66,3 +66,9 @@ portone:
     api-secret: ${PORTONE_API_SECRET}
     channel-key: ${PORTONE_CHANNEL_KEY}
     webhook-secret: ${PORTONE_WEBHOOK_SECRET}
+
+# Rate Limiting 설정
+rate-limit:
+  temp-upload:
+    per-minute: 10  # 분당 10회
+    per-hour: 30    # 시간당 30회
