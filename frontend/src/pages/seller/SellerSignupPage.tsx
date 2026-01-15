@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { sellerService } from "services/sellerService";
 import { toast } from "react-toastify";
+import { AxiosError, isAxiosError } from "axios";
 import type {
   SellerRegisterRequestDto,
   AddressDto,
@@ -350,9 +351,11 @@ const SellerSignupPage = () => {
 
       await sellerService.registerSeller(requestDto);
       navigate("/seller/login");
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message || "회원가입에 실패했습니다.";
+    } catch (error: unknown) {
+      let errorMessage = "회원가입에 실패했습니다.";
+      if (isAxiosError(error) && error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -368,11 +371,35 @@ const SellerSignupPage = () => {
   };
 
   const formatPhoneNumber = (value: string) => {
-    const numbers = value.replace(/-/g, "").slice(0, 11);
-    if (numbers.length <= 3) return numbers;
-    if (numbers.length <= 7)
-      return `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
-    return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7)}`;
+    // 모든 비숫자 문자 제거
+    const numbers = value.replace(/\D/g, "");
+    
+    if (numbers.length === 0) return "";
+    if (numbers.length <= 2) return numbers;
+    
+    // 02로 시작하는 경우 (서울 지역번호) - 2-3-4 또는 2-4-4 형식
+    if (numbers.startsWith("02")) {
+      if (numbers.length <= 5) return `${numbers.slice(0, 2)}-${numbers.slice(2)}`;
+      if (numbers.length <= 9) return `${numbers.slice(0, 2)}-${numbers.slice(2, 5)}-${numbers.slice(5)}`;
+      return `${numbers.slice(0, 2)}-${numbers.slice(2, 6)}-${numbers.slice(6, 10)}`;
+    }
+    
+    // 길이가 8인 경우 (4-4 형식, 기업/서비스 번호: 1588-1234 등)
+    if (numbers.length === 8) {
+      return `${numbers.slice(0, 4)}-${numbers.slice(4)}`;
+    }
+    
+    // 3자리 지역/서비스 코드로 시작하는 경우 (031, 032, 158 등) - 3-3-4 또는 3-4-4 형식
+    if (numbers.length >= 3) {
+      const prefix = numbers.slice(0, 3);
+      if (numbers.length <= 6) return `${prefix}-${numbers.slice(3)}`;
+      if (numbers.length <= 10) return `${prefix}-${numbers.slice(3, 6)}-${numbers.slice(6)}`;
+      return `${prefix}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`;
+    }
+    
+    // 모바일 번호 (10 또는 11자리) - 3-4-4 형식
+    if (numbers.length <= 7) return `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
+    return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`;
   };
 
   return (
