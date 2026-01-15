@@ -156,7 +156,7 @@ public class S3Service {
         } catch (Exception e) {
             logger.error("S3 파일 복사 실패: sourceUrl={}, destination={}", 
                     sourceFileUrl, destinationFileName, e);
-            throw new CustomException(MemberErrorCode.FILE_UPLOAD_FAILED);
+            throw new CustomException(MemberErrorCode.FILE_COPY_FAILED);
         }
     }
 

@@ -86,7 +86,9 @@ public class SellerService {
                     .email(requestDto.getEmail())
                     .name(userInfo.getName())
                     .nickname(userInfo.getNickname())
-                    .phone(requestDto.getRepresentativePhone().replace("-", "")) // 하이픈 제거
+                    .phone(requestDto.getRepresentativePhone() != null 
+                            ? requestDto.getRepresentativePhone().replace("-", "") 
+                            : null) // 하이픈 제거
                     .role(Role.SELLER)
                     .build();
             user = userRepository.save(user);

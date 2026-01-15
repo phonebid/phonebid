@@ -4,6 +4,7 @@ import { useAuthStore } from "store/authStore";
 import Button from "components/common/Button";
 import { apiClient } from "services/apiClient";
 import { toast } from "react-toastify";
+import { isAxiosError } from "axios";
 import type { LoginResponse, User } from "@/types/UserTypes";
 
 const SellerLoginPage = () => {
@@ -73,10 +74,11 @@ const SellerLoginPage = () => {
 
         toast.success("로그인이 완료되었습니다.");
         navigate("/seller-center", { replace: true });
-      } catch (error: any) {
-        console.error("로그인 실패:", error);
-        const errorMessage =
-          error.response?.data?.message || "로그인에 실패했습니다.";
+      } catch (error: unknown) {
+        let errorMessage = "로그인에 실패했습니다.";
+        if (isAxiosError(error) && error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        }
         toast.error(errorMessage);
       } finally {
         setIsLoading(false);
