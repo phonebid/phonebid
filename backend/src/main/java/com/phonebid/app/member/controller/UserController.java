@@ -55,12 +55,17 @@ public class UserController {
             ? token.substring(JwtUtil.BEARER_PREFIX.length()) 
             : token;
         
+        // keepLoggedIn 값에 따라 쿠키 만료 시간 설정
+        Duration cookieMaxAge = Boolean.TRUE.equals(requestDto.getKeepLoggedIn())
+            ? Duration.ofDays(30) // 30일 유효
+            : Duration.ofHours(1); // 1시간 유효
+        
         ResponseCookie cookie = ResponseCookie.from(JwtUtil.AUTHORIZATION_HEADER, tokenValue)
                 .path("/")
                 .httpOnly(true) // XSS 공격 방지
                 .secure(isProduction) // 프로덕션에서만 HTTPS 필수
                 .sameSite("Lax") // CSRF 공격 방지
-                .maxAge(Duration.ofHours(1)) // 1시간 유효
+                .maxAge(cookieMaxAge)
                 .build();
         
         return ResponseEntity.ok()

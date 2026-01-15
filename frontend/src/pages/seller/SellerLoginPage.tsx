@@ -49,7 +49,10 @@ const SellerLoginPage = () => {
       try {
         const response = await apiClient.post<LoginResponse>(
           "/users/login",
-          credentials
+          {
+            ...credentials,
+            keepLoggedIn: keepLoggedIn,
+          }
         );
 
         const { username, nickname, role } = response;
