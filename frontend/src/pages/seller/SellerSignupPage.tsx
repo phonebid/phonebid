@@ -784,16 +784,13 @@ const SellerSignupPage = () => {
                         </label>
                         <input
                           type="text"
-                          placeholder="판매점 이름 입력"
                           value={step1Data.storeName}
-                          onChange={(e) =>
-                            setStep1Data((prev) => ({
-                              ...prev,
-                              storeName: e.target.value,
-                            }))
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          readOnly
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
                         />
+                        <p className="text-xs text-gray-500 mt-1">
+                          상호명과 동일하게 적용됩니다
+                        </p>
                       </div>
 
                       <div>
