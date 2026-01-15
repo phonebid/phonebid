@@ -120,7 +120,9 @@ public class S3Service {
                 if (!bucket.equals(sourceBucket)) {
                     throw new CustomException(MemberErrorCode.FILE_COPY_FAILED);
                 }
-            } catch (Exception e) {
+            } catch (CustomException e) {
+                throw e;
+            } catch (IllegalArgumentException e) {
                 // AmazonS3URI 파싱 실패 시 직접 URL 파싱
                 // https://bucket.s3.region.amazonaws.com/key 형식 파싱
                 String urlPattern = "https?://[^/]+/(.+)";
@@ -217,6 +219,7 @@ public class S3Service {
      * @param prefix 조회할 경로 prefix (예: "temp/seller-documents/")
      * @param olderThanHours 삭제할 파일의 최소 경과 시간 (시간 단위)
      * @return 삭제된 파일 개수
+     * @throws CustomException 파일 목록 조회 실패 시
      */
     public int deleteOldTempFiles(String prefix, long olderThanHours) {
         Logger logger = LoggerFactory.getLogger(S3Service.class);
@@ -243,8 +246,12 @@ public class S3Service {
             logger.info("임시 파일 정리 완료: prefix={}, 삭제된 파일 수={}, 전체 파일 수={}", 
                     prefix, deletedCount, files.size());
             
+        } catch (CustomException e) {
+            logger.error("임시 파일 정리 중 오류 발생: prefix={}", prefix, e);
+            throw e;
         } catch (Exception e) {
             logger.error("임시 파일 정리 중 오류 발생: prefix={}", prefix, e);
+            throw new CustomException(MemberErrorCode.FILE_DELETE_FAILED);
         }
         
         return deletedCount;
