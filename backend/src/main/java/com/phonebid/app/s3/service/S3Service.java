@@ -118,7 +118,7 @@ public class S3Service {
                 }
                 
                 if (!bucket.equals(sourceBucket)) {
-                    throw new CustomException(MemberErrorCode.FILE_DELETE_FAILED);
+                    throw new CustomException(MemberErrorCode.FILE_COPY_FAILED);
                 }
             } catch (Exception e) {
                 // AmazonS3URI 파싱 실패 시 직접 URL 파싱
@@ -206,7 +206,7 @@ public class S3Service {
         } catch (Exception e) {
             Logger logger = LoggerFactory.getLogger(S3Service.class);
             logger.error("S3 파일 목록 조회 실패: prefix={}", prefix, e);
-            throw new CustomException(MemberErrorCode.FILE_DELETE_FAILED);
+            throw new CustomException(MemberErrorCode.FILE_LIST_FAILED);
         }
         
         return files;

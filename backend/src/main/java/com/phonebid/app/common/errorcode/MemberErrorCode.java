@@ -23,6 +23,8 @@ public enum MemberErrorCode implements ErrorCode {
     INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "지원하지 않는 파일 형식입니다. (jpg, jpeg, png, pdf만 가능)"),
     FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드에 실패했습니다."),
     FILE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일 삭제에 실패했습니다."),
+    FILE_COPY_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일 복사에 실패했습니다."),
+    FILE_LIST_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일 목록 조회에 실패했습니다."),
     DOCUMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 문서를 찾을 수 없습니다.");
 
     private final HttpStatus status;

@@ -136,9 +136,10 @@ public class SellerDocumentService {
             if (parts.length > 0) {
                 String lastPart = parts[parts.length - 1];
                 // UUID-{filename} 형식에서 filename 추출
-                int firstDashIndex = lastPart.indexOf("-");
-                if (firstDashIndex > 0 && firstDashIndex < lastPart.length() - 1) {
-                    return lastPart.substring(firstDashIndex + 1);
+                // UUID는 36자리이므로, 36번째 문자 이후의 하이픈을 찾아야 함
+                int sep = lastPart.indexOf('-', 36);
+                if (sep > 0 && sep < lastPart.length() - 1) {
+                    return lastPart.substring(sep + 1);
                 }
                 return lastPart;
             }
