@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import com.phonebid.app.member.domain.Role;
+import com.phonebid.app.common.Constants;
 
 import java.security.Key;
 import java.util.Base64;
@@ -27,8 +28,6 @@ public class JwtUtil {
     public static final String AUTHORIZATION_KEY = "auth";
     // Token 식별자
     public static final String BEARER_PREFIX = "Bearer ";
-    // 토큰 만료시간
-    private final long TOKEN_TIME = 60 * 60 * 1000L; // 60분
 
     @Value("${jwt.secret.key}")
     private String secretKey;
@@ -41,17 +40,39 @@ public class JwtUtil {
         key = Keys.hmacShaKeyFor(bytes);
     }
     
-    public String createToken(String username, Role role) {
+    /**
+     * JWT 토큰 생성 (keepLoggedIn 파라미터 포함)
+     * @param username 사용자명
+     * @param role 사용자 역할
+     * @param keepLoggedIn 로그인 상태 유지 여부 (true: 30일, false: 1시간)
+     * @return JWT 토큰 (Bearer 접두사 포함)
+     */
+    public String createToken(String username, Role role, boolean keepLoggedIn) {
         Date date = new Date();
+        
+        // keepLoggedIn 값에 따라 토큰 만료 시간 계산
+        long tokenExpiryMillis = keepLoggedIn 
+                ? Constants.Jwt.KEEP_LOGGED_IN_EXPIRY_MILLIS 
+                : Constants.Jwt.DEFAULT_EXPIRY_MILLIS;
 
         return BEARER_PREFIX +
                 Jwts.builder()
                         .setSubject(username)
                         .claim(AUTHORIZATION_KEY, role)
-                        .setExpiration(new Date(date.getTime() + TOKEN_TIME))
+                        .setExpiration(new Date(date.getTime() + tokenExpiryMillis))
                         .setIssuedAt(date)
                         .signWith(key, signatureAlgorithm)
                         .compact();
+    }
+    
+    /**
+     * JWT 토큰 생성 (기본 만료 시간: 1시간)
+     * @param username 사용자명
+     * @param role 사용자 역할
+     * @return JWT 토큰 (Bearer 접두사 포함)
+     */
+    public String createToken(String username, Role role) {
+        return createToken(username, role, false);
     }
     
     public String getJwtFromHeader(HttpServletRequest request) {

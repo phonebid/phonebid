@@ -77,6 +77,7 @@ public class UserService {
     public LoginResponseDto login(LoginRequestDto requestDto) {
         String username = requestDto.getUsername();
         String password = requestDto.getPassword();
+        boolean keepLoggedIn = Boolean.TRUE.equals(requestDto.getKeepLoggedIn());
 
         // 사용자 존재 확인
         User user = userRepository.findByUsername(username)
@@ -87,8 +88,8 @@ public class UserService {
             throw new CustomException(CommonErrorCode.INVALID_CREDENTIALS);
         }
 
-        // JWT 토큰 생성
-        String token = jwtUtil.createToken(user.getUsername(), user.getRole());
+        // JWT 토큰 생성 (keepLoggedIn 값에 따라 만료 시간 결정)
+        String token = jwtUtil.createToken(user.getUsername(), user.getRole(), keepLoggedIn);
         
         // LoginResponseDto 생성 및 반환
         return LoginResponseDto.of(
