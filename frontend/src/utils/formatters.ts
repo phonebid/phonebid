@@ -186,6 +186,5 @@ export const formatPhoneNumber = (value: string): string => {
     return `${prefix}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`;
   }
   
-  if (numbers.length <= 7) return `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
-  return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`;
+  return numbers;
 };

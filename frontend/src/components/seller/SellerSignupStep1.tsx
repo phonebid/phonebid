@@ -26,6 +26,55 @@ const SellerSignupStep1 = ({
   handleStep1Next,
   onCancel,
 }: SellerSignupStep1Props) => {
+  const createPhoneKeyDownHandler = (
+    fieldName: "representativePhone" | "customerServicePhone"
+  ) => {
+    return (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Backspace") {
+        const input = e.currentTarget;
+        const cursorPosition = input.selectionStart || 0;
+        const value = input.value;
+
+        if (cursorPosition > 0 && value[cursorPosition - 1] === "-") {
+          e.preventDefault();
+          const beforeHyphen = value.slice(0, cursorPosition - 1);
+          const afterHyphen = value.slice(cursorPosition);
+          const digitsBeforeHyphen = beforeHyphen.replace(/\D/g, "");
+          const newValue = beforeHyphen.slice(0, -1) + afterHyphen;
+          const formattedValue = formatPhoneNumber(newValue);
+          setStep1Data((prev) => ({
+            ...prev,
+            [fieldName]: formattedValue,
+          }));
+          setTimeout(() => {
+            const targetDigitCount = digitsBeforeHyphen.length - 1;
+            let newCursorPos = formattedValue.length;
+            let digitCount = 0;
+            for (let i = 0; i < formattedValue.length; i++) {
+              if (/\d/.test(formattedValue[i])) {
+                digitCount++;
+                if (digitCount === targetDigitCount) {
+                  newCursorPos = i + 1;
+                  if (
+                    i + 1 < formattedValue.length &&
+                    formattedValue[i + 1] === "-"
+                  ) {
+                    newCursorPos = i + 2;
+                  }
+                  break;
+                }
+              }
+            }
+            if (targetDigitCount <= 0) {
+              newCursorPos = 0;
+            }
+            input.setSelectionRange(newCursorPos, newCursorPos);
+          }, 0);
+        }
+      }
+    };
+  };
+
   return (
     <div className="space-y-8">
       {/* 대리점 여부 */}
@@ -444,54 +493,7 @@ const SellerSignupStep1 = ({
                   representativePhone: formatPhoneNumber(e.target.value),
                 }))
               }
-              onKeyDown={(e) => {
-                if (e.key === "Backspace") {
-                  const input = e.currentTarget;
-                  const cursorPosition = input.selectionStart || 0;
-                  const value = input.value;
-                  
-                  if (cursorPosition > 0 && value[cursorPosition - 1] === "-") {
-                    e.preventDefault();
-                    // 하이픈과 그 앞의 숫자를 함께 삭제
-                    const beforeHyphen = value.slice(0, cursorPosition - 1);
-                    const afterHyphen = value.slice(cursorPosition);
-                    // 하이픈 앞의 숫자만 추출 (삭제 전)
-                    const digitsBeforeHyphen = beforeHyphen.replace(/\D/g, "");
-                    // 하이픈 앞의 마지막 숫자까지 삭제
-                    const newValue = beforeHyphen.slice(0, -1) + afterHyphen;
-                    const formattedValue = formatPhoneNumber(newValue);
-                    setStep1Data((prev) => ({
-                      ...prev,
-                      representativePhone: formattedValue,
-                    }));
-                    setTimeout(() => {
-                      // 포맷팅 후 삭제된 숫자 개수만큼의 위치에 커서 설정
-                      const targetDigitCount = digitsBeforeHyphen.length - 1;
-                      let newCursorPos = formattedValue.length;
-                      let digitCount = 0;
-                      for (let i = 0; i < formattedValue.length; i++) {
-                        if (/\d/.test(formattedValue[i])) {
-                          digitCount++;
-                          if (digitCount === targetDigitCount) {
-                            // 해당 숫자 뒤의 위치 찾기 (하이픈이 있을 수 있음)
-                            newCursorPos = i + 1;
-                            // 하이픈이 있으면 그 뒤로
-                            if (i + 1 < formattedValue.length && formattedValue[i + 1] === "-") {
-                              newCursorPos = i + 2;
-                            }
-                            break;
-                          }
-                        }
-                      }
-                      // 숫자가 없으면 맨 앞
-                      if (targetDigitCount <= 0) {
-                        newCursorPos = 0;
-                      }
-                      input.setSelectionRange(newCursorPos, newCursorPos);
-                    }, 0);
-                  }
-                }
-              }}
+              onKeyDown={createPhoneKeyDownHandler("representativePhone")}
               className={`w-full px-3 py-2 border rounded-md ${
                 errors.representativePhone
                   ? "border-red-500"
@@ -545,54 +547,7 @@ const SellerSignupStep1 = ({
                   customerServicePhone: formatPhoneNumber(e.target.value),
                 }))
               }
-              onKeyDown={(e) => {
-                if (e.key === "Backspace") {
-                  const input = e.currentTarget;
-                  const cursorPosition = input.selectionStart || 0;
-                  const value = input.value;
-                  
-                  if (cursorPosition > 0 && value[cursorPosition - 1] === "-") {
-                    e.preventDefault();
-                    // 하이픈과 그 앞의 숫자를 함께 삭제
-                    const beforeHyphen = value.slice(0, cursorPosition - 1);
-                    const afterHyphen = value.slice(cursorPosition);
-                    // 하이픈 앞의 숫자만 추출 (삭제 전)
-                    const digitsBeforeHyphen = beforeHyphen.replace(/\D/g, "");
-                    // 하이픈 앞의 마지막 숫자까지 삭제
-                    const newValue = beforeHyphen.slice(0, -1) + afterHyphen;
-                    const formattedValue = formatPhoneNumber(newValue);
-                    setStep1Data((prev) => ({
-                      ...prev,
-                      customerServicePhone: formattedValue,
-                    }));
-                    setTimeout(() => {
-                      // 포맷팅 후 삭제된 숫자 개수만큼의 위치에 커서 설정
-                      const targetDigitCount = digitsBeforeHyphen.length - 1;
-                      let newCursorPos = formattedValue.length;
-                      let digitCount = 0;
-                      for (let i = 0; i < formattedValue.length; i++) {
-                        if (/\d/.test(formattedValue[i])) {
-                          digitCount++;
-                          if (digitCount === targetDigitCount) {
-                            // 해당 숫자 뒤의 위치 찾기 (하이픈이 있을 수 있음)
-                            newCursorPos = i + 1;
-                            // 하이픈이 있으면 그 뒤로
-                            if (i + 1 < formattedValue.length && formattedValue[i + 1] === "-") {
-                              newCursorPos = i + 2;
-                            }
-                            break;
-                          }
-                        }
-                      }
-                      // 숫자가 없으면 맨 앞
-                      if (targetDigitCount <= 0) {
-                        newCursorPos = 0;
-                      }
-                      input.setSelectionRange(newCursorPos, newCursorPos);
-                    }, 0);
-                  }
-                }
-              }}
+              onKeyDown={createPhoneKeyDownHandler("customerServicePhone")}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             />
           </div>
