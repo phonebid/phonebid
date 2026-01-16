@@ -7,6 +7,8 @@ import SignupPage from "pages/SignupPage";
 import AuthCallbackPage from "pages/AuthCallbackPage";
 import SellerLoginPage from "pages/seller/SellerLoginPage";
 import SellerSignupPage from "pages/seller/SellerSignupPage";
+import SellerDashboardPage from "pages/seller/SellerDashboardPage";
+import SellerBidCreatePage from "pages/seller/SellerBidCreatePage";
 import ConfettiTestPage from "pages/ConfettiPage";
 import AuctionListPage from "pages/AuctionListPage";
 import WeeklyRankingPage from "pages/WeeklyRankingPage";
@@ -44,6 +46,8 @@ export const AppRouter: React.FC = () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/seller/login" element={<SellerLoginPage />} />
         <Route path="/seller/signup" element={<SellerSignupPage />} />
+        <Route path="/seller-center" element={<SellerDashboardPage />} />
+        <Route path="/seller-center/quotes/:quoteId/bid" element={<SellerBidCreatePage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/confetti" element={<ConfettiTestPage />} />

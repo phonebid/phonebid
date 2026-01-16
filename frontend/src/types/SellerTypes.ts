@@ -61,3 +61,45 @@ export const BANK_LIST = [
 
 export type BankName = typeof BANK_LIST[number];
 
+export interface SellerDashboardStats {
+  totalBidsSent: number;
+  inProgressTransactions: number;
+  completedTransactions: number;
+}
+
+export interface AdditionalServiceRequest {
+  serviceName: string;
+  servicePrice: number;
+  description?: string;
+  mandatory?: boolean;
+  cancellableAfterMonths?: number;
+}
+
+export interface BidCreateRequest {
+  quoteId: string;
+  price: number;
+  deliveryDays: number;
+  purchaseMethod: "NUMBER_TRANSFER" | "DEVICE_CHANGE" | "NEW_SUBSCRIPTION" | "LOWEST_PRICE" | "ANY";
+  carrier: "SKT" | "KT" | "LGU" | "SKT_ALD" | "KT_ALD" | "LGU_ALD" | "ANY";
+  currentCarrier?: "SKT" | "KT" | "LGU" | "SKT_ALD" | "KT_ALD" | "LGU_ALD" | "ANY";
+  activationMethod: "COMMON_SUBSIDY" | "SELECTIVE_SUBSIDY" | "ANY";
+  additionalSubsidy?: number;
+  installmentPrincipal: number;
+  contractMonths?: number;
+  pricePlanName: string;
+  pricePlanPrice: number;
+  additionalServices?: AdditionalServiceRequest[];
+}
+
+export interface SellerProfileResponseDto {
+  username: string;
+  businessNumber: string;
+  storeName: string;
+  representativeName: string;
+  phoneNumber: string;
+  email: string;
+  fullAddress: string;
+  approvalStatus: "PENDING" | "APPROVED" | "REJECTED";
+  approvalStatusDisplayName: string;
+}
+
