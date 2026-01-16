@@ -162,8 +162,18 @@ const SellerSignupBenefits = ({ currentStep }: SellerSignupBenefitsProps) => {
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-              <span className="text-sm font-bold text-gray-600">2</span>
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                currentStep === 2 ? "bg-blue-600" : "bg-gray-200"
+              }`}
+            >
+              <span
+                className={`text-sm font-bold ${
+                  currentStep === 2 ? "text-white" : "text-gray-600"
+                }`}
+              >
+                2
+              </span>
             </div>
             <div className="flex-1">
               <h4 className="text-sm font-semibold text-gray-900 mb-0.5">
