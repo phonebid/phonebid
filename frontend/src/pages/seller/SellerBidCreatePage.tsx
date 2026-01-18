@@ -6,7 +6,6 @@ import { getQuoteDetail } from "services/quoteService";
 import { sellerService } from "services/sellerService";
 import { Card, CardContent, CardHeader, CardTitle } from "components/ui/card";
 import { Button } from "components/ui/button";
-import { formatPrice } from "utils/quoteUtils";
 import { formatNumber } from "utils/formatters";
 import { logError } from "utils/errorUtils";
 import { toast } from "react-toastify";
@@ -84,13 +83,12 @@ const SellerBidCreatePage: React.FC = () => {
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
-          <Button
-            variant="ghost"
+          <button
             onClick={handleBack}
-            className="mb-4"
+            className="flex items-center gap-2 text-foreground hover:text-primary transition-colors mb-4 group"
           >
             <svg
-              className="w-5 h-5 mr-2"
+              className="w-5 h-5 transition-transform group-hover:-translate-x-1"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -102,8 +100,8 @@ const SellerBidCreatePage: React.FC = () => {
                 d="M15 19l-7-7 7-7"
               />
             </svg>
-            요청 목록으로 돌아가기
-          </Button>
+            <span className="text-sm font-medium">요청 목록으로 돌아가기</span>
+          </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -118,114 +116,160 @@ const SellerBidCreatePage: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
-                  <div>
+                  <div className="flex items-center gap-2">
                     <label className="text-sm font-medium text-foreground">
                       기기 가격 출고가
                     </label>
-                    <div className="mt-1 text-lg font-semibold">
+                    <div className="text-lg font-semibold">
                       {formatNumber(bidForm.formData.devicePrice)}원
                     </div>
                   </div>
 
-                  <div>
-                    <label className="text-sm font-medium text-foreground">
-                      공시지원금
-                    </label>
-                    <input
-                      type="number"
-                      value={bidForm.formData.publicSubsidy}
-                      onChange={(e) =>
-                        bidForm.updateField(
-                          "publicSubsidy",
-                          parseInt(e.target.value) || 0
-                        )
-                      }
-                      className="mt-1 w-full border border-input rounded-md h-10 px-3 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                    {bidForm.errors.publicSubsidy && (
-                      <p className="mt-1 text-sm text-red-500">
-                        {bidForm.errors.publicSubsidy}
-                      </p>
-                    )}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-foreground">
+                        공시지원금
+                      </label>
+                      <div className="relative mt-1">
+                        <input
+                          type="text"
+                          value={
+                            bidForm.formData.publicSubsidy > 0
+                              ? formatNumber(bidForm.formData.publicSubsidy)
+                              : ""
+                          }
+                          onChange={(e) => {
+                            const numericValue = e.target.value.replace(/[^0-9]/g, "");
+                            bidForm.updateField(
+                              "publicSubsidy",
+                              parseInt(numericValue) || 0
+                            );
+                          }}
+                          className="w-full border border-input rounded-md h-10 px-3 pr-8 bg-background text-sm text-blue-600 font-medium text-right focus:outline-none focus:ring-2 focus:ring-ring"
+                          placeholder="0"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-blue-600 font-medium pointer-events-none">
+                          원
+                        </span>
+                      </div>
+                      {bidForm.errors.publicSubsidy && (
+                        <p className="mt-1 text-sm text-red-500">
+                          {bidForm.errors.publicSubsidy}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-foreground">
+                        추가지원금
+                      </label>
+                      <div className="relative mt-1">
+                        <input
+                          type="text"
+                          value={
+                            bidForm.formData.additionalSubsidy > 0
+                              ? formatNumber(bidForm.formData.additionalSubsidy)
+                              : ""
+                          }
+                          onChange={(e) => {
+                            const numericValue = e.target.value.replace(/[^0-9]/g, "");
+                            bidForm.updateField(
+                              "additionalSubsidy",
+                              parseInt(numericValue) || 0
+                            );
+                          }}
+                          className="w-full border border-input rounded-md h-10 px-3 pr-8 bg-background text-sm text-blue-600 font-medium text-right focus:outline-none focus:ring-2 focus:ring-ring"
+                          placeholder="0"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-blue-600 font-medium pointer-events-none">
+                          원
+                        </span>
+                      </div>
+                      {bidForm.errors.additionalSubsidy && (
+                        <p className="mt-1 text-sm text-red-500">
+                          {bidForm.errors.additionalSubsidy}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="text-sm font-medium text-foreground">
-                      추가지원금
-                    </label>
-                    <input
-                      type="number"
-                      value={bidForm.formData.additionalSubsidy}
-                      onChange={(e) =>
-                        bidForm.updateField(
-                          "additionalSubsidy",
-                          parseInt(e.target.value) || 0
-                        )
-                      }
-                      className="mt-1 w-full border border-input rounded-md h-10 px-3 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                    {bidForm.errors.additionalSubsidy && (
-                      <p className="mt-1 text-sm text-red-500">
-                        {bidForm.errors.additionalSubsidy}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-foreground">
-                      할부원금
-                    </label>
-                    <div className="mt-1 text-lg font-semibold">
-                      {formatNumber(bidForm.calculations.installmentPrincipal)}원
+                  <div className="bg-gray-50 rounded-md p-4">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium text-foreground">
+                        할부원금
+                      </label>
+                      <div className="text-lg font-bold text-foreground">
+                        {formatNumber(bidForm.calculations.installmentPrincipal)}원
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-4 pt-4 border-t">
-                  <div>
-                    <label className="text-sm font-medium text-foreground">
-                      개통 조건
-                    </label>
-                    <select
-                      value={bidForm.formData.purchaseMethod}
-                      onChange={(e) =>
-                        bidForm.updateField(
-                          "purchaseMethod",
-                          e.target.value as any
-                        )
-                      }
-                      className="mt-1 w-full border border-input rounded-md h-10 px-3 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    >
-                      <option value="DEVICE_CHANGE">기기변경</option>
-                      <option value="NUMBER_TRANSFER">번호이동</option>
-                      <option value="NEW_SUBSCRIPTION">신규가입</option>
-                    </select>
-                  </div>
+                <div className="pt-4 border-t">
+                  <h3 className="text-base font-semibold text-foreground mb-4">
+                    개통 및 할부 조건
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-foreground">
+                        개통 조건
+                      </label>
+                      <select
+                        value={bidForm.formData.purchaseMethod}
+                        onChange={(e) =>
+                          bidForm.updateField(
+                            "purchaseMethod",
+                            e.target.value as any
+                          )
+                        }
+                        className="mt-1 w-full border border-input rounded-md h-10 px-3 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      >
+                        <option value="DEVICE_CHANGE">기기변경</option>
+                        <option value="NUMBER_TRANSFER">번호이동</option>
+                        <option value="NEW_SUBSCRIPTION">신규가입</option>
+                      </select>
+                    </div>
 
-                  <div>
-                    <label className="text-sm font-medium text-foreground">
-                      할부 조건
-                    </label>
-                    <select
-                      value={bidForm.formData.installmentMonths}
-                      onChange={(e) =>
-                        bidForm.updateField(
-                          "installmentMonths",
-                          parseInt(e.target.value) || 24
-                        )
-                      }
-                      className="mt-1 w-full border border-input rounded-md h-10 px-3 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    >
-                      <option value={24}>24개월</option>
-                      <option value={36}>36개월</option>
-                    </select>
+                    <div>
+                      <label className="text-sm font-medium text-foreground">
+                        할부 조건
+                      </label>
+                      <select
+                        value={bidForm.formData.installmentMonths}
+                        onChange={(e) =>
+                          bidForm.updateField(
+                            "installmentMonths",
+                            parseInt(e.target.value) || 24
+                          )
+                        }
+                        className="mt-1 w-full border border-input rounded-md h-10 px-3 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      >
+                        <option value={24}>24개월</option>
+                        <option value={36}>36개월</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
 
                 <Card className="bg-primary-50 border-primary-200">
-                  <CardContent className="p-4">
-                    <div className="text-sm text-muted-foreground mb-1">
-                      월 할부금
+                  <CardContent className="py-2 px-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <svg
+                        className="w-5 h-5 text-primary-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                        />
+                      </svg>
+                      <div className="text-sm font-medium text-foreground">
+                        월 할부금
+                      </div>
                     </div>
                     <div className="text-2xl font-bold text-primary-600">
                       {formatNumber(bidForm.calculations.monthlyInstallment)}원
@@ -262,14 +306,20 @@ const SellerBidCreatePage: React.FC = () => {
                       요금제 가격
                     </label>
                     <input
-                      type="number"
-                      value={bidForm.formData.pricePlanPrice}
-                      onChange={(e) =>
+                      type="text"
+                      value={
+                        bidForm.formData.pricePlanPrice > 0
+                          ? formatNumber(bidForm.formData.pricePlanPrice)
+                          : ""
+                      }
+                      onChange={(e) => {
+                        const numericValue = e.target.value.replace(/[^0-9]/g, "");
                         bidForm.updateField(
                           "pricePlanPrice",
-                          parseInt(e.target.value) || 0
-                        )
-                      }
+                          parseInt(numericValue) || 0
+                        );
+                      }}
+                      placeholder="0"
                       className="mt-1 w-full border border-input rounded-md h-10 px-3 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                     {bidForm.errors.pricePlanPrice && (
@@ -279,52 +329,54 @@ const SellerBidCreatePage: React.FC = () => {
                     )}
                   </div>
 
-                  <div>
-                    <label className="text-sm font-medium text-foreground">
-                      요금제 유지기간
-                    </label>
-                    <select
-                      value={bidForm.formData.pricePlanMaintenanceMonths}
-                      onChange={(e) =>
-                        bidForm.updateField(
-                          "pricePlanMaintenanceMonths",
-                          parseInt(e.target.value) || 24
-                        )
-                      }
-                      className="mt-1 w-full border border-input rounded-md h-10 px-3 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    >
-                      <option value={24}>24개월 이상</option>
-                      <option value={36}>36개월 이상</option>
-                    </select>
-                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-foreground">
+                        요금제 유지기간
+                      </label>
+                      <select
+                        value={bidForm.formData.pricePlanMaintenanceMonths}
+                        onChange={(e) =>
+                          bidForm.updateField(
+                            "pricePlanMaintenanceMonths",
+                            parseInt(e.target.value) || 24
+                          )
+                        }
+                        className="mt-1 w-full border border-input rounded-md h-10 px-3 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      >
+                        <option value={24}>24개월 이상</option>
+                        <option value={36}>36개월 이상</option>
+                      </select>
+                    </div>
 
-                  <div>
-                    <label className="text-sm font-medium text-foreground">
-                      회선 유지기간
-                    </label>
-                    <select
-                      value={bidForm.formData.lineMaintenanceMonths}
-                      onChange={(e) =>
-                        bidForm.updateField(
-                          "lineMaintenanceMonths",
-                          parseInt(e.target.value) || 24
-                        )
-                      }
-                      className="mt-1 w-full border border-input rounded-md h-10 px-3 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    >
-                      <option value={24}>24개월 이상</option>
-                      <option value={36}>36개월 이상</option>
-                    </select>
+                    <div>
+                      <label className="text-sm font-medium text-foreground">
+                        회선 유지기간
+                      </label>
+                      <select
+                        value={bidForm.formData.lineMaintenanceMonths}
+                        onChange={(e) =>
+                          bidForm.updateField(
+                            "lineMaintenanceMonths",
+                            parseInt(e.target.value) || 24
+                          )
+                        }
+                        className="mt-1 w-full border border-input rounded-md h-10 px-3 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      >
+                        <option value={24}>24개월 이상</option>
+                        <option value={36}>36개월 이상</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
 
                 <div className="space-y-4 pt-4 border-t">
                   <div>
-                    <label className="text-sm font-medium text-foreground mb-2 block">
+                    <label className="text-sm font-bold text-foreground mb-4 block">
                       부가서비스
                     </label>
                     <div className="space-y-2">
-                      <label className="flex items-center gap-2">
+                      <label className="flex items-center gap-2 border border-gray-200 rounded-md p-3 cursor-pointer hover:bg-gray-50 transition-colors">
                         <input
                           type="checkbox"
                           className="w-4 h-4"
@@ -351,7 +403,7 @@ const SellerBidCreatePage: React.FC = () => {
                           T멤버십 VIP (월 5,000원)
                         </span>
                       </label>
-                      <label className="flex items-center gap-2">
+                      <label className="flex items-center gap-2 border border-gray-200 rounded-md p-3 cursor-pointer hover:bg-gray-50 transition-colors">
                         <input
                           type="checkbox"
                           className="w-4 h-4"
@@ -378,7 +430,7 @@ const SellerBidCreatePage: React.FC = () => {
                           디바이스 케어 (월 11,000원)
                         </span>
                       </label>
-                      <label className="flex items-center gap-2">
+                      <label className="flex items-center gap-2 border border-gray-200 rounded-md p-3 cursor-pointer hover:bg-gray-50 transition-colors">
                         <input
                           type="checkbox"
                           className="w-4 h-4"
@@ -406,29 +458,67 @@ const SellerBidCreatePage: React.FC = () => {
                         </span>
                       </label>
                     </div>
+                    <div className="mt-4">
+                      <label className="text-xs text-muted-foreground">
+                        부가서비스 유지기간
+                      </label>
+                      <select
+                        value={bidForm.formData.additionalServicesMaintenanceMonths}
+                        onChange={(e) =>
+                          bidForm.updateField(
+                            "additionalServicesMaintenanceMonths",
+                            parseInt(e.target.value) || 0
+                          )
+                        }
+                        className="mt-1 w-full border border-input rounded-md h-10 px-3 bg-background text-xs focus:outline-none focus:ring-2 focus:ring-ring"
+                      >
+                        <option value={0}>선택 안함</option>
+                        <option value={24}>24개월 이상</option>
+                        <option value={36}>36개월 이상</option>
+                      </select>
+                    </div>
                   </div>
+                  <div className="border-t my-4"></div>
                 </div>
 
-                <Card className="bg-purple-50 border-purple-200">
-                  <CardContent className="p-4">
-                    <div className="text-sm text-muted-foreground mb-1">
-                      (할부금 + 요금제)
-                    </div>
-                    <div className="text-2xl font-bold text-purple-600">
-                      {formatNumber(bidForm.calculations.totalMonthlyPayment)}원
-                    </div>
-                    <div className="text-sm font-medium text-foreground mt-1">
-                      월 예상 납부액
-                    </div>
-                  </CardContent>
-                </Card>
+                <div>
+                  <Card className="border-pink-200 shadow-sm overflow-hidden" style={{ background: 'linear-gradient(to bottom right, #eff6ff, #e0f2fe, #fce7f3)' }}>
+                    <CardContent className="py-3 px-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-sm font-medium text-foreground">
+                          월 예상 납부액
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          (할부금 + 요금제)
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-3xl font-bold text-foreground">
+                          {formatNumber(bidForm.calculations.totalMonthlyPayment)}
+                          <span className="text-xl font-normal ml-1">원</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
 
-                <div className="pt-4">
+                <div className="pt-2">
                   <Button
                     onClick={handleSubmit}
                     disabled={isSubmitting}
-                    className="w-full bg-primary-600 hover:bg-primary-700 text-white"
+                    className="w-full text-white shadow-lg transition-all font-bold"
+                    style={{ background: 'linear-gradient(to right, #60a5fa, #3b82f6, #2563eb)' }}
                     size="lg"
+                    onMouseEnter={(e) => {
+                      if (!isSubmitting) {
+                        e.currentTarget.style.background = 'linear-gradient(to right, #3b82f6, #2563eb, #1d4ed8)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSubmitting) {
+                        e.currentTarget.style.background = 'linear-gradient(to right, #60a5fa, #3b82f6, #2563eb)';
+                      }
+                    }}
                   >
                     <svg
                       className="w-5 h-5 mr-2"
@@ -440,7 +530,7 @@ const SellerBidCreatePage: React.FC = () => {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                        d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
                       />
                     </svg>
                     견적 보내기
