@@ -1,0 +1,17 @@
+services:
+  backend:
+    image: jooc0311/phonebid-backend:latest
+    restart: unless-stopped
+    env_file:
+      - /opt/phonebid/.env
+    expose:
+      - "8080"
+
+  nginx:
+    image: jooc0311/phonebid-nginx:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
