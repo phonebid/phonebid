@@ -139,6 +139,13 @@ class QuoteServiceTest {
                 .activationMethod(ActivationMethod.SELECTIVE_SUBSIDY)
                 .expiredAt(LocalDateTime.now().plusHours(24))
                 .build();
+        try {
+            java.lang.reflect.Field idField = Quote.class.getDeclaredField("id");
+            idField.setAccessible(true);
+            idField.set(testQuote1, UUID.randomUUID());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set UUID for Quote", e);
+        }
 
         PhoneModel phoneModel2 = PhoneModel.builder()
                 .brand(Brand.SAMSUNG)
@@ -181,6 +188,13 @@ class QuoteServiceTest {
                 .activationMethod(ActivationMethod.COMMON_SUBSIDY)
                 .expiredAt(LocalDateTime.now().plusHours(12))
                 .build();
+        try {
+            java.lang.reflect.Field idField = Quote.class.getDeclaredField("id");
+            idField.setAccessible(true);
+            idField.set(testQuote2, UUID.randomUUID());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set UUID for Quote", e);
+        }
 
         // 테스트 요청 DTO 생성 (ID 기반)
         quoteCreateRequestDto = QuoteCreateRequestDto.builder()
@@ -203,8 +217,10 @@ class QuoteServiceTest {
         Page<Quote> mockPage = new PageImpl<>(mockQuotes, pageable, mockQuotes.size());
         when(quoteRepository.findByUserIdAndStatus(eq(testUser.getId()), eq(QuoteStatus.OPEN), eq(pageable)))
                 .thenReturn(mockPage);
-        when(bidRepository.countByQuoteId(any(UUID.class))).thenReturn(0L);
-        when(bidService.getMinInstallmentPrincipal(any(UUID.class))).thenReturn(null);
+        when(bidRepository.countByQuoteId(eq(testQuote1.getId()))).thenReturn(0L);
+        when(bidRepository.countByQuoteId(eq(testQuote2.getId()))).thenReturn(0L);
+        when(bidService.getMinInstallmentPrincipal(eq(testQuote1.getId()))).thenReturn(null);
+        when(bidService.getMinInstallmentPrincipal(eq(testQuote2.getId()))).thenReturn(null);
 
         // when
         Page<QuoteResponseDto> result = quoteService.getMyOpenQuotes(testUser, pageable);
@@ -239,6 +255,10 @@ class QuoteServiceTest {
         List<Quote> mockQuotes = Arrays.asList(testQuote1, testQuote2);
         when(quoteRepository.findLatestQuotesByStatus(eq(QuoteStatus.OPEN)))
                 .thenReturn(mockQuotes);
+        when(bidRepository.countByQuoteId(eq(testQuote1.getId()))).thenReturn(0L);
+        when(bidRepository.countByQuoteId(eq(testQuote2.getId()))).thenReturn(0L);
+        when(bidService.getMinInstallmentPrincipal(eq(testQuote1.getId()))).thenReturn(null);
+        when(bidService.getMinInstallmentPrincipal(eq(testQuote2.getId()))).thenReturn(null);
 
         // when
         List<QuoteResponseDto> result = quoteService.getAllOpenQuotes();

@@ -47,6 +47,110 @@ public class SellerDocumentService {
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
 
     /**
+     * 임시 파일 업로드 (회원가입 단계용, 인증 불필요)
+     * S3에만 업로드하고 DB에는 저장하지 않음
+     */
+    public String uploadTempFile(SellerDocumentUploadRequestDto requestDto) {
+        MultipartFile file = requestDto.getFile();
+        DocumentType documentType = requestDto.getDocumentType();
+
+        // 파일 검증
+        validateFile(file);
+
+        try {
+            // 임시 파일명 생성 (UUID 기반)
+            String tempFileName = generateTempFileName(documentType, file.getOriginalFilename());
+            String uploadedFileUrl = s3Service.uploadFile(tempFileName, file);
+            
+            log.info("임시 파일 업로드 완료: documentType={}, fileName={}, url={}", 
+                    documentType, file.getOriginalFilename(), uploadedFileUrl);
+            
+            return uploadedFileUrl;
+        } catch (Exception e) {
+            log.error("임시 파일 업로드 실패: documentType={}, fileName={}", 
+                    documentType, file.getOriginalFilename(), e);
+            throw new CustomException(MemberErrorCode.FILE_UPLOAD_FAILED);
+        }
+    }
+
+    /**
+     * 임시 파일명 생성
+     */
+    private String generateTempFileName(DocumentType documentType, String originalFilename) {
+        String sanitizedFilename = sanitizeFilename(originalFilename);
+        return String.format("temp/seller-documents/%s/%s-%s", 
+                documentType.name().toLowerCase(), 
+                UUID.randomUUID(), 
+                sanitizedFilename);
+    }
+
+    /**
+     * 임시 파일을 실제 경로로 이동
+     * 회원가입 완료 시 임시 파일을 seller-documents/{sellerId}/ 경로로 이동
+     * 
+     * @param tempFileUrl 임시 파일 URL
+     * @param sellerId 판매자 ID
+     * @param documentType 문서 타입
+     * @return 이동된 파일의 URL
+     */
+    public String moveTempFileToFinalLocation(String tempFileUrl, UUID sellerId, DocumentType documentType) {
+        if (tempFileUrl == null || tempFileUrl.trim().isEmpty()) {
+            throw new CustomException(MemberErrorCode.MISSING_FILE_URL);
+        }
+
+        try {
+            // 원본 파일명에서 UUID와 원본 파일명 추출
+            String originalFilename = extractOriginalFilenameFromTempUrl(tempFileUrl);
+            String sanitizedFilename = sanitizeFilename(originalFilename);
+            
+            // 최종 파일명 생성 (실제 경로)
+            String finalFileName = String.format("seller-documents/%s/%s/%s-%s", 
+                    sellerId, 
+                    documentType.name().toLowerCase(), 
+                    UUID.randomUUID(), 
+                    sanitizedFilename);
+            
+            // 파일 이동 (복사 후 삭제)
+            String finalFileUrl = s3Service.moveFile(tempFileUrl, finalFileName);
+            
+            log.info("임시 파일 이동 완료: sellerId={}, documentType={}, tempUrl={}, finalUrl={}", 
+                    sellerId, documentType, tempFileUrl, finalFileUrl);
+            
+            return finalFileUrl;
+            
+        } catch (Exception e) {
+            log.error("임시 파일 이동 실패: sellerId={}, documentType={}, tempUrl={}", 
+                    sellerId, documentType, tempFileUrl, e);
+            throw new CustomException(MemberErrorCode.FILE_UPLOAD_FAILED);
+        }
+    }
+
+    /**
+     * 임시 파일 URL에서 원본 파일명 추출
+     */
+    private String extractOriginalFilenameFromTempUrl(String tempFileUrl) {
+        try {
+            // URL에서 파일명 부분 추출
+            // 예: temp/seller-documents/business_license/{UUID}-{originalFilename}
+            String[] parts = tempFileUrl.split("/");
+            if (parts.length > 0) {
+                String lastPart = parts[parts.length - 1];
+                // UUID-{filename} 형식에서 filename 추출
+                // UUID는 36자리이므로, 36번째 문자 이후의 하이픈을 찾아야 함
+                int sep = lastPart.indexOf('-', 36);
+                if (sep > 0 && sep < lastPart.length() - 1) {
+                    return lastPart.substring(sep + 1);
+                }
+                return lastPart;
+            }
+            return "unnamed";
+        } catch (Exception e) {
+            log.warn("임시 파일 URL에서 파일명 추출 실패: {}", tempFileUrl, e);
+            return "unnamed";
+        }
+    }
+
+    /**
      * 판매자 서류 업로드
      */
     public SellerDocumentUploadResponseDto uploadDocument(String username, SellerDocumentUploadRequestDto requestDto) {

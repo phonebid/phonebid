@@ -1,21 +1,33 @@
 package com.phonebid.app.member.service;
 
 import com.phonebid.app.common.domain.Address;
+import com.phonebid.app.common.errorcode.CommonErrorCode;
 import com.phonebid.app.common.errorcode.MemberErrorCode;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.member.domain.Seller;
+import com.phonebid.app.member.domain.SellerDocument;
+import com.phonebid.app.member.domain.DocumentType;
 import com.phonebid.app.member.domain.User;
 import com.phonebid.app.member.domain.Role;
-import com.phonebid.app.member.domain.ApprovalStatus;
 import com.phonebid.app.member.dto.request.SellerRegisterRequestDto;
 import com.phonebid.app.member.dto.request.SellerProfileUpdateRequestDto;
+import com.phonebid.app.member.dto.request.SellerUserInfoDto;
 import com.phonebid.app.member.dto.response.SellerProfileResponseDto;
+import com.phonebid.app.member.repository.SellerDocumentRepository;
 import com.phonebid.app.member.repository.SellerRepository;
 import com.phonebid.app.member.repository.UserRepository;
+import com.phonebid.app.mypage.domain.Account;
+import com.phonebid.app.mypage.domain.Bank;
+import com.phonebid.app.mypage.repository.AccountRepository;
+import com.phonebid.app.s3.service.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 판매자 서비스
@@ -29,41 +41,154 @@ public class SellerService {
 
     private final SellerRepository sellerRepository;
     private final UserRepository userRepository;
+    private final AccountRepository accountRepository;
+    private final SellerDocumentRepository sellerDocumentRepository;
+    private final SellerDocumentService sellerDocumentService;
+    private final PasswordEncoder passwordEncoder;
+    private final S3Service s3Service;
 
     /**
-     * 판매자 등록
+     * 판매자 등록 (회원가입 포함)
      */
     @Transactional
-    public void registerSeller(String username, SellerRegisterRequestDto requestDto) {
-        // 사용자 존재 여부 확인
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new CustomException(MemberErrorCode.USER_NOT_FOUND));
+    public void registerSeller(SellerRegisterRequestDto requestDto) {
+        List<String> movedFileUrls = new ArrayList<>(); // 이동 성공한 파일 URL 추적
+        
+        try {
+            SellerUserInfoDto userInfo = requestDto.getUserInfo();
+            
+            // 1. User 생성
+            // 아이디 중복 확인
+            if (userRepository.findByUsername(userInfo.getUsername()).isPresent()) {
+                throw new CustomException(CommonErrorCode.DUPLICATE_USERNAME);
+            }
 
-        // 이미 판매자로 등록된 사용자인지 확인
-        if (sellerRepository.existsByUsername(username)) {
-            throw new CustomException(MemberErrorCode.SELLER_ALREADY_EXISTS);
+            // 이메일 중복 확인
+            if (userRepository.findByEmail(requestDto.getEmail()).isPresent()) {
+                throw new CustomException(CommonErrorCode.DUPLICATE_EMAIL);
+            }
+
+            // 닉네임 중복 확인
+            if (userRepository.findByNickname(userInfo.getNickname()).isPresent()) {
+                throw new CustomException(CommonErrorCode.DUPLICATE_NICKNAME);
+            }
+
+            // 사업자등록번호 중복 확인
+            if (sellerRepository.existsByBusinessNumber(requestDto.getBusinessNumber())) {
+                throw new CustomException(MemberErrorCode.BUSINESS_NUMBER_ALREADY_EXISTS);
+            }
+
+            // User 생성
+            String encodedPassword = passwordEncoder.encode(userInfo.getPassword());
+            User user = User.builder()
+                    .username(userInfo.getUsername())
+                    .password(encodedPassword)
+                    .email(requestDto.getEmail())
+                    .name(userInfo.getName())
+                    .nickname(userInfo.getNickname())
+                    .phone(requestDto.getRepresentativePhone() != null 
+                            ? requestDto.getRepresentativePhone().replace("-", "") 
+                            : null) // 하이픈 제거
+                    .role(Role.SELLER)
+                    .build();
+            user = userRepository.save(user);
+
+            // 2. Seller 생성
+            Address businessAddress = requestDto.getBusinessAddress().toEntity();
+            Address storeAddress = requestDto.getStoreAddress().toEntity();
+            
+            Seller seller = Seller.builder()
+                    .user(user)
+                    .businessNumber(requestDto.getBusinessNumber())
+                    .storeName(requestDto.getStoreName())
+                    .storeAddress(storeAddress)
+                    .isAgent(requestDto.getIsAgent())
+                    .representativeName(requestDto.getRepresentativeName())
+                    .businessAddress(businessAddress)
+                    .consentNumber(requestDto.getConsentNumber())
+                    .customerServicePhone(requestDto.getCustomerServicePhone())
+                    .build();
+            seller = sellerRepository.save(seller);
+
+            // 3. Account 생성 (정산 계좌)
+            Bank bank = requestDto.getSettlementAccount().getBank();
+            String accountNumber = requestDto.getSettlementAccount().getAccountNumber().trim();
+            String accountHolderName = requestDto.getSettlementAccount().getAccountHolderName().trim();
+            
+            Account account = Account.builder()
+                    .user(user)
+                    .bank(bank)
+                    .accountNumber(accountNumber)
+                    .accountHolderName(accountHolderName)
+                    .build();
+            accountRepository.save(account);
+
+            // 4. SellerDocument 생성 (사업자등록증)
+            // 임시 파일을 실제 경로로 이동
+            String businessLicenseFileUrl = sellerDocumentService.moveTempFileToFinalLocation(
+                    requestDto.getBusinessLicenseFileUrl(),
+                    seller.getSellerId(),
+                    DocumentType.BUSINESS_LICENSE
+            );
+            movedFileUrls.add(businessLicenseFileUrl); // 성공 시 추가
+            
+            SellerDocument businessLicense = SellerDocument.builder()
+                    .seller(seller)
+                    .type(DocumentType.BUSINESS_LICENSE)
+                    .fileUrl(businessLicenseFileUrl)
+                    .build();
+            sellerDocumentRepository.save(businessLicense);
+
+            // 5. SellerDocument 생성 (사전승낙서 - 대리점이 아닌 경우만)
+            if (!requestDto.getIsAgent() && requestDto.getConsentFormFileUrl() != null 
+                    && !requestDto.getConsentFormFileUrl().trim().isEmpty()) {
+                // 임시 파일을 실제 경로로 이동
+                String consentFormFileUrl = sellerDocumentService.moveTempFileToFinalLocation(
+                        requestDto.getConsentFormFileUrl(),
+                        seller.getSellerId(),
+                        DocumentType.CONSENT_FORM
+                );
+                movedFileUrls.add(consentFormFileUrl); // 성공 시 추가
+                
+                SellerDocument consentForm = SellerDocument.builder()
+                        .seller(seller)
+                        .type(DocumentType.CONSENT_FORM)
+                        .fileUrl(consentFormFileUrl)
+                        .build();
+                sellerDocumentRepository.save(consentForm);
+            }
+            
+        } catch (Exception e) {
+            // 보상 트랜잭션: 이동된 파일들 삭제
+            rollbackMovedFiles(movedFileUrls);
+            throw e; // 원래 예외 재발생
         }
+    }
 
-        // 사업자등록번호 중복 확인
-        if (sellerRepository.existsByBusinessNumber(requestDto.getBusinessNumber())) {
-            throw new CustomException(MemberErrorCode.BUSINESS_NUMBER_ALREADY_EXISTS);
+    /**
+     * 보상 트랜잭션: 이동된 파일들을 삭제
+     * 트랜잭션 실패 시 이미 이동된 S3 파일들을 정리하여 DB/S3 불일치를 방지
+     * 
+     * @param movedFileUrls 삭제할 파일 URL 리스트
+     */
+    private void rollbackMovedFiles(List<String> movedFileUrls) {
+        if (movedFileUrls.isEmpty()) {
+            return;
         }
-
-        // 사용자 역할을 판매자로 변경하고 저장
-        user.updateRole(Role.SELLER);
-        userRepository.save(user);
-
-        // 판매자 엔티티 생성 (주소는 null로 설정)
-        Seller seller = Seller.builder()
-                .user(user)
-                .businessNumber(requestDto.getBusinessNumber())
-                .storeName(requestDto.getStoreName())
-                .storeAddress(null) // 주소는 별도 API로 관리
-                .build();
-
-        // 판매자 저장
-        sellerRepository.save(seller);
-    
+        
+        log.warn("보상 트랜잭션 시작: 이동된 파일 {}개 삭제 시도", movedFileUrls.size());
+        
+        for (String fileUrl : movedFileUrls) {
+            try {
+                s3Service.deleteFileByUrl(fileUrl);
+                log.info("보상 트랜잭션: 이동된 파일 삭제 완료 - {}", fileUrl);
+            } catch (Exception e) {
+                log.error("보상 트랜잭션: 파일 삭제 실패 - {}", fileUrl, e);
+                // 개별 파일 삭제 실패는 로깅만 하고 계속 진행
+            }
+        }
+        
+        log.info("보상 트랜잭션 완료: {}개 파일 처리 완료", movedFileUrls.size());
     }
 
     /**

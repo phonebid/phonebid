@@ -131,6 +131,8 @@ public class WebSecurityConfig {
                         .requestMatchers("/").permitAll() // 메인 페이지 요청 허가
                         .requestMatchers("/api/v1/users/signup").permitAll() // 회원가입 엔드포인트 접근 허가
                         .requestMatchers("/api/v1/users/login").permitAll() // 로그인 엔드포인트 접근 허가
+                        .requestMatchers("/api/v1/sellers/register").permitAll() // 판매자 회원가입 엔드포인트 접근 허가
+                        .requestMatchers("/api/v1/sellers/documents/temp").permitAll() // 임시 파일 업로드 엔드포인트 접근 허가 (회원가입 단계용)
                         .requestMatchers("/api/v1/auth/kakao/**").permitAll() // 카카오 OAuth 엔드포인트 접근 허가
                         .requestMatchers("/api/v1/auth/naver/**").permitAll() // 네이버 OAuth 엔드포인트 접근 허가
                         .requestMatchers("/api/v1/payments/portone/**").permitAll() // PortOne 결제 엔드포인트 접근 허가
