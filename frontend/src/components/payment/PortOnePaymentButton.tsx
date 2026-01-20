@@ -46,7 +46,8 @@ export const PortOnePaymentButton: React.FC<PortOnePaymentButtonProps> = ({
         totalAmount: initData.amount,
         currency: "CURRENCY_KRW",
         redirectUrl: initData.redirectUrl,
-        cancelUrl: initData.cancelUrl,
+        // TODO: 취소 URL 설정 portone request에 cancelUrl 없음
+        // cancelUrl: initData.cancelUrl, 
         customer: {
           fullName: initData.buyerName,
           phoneNumber: initData.buyerPhone,
@@ -54,32 +55,32 @@ export const PortOnePaymentButton: React.FC<PortOnePaymentButtonProps> = ({
         },
       });
 
-      if (response.code) {
+      if (response?.code) {
         const failureResult: PortOnePaymentResult = {
-          paymentId: response.paymentId,
-          code: response.code,
-          message: response.message,
+          paymentId: response?.paymentId,
+          code: response?.code,
+          message: response?.message,
         };
-        toast.error(response.message ?? "결제에 실패했습니다.");
+        toast.error(response?.message ?? "결제에 실패했습니다.");
         onFailure?.(failureResult);
         const query = new URLSearchParams();
-        if (response.code) {
-          query.set("code", response.code);
+        if (response?.code) {
+          query.set("code", response?.code);
         }
-        if (response.message) {
-          query.set("message", response.message);
+        if (response?.message) {
+          query.set("message", response?.message);
         }
         navigate(`/payment/fail?${query.toString()}`);
         return;
       }
 
       const successResult: PortOnePaymentResult = {
-        paymentId: response.paymentId,
+        paymentId: response?.paymentId,
       };
       toast.success("결제가 요청되었습니다.");
       onSuccess?.(successResult);
-      if (response.paymentId) {
-        navigate(`/payment/success?paymentId=${encodeURIComponent(response.paymentId)}`);
+      if (response?.paymentId) {
+        navigate(`/payment/success?paymentId=${encodeURIComponent(response?.paymentId)}`);
       } else {
         navigate(`/payment/success`);
       }
