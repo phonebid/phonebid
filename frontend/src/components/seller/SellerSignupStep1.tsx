@@ -51,7 +51,7 @@ const SellerSignupStep1 = ({
             let newCursorPos = formattedValue.length;
             let digitCount = 0;
             for (let i = 0; i < formattedValue.length; i++) {
-              if (/\d/.test(formattedValue[i])) {
+              if (/\d/.test(formattedValue?.[i] ?? "")) {
                 digitCount++;
                 if (digitCount === targetDigitCount) {
                   newCursorPos = i + 1;
