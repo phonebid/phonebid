@@ -29,6 +29,7 @@ import {
 import Input from "@/components/common/Input";
 import { toast } from "react-toastify";
 import { Pencil, Trash2 } from "lucide-react";
+import { getErrorMessage, logError } from "@/utils/errorUtils";
 
 interface FormState {
   brand: Brand | "";
@@ -329,7 +330,8 @@ const PhoneModelManagePage = () => {
           setIsUploadingImages(true);
           await uploadPhoneModelImages(createdModel.id, form.selectedImages);
           toast.success("휴대폰 모델과 이미지가 생성되었습니다.");
-        } catch (imageError) {
+        } catch (e) {
+          logError("모델은 생성되었지만 이미지 업로드에 실패했습니다.", getErrorMessage(e));
           toast.error("모델은 생성되었지만 이미지 업로드에 실패했습니다.");
         } finally {
           setIsUploadingImages(false);
@@ -343,7 +345,8 @@ const PhoneModelManagePage = () => {
       await mutate("/phone/models");
       // 생성된 모델의 이미지 로드
       await loadModelImages(createdModel.id);
-    } catch (submitError) {
+    } catch (e) {
+      logError("휴대폰 모델 생성에 실패했습니다.", getErrorMessage(e));
       toast.error("휴대폰 모델 생성에 실패했습니다.");
     } finally {
       setIsSubmitting(false);
@@ -355,7 +358,8 @@ const PhoneModelManagePage = () => {
       setIsLoadingImages(true);
       const images = await getPhoneModelImages(modelId);
       setModelImages(images);
-    } catch (error) {
+    } catch (e) {
+      logError("모델 이미지를 불러오는데 실패했습니다.", getErrorMessage(e));
       toast.error("모델 이미지를 불러오는데 실패했습니다.");
     } finally {
       setIsLoadingImages(false);
@@ -462,7 +466,8 @@ const PhoneModelManagePage = () => {
       await uploadPhoneModelImages(selectedModelId, files);
       toast.success("이미지가 업로드되었습니다.");
       await loadModelImages(selectedModelId);
-    } catch (error) {
+    } catch (e) {
+      logError("이미지 업로드에 실패했습니다.", getErrorMessage(e));
       toast.error("이미지 업로드에 실패했습니다.");
     } finally {
       setIsUploadingImages(false);
@@ -497,7 +502,8 @@ const PhoneModelManagePage = () => {
       await deletePhoneModelImage(selectedModelId, imageId);
       setModelImages((prev) => prev.filter((img) => img.id !== imageId));
       toast.success("이미지가 삭제되었습니다.");
-    } catch (error) {
+    } catch (e) {
+      logError("이미지 삭제에 실패했습니다.", getErrorMessage(e));
       toast.error("이미지 삭제에 실패했습니다.");
     }
   };
@@ -595,7 +601,8 @@ const PhoneModelManagePage = () => {
       setEditingModel(null);
       setEditForm(DEFAULT_FORM);
       await mutate("/phone/models");
-    } catch (error) {
+    } catch (e) {
+      logError("모델 수정에 실패했습니다.", getErrorMessage(e));
       toast.error("모델 수정에 실패했습니다.");
     } finally {
       setIsUpdating(false);
@@ -611,7 +618,8 @@ const PhoneModelManagePage = () => {
         setModelImages([]);
       }
       await mutate("/phone/models");
-    } catch (error) {
+    } catch (e) {
+      logError("모델 삭제에 실패했습니다.", getErrorMessage(e));
       toast.error("모델 삭제에 실패했습니다.");
     }
   };

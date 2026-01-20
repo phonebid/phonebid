@@ -6,7 +6,6 @@ import {
   formatPrice,
   getCarrierDisplayName,
   getPurchaseMethodDisplayName,
-  getActivationMethodDisplayName,
   sortBidsByMaintenanceCost,
 } from "utils/quoteUtils";
 import { logError } from "utils/errorUtils";
@@ -80,8 +79,6 @@ const BidDetailPage = () => {
   if (!bid || !quote) {
     return null;
   }
-
-  const modelDisplayName = `${quote.model} ${quote.storage ? quote.storage : ""}`.trim();
 
   return (
     <div className="min-h-screen bg-gray-50">

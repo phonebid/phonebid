@@ -11,7 +11,7 @@ import {
   INQUIRY_STATUS_LABELS,
 } from "types/CustomerServiceTypes";
 import { formatDateSimple } from "utils/formatters";
-import { getErrorMessage, logError } from "utils/errorUtils";
+import { logError } from "utils/errorUtils";
 
 const MyInquiriesPage = () => {
   const navigate = useNavigate();
