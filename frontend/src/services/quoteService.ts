@@ -5,7 +5,6 @@ import type {
   QuoteListItem,
   BidListItem,
   BidDetail,
-  AdditionalService,
 } from "types/QuoteTypes";
 import type { PhoneModelResponse, PhoneOptionResponse } from "types/PhoneModelTypes";
 import type { Page } from "types/MyPageTypes";

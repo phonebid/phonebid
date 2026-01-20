@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { sellerService } from "services/sellerService";
 import { toast } from "react-toastify";
-import { AxiosError, isAxiosError } from "axios";
+import { isAxiosError } from "axios";
 import type {
   SellerRegisterRequestDto,
   AddressDto,
@@ -10,6 +10,7 @@ import type {
   BankName,
 } from "types/SellerTypes";
 import { validateStep1, validateStep2, type Step1Data, type Step2Data } from "utils/sellerValidation";
+import { getErrorMessage, logError } from "@/utils/errorUtils";
 
 export interface UseSellerSignupReturn {
   step: 1 | 2;
@@ -152,7 +153,8 @@ export const useSellerSignup = (): UseSellerSignupReturn => {
         }));
       }
       toast.success("파일이 업로드되었습니다.");
-    } catch (error) {
+    } catch (e) {
+      logError("파일 업로드에 실패했습니다.", getErrorMessage(e));
       toast.error("파일 업로드에 실패했습니다.");
     } finally {
       setIsLoading(false);
