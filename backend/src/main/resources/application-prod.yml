@@ -16,18 +16,18 @@ spring:
 
 # 프론트엔드 URL 설정 - 프로덕션 환경
 frontend:
-  url: https://phonebid.com
+  url: http://bidr.kr
 
 # CORS 설정 - 프로덕션 환경 (제한적 origin, 문자열 형식)
 cors:
-  allowed-origins: https://phonebid.com,https://www.phonebid.com,https://app.phonebid.com
+  allowed-origins: http://bidr.kr,https://bidr.kr
 
 # 프로덕션 환경 OAuth 설정 (환경변수 사용)
 oauth:
   kakao:
     client-id: ${KAKAO_CLIENT_ID}
-    redirect-uri: https://phonebid.com/api/v1/auth/kakao/callback
+    redirect-uri: http://bidr.kr/api/v1/auth/kakao/callback
   naver:
     client-id: ${NAVER_CLIENT_ID}
     client-secret: ${NAVER_CLIENT_SECRET}
-    redirect-uri: https://phonebid.com/api/v1/auth/naver/callback
+    redirect-uri: http://bidr.kr/api/v1/auth/naver/callback
