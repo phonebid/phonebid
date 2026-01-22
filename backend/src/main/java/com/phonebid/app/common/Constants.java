@@ -38,6 +38,21 @@ public final class Constants {
          * 로그인 상태 유지 시 토큰 만료 시간 (밀리초): 30일
          */
         public static final long KEEP_LOGGED_IN_EXPIRY_MILLIS = 30L * 24 * 60 * 60 * 1000L; // 30일
+        
+        /**
+         * Refresh Token 만료 시간: 30일
+         */
+        public static final Duration REFRESH_TOKEN_EXPIRY = Duration.ofDays(30);
+        
+        /**
+         * Refresh Token 만료 시간 (밀리초): 30일
+         */
+        public static final long REFRESH_TOKEN_EXPIRY_MILLIS = 30L * 24 * 60 * 60 * 1000L;
+        
+        /**
+         * Refresh Token 쿠키 이름
+         */
+        public static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
     }
 }
 
