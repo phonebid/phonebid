@@ -66,7 +66,12 @@ public enum CommonErrorCode implements ErrorCode {
 
     // 배송지 관련 에러
     DELIVERY_ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "배송지를 찾을 수 없습니다."),
-    DEFAULT_DELIVERY_ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "기본 배송지가 없습니다.");
+    DEFAULT_DELIVERY_ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "기본 배송지가 없습니다."),
+
+    // Refresh Token 관련 에러
+    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 Refresh Token입니다."),
+    EXPIRED_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "만료된 Refresh Token입니다."),
+    REFRESH_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "Refresh Token을 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String message;
