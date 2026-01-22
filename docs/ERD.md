@@ -17,6 +17,21 @@ last_modified_by VARCHAR(255),
 is_delete BOOLEAN NOT NULL DEFAULT FALSE
 );
 
+-- Refresh Token 테이블
+CREATE TABLE refresh_tokens (
+id UUID PRIMARY KEY, -- Refresh Token 고유 ID
+user_id UUID NOT NULL, -- 사용자 ID (users.id)
+token VARCHAR(500) NOT NULL UNIQUE, -- Refresh Token 값
+expires_at TIMESTAMP NOT NULL, -- 만료 시각
+created_at TIMESTAMP NOT NULL, -- BaseEntity
+updated_at TIMESTAMP NOT NULL,
+created_by VARCHAR(255),
+updated_by VARCHAR(255),
+deleted_at TIMESTAMP,
+deleted_by VARCHAR(255),
+is_delete BOOLEAN NOT NULL DEFAULT FALSE
+);
+
 -- 판매자 정보 테이블
 CREATE TABLE sellers (
 user_id UUID PRIMARY KEY, -- users.id 와 1:1 관계
@@ -113,6 +128,8 @@ is_delete BOOLEAN NOT NULL DEFAULT FALSE
 -- 인덱스 생성
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_provider ON users(provider, provider_id);
+CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+CREATE INDEX idx_refresh_tokens_token ON refresh_tokens(token);
 CREATE INDEX idx_sellers_approval_status ON sellers(approval_status);
 CREATE INDEX idx_quotes_user_id ON quotes(user_id);
 CREATE INDEX idx_quotes_status ON quotes(status);
@@ -124,6 +141,7 @@ CREATE INDEX idx_seller_documents_seller_id ON seller_documents(seller_id);
 CREATE INDEX idx_seller_documents_type ON seller_documents(type);
 
 -- 외래 키 설정
+ALTER TABLE refresh_tokens ADD CONSTRAINT fk_refresh_tokens_user FOREIGN KEY (user_id) REFERENCES users(id);
 ALTER TABLE sellers ADD CONSTRAINT fk_sellers_user FOREIGN KEY (user_id) REFERENCES users(id);
 ALTER TABLE seller_documents ADD CONSTRAINT fk_documents_seller FOREIGN KEY (seller_id) REFERENCES sellers(user_id);
 ALTER TABLE quotes ADD CONSTRAINT fk_quotes_user FOREIGN KEY (user_id) REFERENCES users(id);
