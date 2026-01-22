@@ -31,7 +31,7 @@ export const getApiBaseUrl = (): string => {
   }
 
   // 프로덕션 환경: 실제 도메인 (배포 시 수정 필요)
-  return "https://api.phonebid.com";
+  return "https://bidr.kr";
 };
 
 /**

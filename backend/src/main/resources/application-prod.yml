@@ -16,18 +16,18 @@ spring:
 
 # 프론트엔드 URL 설정 - 프로덕션 환경
 frontend:
-  url: http://bidr.kr
+  url: https://bidr.kr
 
 # CORS 설정 - 프로덕션 환경 (제한적 origin, 문자열 형식)
 cors:
-  allowed-origins: http://bidr.kr,https://bidr.kr
+  allowed-origins: https://bidr.kr,https://www.bidr.kr
 
 # 프로덕션 환경 OAuth 설정 (환경변수 사용)
 oauth:
   kakao:
     client-id: ${KAKAO_CLIENT_ID}
-    redirect-uri: http://bidr.kr/api/v1/auth/kakao/callback
+    redirect-uri: https://bidr.kr/api/v1/auth/kakao/callback
   naver:
     client-id: ${NAVER_CLIENT_ID}
     client-secret: ${NAVER_CLIENT_SECRET}
-    redirect-uri: http://bidr.kr/api/v1/auth/naver/callback
+    redirect-uri: https://bidr.kr/api/v1/auth/naver/callback
