@@ -1,11 +1,14 @@
 package com.phonebid.app.member.controller;
 
 import com.phonebid.app.common.dto.ApiResponse;
+import com.phonebid.app.common.Constants;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.common.errorcode.KakaoErrorCode;
 import com.phonebid.app.jwt.JwtUtil;
+import com.phonebid.app.auth.service.RefreshTokenService;
 import com.phonebid.app.member.dto.response.LoginResponseDto;
 import com.phonebid.app.member.service.KakaoService;
+import com.phonebid.app.member.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +34,8 @@ public class KakaoController {
     
     private final KakaoService kakaoService;
     private final Environment environment;
+    private final RefreshTokenService refreshTokenService;
+    private final UserRepository userRepository;
     
     @Value("${oauth.kakao.client-id}")
     private String kakaoClientId;
@@ -58,10 +63,15 @@ public class KakaoController {
             
             log.info("카카오 로그인 성공: username={}", loginResponse.getUsername());
             
-            // JWT 토큰을 보안 강화된 쿠키에 저장 (Bearer 접두사 제거)
+            // Access Token과 Refresh Token을 쿠키에 저장
             boolean isProduction = Arrays.asList(environment.getActiveProfiles()).contains("prod");
             
-            ResponseCookie cookie = ResponseCookie.from(JwtUtil.AUTHORIZATION_HEADER, token.substring(7))
+            // Access Token 쿠키
+            String accessTokenValue = token.startsWith(JwtUtil.BEARER_PREFIX) 
+                ? token.substring(JwtUtil.BEARER_PREFIX.length()) 
+                : token;
+            
+            ResponseCookie accessTokenCookie = ResponseCookie.from(JwtUtil.AUTHORIZATION_HEADER, accessTokenValue)
                     .path("/")
                     .httpOnly(true) // XSS 공격 방지
                     .secure(isProduction) // 프로덕션에서만 HTTPS 필수
@@ -69,7 +79,23 @@ public class KakaoController {
                     .maxAge(Duration.ofHours(1)) // 1시간 유효
                     .build();
             
-            response.addHeader("Set-Cookie", cookie.toString());
+            // Refresh Token 쿠키
+            String refreshToken = refreshTokenService.findByUserId(userRepository.findByUsername(loginResponse.getUsername())
+                    .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."))
+                    .getId())
+                .orElseThrow(() -> new RuntimeException("Refresh Token을 찾을 수 없습니다."))
+                .getToken();
+            
+            ResponseCookie refreshTokenCookie = ResponseCookie.from(Constants.Jwt.REFRESH_TOKEN_COOKIE_NAME, refreshToken)
+                    .path("/")
+                    .httpOnly(true) // XSS 공격 방지
+                    .secure(isProduction) // 프로덕션에서만 HTTPS 필수
+                    .sameSite("Strict") // CSRF 공격 방지
+                    .maxAge(Constants.Jwt.REFRESH_TOKEN_EXPIRY) // 30일
+                    .build();
+            
+            response.addHeader("Set-Cookie", accessTokenCookie.toString());
+            response.addHeader("Set-Cookie", refreshTokenCookie.toString());
             
             // 프론트엔드 홈 페이지로 리다이렉트 (쿠키에 토큰이 이미 설정됨)
             // 홈 페이지에서 initializeAuth()가 자동으로 실행되어 사용자 정보 조회
