@@ -122,4 +122,61 @@ public class JwtUtil {
     public Claims getUserInfoFromToken(String token) {
         return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
     }
+
+    /**
+     * Refresh Token 생성 (만료 시간: 30일)
+     * @param username 사용자명
+     * @return Refresh Token (Bearer 접두사 없이 순수 토큰만 반환)
+     */
+    public String createRefreshToken(String username) {
+        Date date = new Date();
+        
+        return Jwts.builder()
+                .setSubject(username)
+                .setExpiration(new Date(date.getTime() + Constants.Jwt.REFRESH_TOKEN_EXPIRY_MILLIS))
+                .setIssuedAt(date)
+                .signWith(key, signatureAlgorithm)
+                .compact();
+    }
+
+    /**
+     * Refresh Token 검증
+     * @param token Refresh Token
+     * @return 유효하면 true, 그렇지 않으면 false
+     */
+    public boolean validateRefreshToken(String token) {
+        try {
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            return true;
+        } catch (SecurityException | MalformedJwtException e) {
+            log.error("Invalid Refresh Token signature, 유효하지 않는 Refresh Token 서명 입니다.");
+        } catch (ExpiredJwtException e) {
+            log.error("Expired Refresh Token, 만료된 Refresh Token 입니다.");
+        } catch (UnsupportedJwtException e) {
+            log.error("Unsupported Refresh Token, 지원되지 않는 Refresh Token 입니다.");
+        } catch (IllegalArgumentException e) {
+            log.error("Refresh Token claims is empty, 잘못된 Refresh Token 입니다.");
+        }
+        return false;
+    }
+
+    /**
+     * 쿠키에서 Refresh Token을 가져오는 메서드
+     * @param request HTTP 요청 객체
+     * @return Refresh Token (없으면 null)
+     */
+    public String getRefreshTokenFromCookie(HttpServletRequest request) {
+        jakarta.servlet.http.Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (jakarta.servlet.http.Cookie cookie : cookies) {
+                if (Constants.Jwt.REFRESH_TOKEN_COOKIE_NAME.equals(cookie.getName())) {
+                    String tokenValue = cookie.getValue();
+                    if (StringUtils.hasText(tokenValue)) {
+                        return tokenValue;
+                    }
+                }
+            }
+        }
+        return null;
+    }
 }
