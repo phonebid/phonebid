@@ -7,6 +7,7 @@ import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.common.errorcode.NaverErrorCode;
 import com.phonebid.app.common.errorcode.CommonErrorCode;
 import com.phonebid.app.jwt.JwtUtil;
+import com.phonebid.app.auth.service.RefreshTokenService;
 import com.phonebid.app.member.domain.Provider;
 import com.phonebid.app.member.domain.Role;
 import com.phonebid.app.member.domain.User;
@@ -41,6 +42,7 @@ public class NaverService {
     private final UserRepository userRepository;
     private final WebClient webClient;
     private final JwtUtil jwtUtil;
+    private final RefreshTokenService refreshTokenService;
     
     @Value("${oauth.naver.client-id}")
     private String clientId;
@@ -60,19 +62,23 @@ public class NaverService {
     @Transactional
     public LoginResponseDto naverLogin(String code) throws CustomException {
         try {
-            // 1. 인가 코드로 액세스 토큰 요청
-            String accessToken = getToken(code);
+            // 1. 인가 코드로 네이버 액세스 토큰 요청
+            String naverAccessToken = getToken(code);
             
-            // 2. 액세스 토큰으로 네이버 사용자 정보 가져오기
-            NaverUserInfoDto naverUserInfo = getNaverUserInfo(accessToken);
+            // 2. 네이버 액세스 토큰으로 네이버 사용자 정보 가져오기
+            NaverUserInfoDto naverUserInfo = getNaverUserInfo(naverAccessToken);
             
             // 3. 필요시 회원가입 처리
             User naverUser = registerNaverUserIfNeeded(naverUserInfo);
             
-            // 4. JWT 토큰 생성 및 반환
-            String token = jwtUtil.createToken(naverUser.getUsername(), naverUser.getRole());
+            // 4. Refresh Token 생성 및 저장
+            refreshTokenService.deleteByUserId(naverUser.getId());
+            refreshTokenService.createRefreshToken(naverUser.getId());
             
-            return LoginResponseDto.of(token, naverUser.getUsername(), naverUser.getNickname(), naverUser.getRole().name());
+            // 5. JWT Access Token 생성 및 반환
+            String accessToken = jwtUtil.createToken(naverUser.getUsername(), naverUser.getRole(), false);
+            
+            return LoginResponseDto.of(accessToken, naverUser.getUsername(), naverUser.getNickname(), naverUser.getRole().name());
         } catch (Exception e) {
             log.error("네이버 로그인 처리 중 예상치 못한 오류 발생", e);
             throw new CustomException(NaverErrorCode.NAVER_LOGIN_PROCESSING_FAILED);
