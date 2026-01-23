@@ -22,5 +22,7 @@ COPY --from=builder /workspace/build/libs/*.jar /app/app.jar
 ENV TZ=Asia/Seoul
 EXPOSE 8080
 
+# Spring Profile을 환경변수로 받아서 실행
+# docker-compose의 env_file에서 SPRING_PROFILES_ACTIVE를 주입
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
 
