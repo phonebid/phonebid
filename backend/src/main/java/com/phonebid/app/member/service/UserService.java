@@ -13,6 +13,7 @@ import com.phonebid.app.member.domain.User;
 import com.phonebid.app.member.domain.Role;
 import com.phonebid.app.member.repository.UserRepository;
 import com.phonebid.app.jwt.JwtUtil;
+import com.phonebid.app.auth.service.RefreshTokenService;
 
 import lombok.RequiredArgsConstructor;
 import java.util.Optional;
@@ -24,6 +25,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final RefreshTokenService refreshTokenService;
 
     /**
      * 회원 가입
@@ -88,12 +90,16 @@ public class UserService {
             throw new CustomException(CommonErrorCode.INVALID_CREDENTIALS);
         }
 
-        // JWT 토큰 생성 (keepLoggedIn 값에 따라 만료 시간 결정)
-        String token = jwtUtil.createToken(user.getUsername(), user.getRole(), keepLoggedIn);
+        // 기존 Refresh Token 삭제 및 새로 생성
+        refreshTokenService.deleteByUserId(user.getId());
+        refreshTokenService.createRefreshToken(user.getId());
         
-        // LoginResponseDto 생성 및 반환
+        // Access Token 생성 (keepLoggedIn 값에 따라 만료 시간 결정)
+        String accessToken = jwtUtil.createToken(user.getUsername(), user.getRole(), keepLoggedIn);
+        
+        // LoginResponseDto 생성 및 반환 (Refresh Token은 쿠키로만 전달되므로 응답에는 포함하지 않음)
         return LoginResponseDto.of(
-            token, 
+            accessToken, 
             user.getUsername(), 
             user.getNickname(), 
             user.getRole().name()
