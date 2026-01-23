@@ -2,12 +2,10 @@ package com.phonebid.app.common.config;
 
 import org.springframework.context.annotation.Configuration;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -18,7 +16,6 @@ import com.phonebid.app.security.UserDetailsServiceImpl;
 
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 
@@ -91,16 +88,24 @@ public class WebSecurityConfig {
         configuration.setAllowedOrigins(getAllowedOrigins());
         
         // HTTP 메서드 허용
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         
-        // 헤더 허용
-        configuration.setAllowedHeaders(Arrays.asList("*"));
+        // 헤더 허용 (더 구체적으로)
+        configuration.setAllowedHeaders(Arrays.asList(
+            "Authorization",
+            "Content-Type",
+            "Accept",
+            "Origin",
+            "X-Requested-With",
+            "Access-Control-Request-Method",
+            "Access-Control-Request-Headers"
+        ));
         
         // 인증 정보 포함 허용 (쿠키, 인증 헤더)
         configuration.setAllowCredentials(true);
         
         // 노출 헤더 설정
-        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type", "Set-Cookie"));
         
         // 캐시 시간 설정 (1시간)
         configuration.setMaxAge(3600L);
