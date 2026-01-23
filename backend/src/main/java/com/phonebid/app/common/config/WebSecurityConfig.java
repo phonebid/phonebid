@@ -2,6 +2,8 @@ package com.phonebid.app.common.config;
 
 import org.springframework.context.annotation.Configuration;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
@@ -33,6 +35,7 @@ import java.util.Arrays;
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
+@Slf4j
 public class WebSecurityConfig {
 
     private final JwtUtil jwtUtil;
@@ -43,6 +46,7 @@ public class WebSecurityConfig {
     private String allowedOriginsString;
 
     private List<String> getAllowedOrigins() {
+        log.info("CORS allowed origins = {}", allowedOriginsString);
         if (allowedOriginsString == null || allowedOriginsString.isEmpty()) {
             return Arrays.asList("http://localhost:5173", "http://localhost:3000");
         }
