@@ -1,12 +1,18 @@
-import axios, { AxiosInstance, AxiosResponse } from "axios";
+import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import { toast } from "react-toastify";
 import type { ApiResponse } from "types/ApiTypes";
 import { ApiErrorClass } from "types/ApiTypes";
 import { getApiBaseUrl, getApiTimeout, API_CONSTANTS } from "utils/apiUtils";
 import { useAuthStore } from "store/authStore";
+import { refreshAccessToken } from "services/authService";
 
 class ApiClient {
   private client: AxiosInstance;
+  private isRefreshing = false;
+  private failedQueue: Array<{
+    resolve: (value?: unknown) => void;
+    reject: (error?: unknown) => void;
+  }> = [];
 
   constructor() {
     const baseURL = getApiBaseUrl();
@@ -43,28 +49,85 @@ class ApiClient {
     // Response interceptor for error handling
     this.client.interceptors.response.use(
       (response: AxiosResponse<ApiResponse<unknown>>) => response,
-      (error) => {
+      async (error) => {
         const errorMessage =
           error.response?.data?.message || "알 수 없는 오류가 발생했습니다.";
         const errorCode = error.response?.status || 500;
         const requestUrl = error.config?.url || "";
+        const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
         console.error("API Error:", error);
 
-        // 토큰 관련 에러 처리 (401, 403)
-        if (errorCode === 401 || errorCode === 403) {
-          // 인증 확인용 요청(/mypage/profile)이거나 이미 로그인 페이지에 있으면 forceLogout 호출 안 함
+        // 401 에러 처리 (토큰 갱신 시도)
+        if (errorCode === 401 && originalRequest && !originalRequest._retry) {
+          // Refresh Token 갱신 요청은 인터셉터 제외
+          if (requestUrl.includes("/auth/refresh")) {
+            const { forceLogout } = useAuthStore.getState();
+            toast.error("세션이 만료되었습니다. 다시 로그인해주세요.");
+            forceLogout();
+            return Promise.reject(new ApiErrorClass(errorCode, "인증이 필요합니다."));
+          }
+
+          // 이미 갱신 중이면 대기
+          if (this.isRefreshing) {
+            return new Promise((resolve, reject) => {
+              this.failedQueue.push({ resolve, reject });
+            })
+              .then(() => {
+                return this.client(originalRequest);
+              })
+              .catch((err) => {
+                return Promise.reject(err);
+              });
+          }
+
+          originalRequest._retry = true;
+          this.isRefreshing = true;
+
+          try {
+            // Refresh Token으로 Access Token 갱신
+            await refreshAccessToken();
+            
+            // 대기 중인 요청들 재시도
+            this.processQueue(null);
+            
+            // 원래 요청 재시도
+            return this.client(originalRequest);
+          } catch (refreshError) {
+            // 갱신 실패 시 대기 중인 요청들 모두 실패 처리
+            this.processQueue(refreshError);
+            
+            // 인증 확인용 요청(/mypage/profile)이거나 이미 로그인 페이지에 있으면 forceLogout 호출 안 함
+            const isAuthCheckRequest = requestUrl.includes("/mypage/profile");
+            const isOnLoginPage = window.location.pathname === "/login";
+
+            if (!isAuthCheckRequest && !isOnLoginPage) {
+              const { forceLogout } = useAuthStore.getState();
+              toast.error("세션이 만료되었습니다. 다시 로그인해주세요.");
+              forceLogout();
+            }
+
+            return Promise.reject(
+              new ApiErrorClass(errorCode, "인증이 필요합니다.")
+            );
+          } finally {
+            this.isRefreshing = false;
+          }
+        }
+
+        // 403 에러 처리
+        if (errorCode === 403) {
           const isAuthCheckRequest = requestUrl.includes("/mypage/profile");
           const isOnLoginPage = window.location.pathname === "/login";
 
           if (!isAuthCheckRequest && !isOnLoginPage) {
             const { forceLogout } = useAuthStore.getState();
-            toast.error("세션이 만료되었습니다. 다시 로그인해주세요.");
+            toast.error("권한이 없습니다.");
             forceLogout();
           }
 
           return Promise.reject(
-            new ApiErrorClass(errorCode, "인증이 필요합니다.")
+            new ApiErrorClass(errorCode, "권한이 없습니다.")
           );
         }
 
@@ -72,6 +135,17 @@ class ApiClient {
         return Promise.reject(new ApiErrorClass(errorCode, errorMessage));
       }
     );
+  }
+
+  private processQueue(error: unknown) {
+    this.failedQueue.forEach((prom) => {
+      if (error) {
+        prom.reject(error);
+      } else {
+        prom.resolve(undefined);
+      }
+    });
+    this.failedQueue = [];
   }
 
   async get<T>(url: string): Promise<T> {

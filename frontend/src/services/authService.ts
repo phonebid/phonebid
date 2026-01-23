@@ -1,6 +1,8 @@
 import { toast } from "react-toastify";
 import { createKakaoAuthURL, createNaverAuthURL } from "utils/constants";
+import { apiClient } from "services/apiClient";
 import type { User } from "types/UserTypes";
+import type { ApiResponse } from "types/ApiTypes";
 
 /**
  * 카카오 로그인 - URL 리다이렉트 방식
@@ -61,4 +63,31 @@ export const isLoggedIn = (): boolean => {
 export const getCurrentUser = (): User | null => {
   const userData = localStorage.getItem("userData");
   return userData ? JSON.parse(userData) : null;
+};
+
+/**
+ * Refresh Token으로 Access Token 갱신
+ * @returns 새로운 Access Token (Bearer 접두사 포함)
+ */
+export const refreshAccessToken = async (): Promise<string> => {
+  try {
+    // apiClient를 직접 사용하지 않고 axios를 직접 사용하여 인터셉터 제외
+    const axios = (await import("axios")).default;
+    const { getApiBaseUrl, API_CONSTANTS } = await import("utils/apiUtils");
+    
+    const baseURL = getApiBaseUrl();
+    const response = await axios.post<ApiResponse<string>>(
+      `${baseURL}${API_CONSTANTS.ENDPOINTS.API_V1}/auth/refresh`,
+      {},
+      {
+        withCredentials: true, // 쿠키 자동 전송
+      }
+    );
+    
+    // 응답에서 토큰 추출
+    return response.data.data || "";
+  } catch (error) {
+    console.error("토큰 갱신 실패:", error);
+    throw error;
+  }
 };
