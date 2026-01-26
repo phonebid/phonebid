@@ -75,7 +75,7 @@ public class UserService {
     /**
      * 로그인
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public LoginResponseDto login(LoginRequestDto requestDto) {
         String username = requestDto.getUsername();
         String password = requestDto.getPassword();
