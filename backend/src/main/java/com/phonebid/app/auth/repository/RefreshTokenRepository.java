@@ -27,14 +27,14 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID
     /**
      * 사용자 ID로 RefreshToken 삭제
      */
-    @Modifying
+    @Modifying(clearAutomatically = false, flushAutomatically = true)
     @Query("DELETE FROM RefreshToken rt WHERE rt.user.id = :userId")
     void deleteByUserId(@Param("userId") UUID userId);
 
     /**
      * 만료된 RefreshToken 삭제
      */
-    @Modifying
+    @Modifying(clearAutomatically = false, flushAutomatically = true)
     @Query("DELETE FROM RefreshToken rt WHERE rt.expiresAt < :dateTime")
     void deleteByExpiresAtBefore(@Param("dateTime") LocalDateTime dateTime);
 }

@@ -1,6 +1,7 @@
 package com.phonebid.app.auth.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.phonebid.app.auth.domain.RefreshToken;
 import com.phonebid.app.auth.service.RefreshTokenService;
 import com.phonebid.app.common.Constants;
 import com.phonebid.app.common.exception.GlobalExceptionHandler;
@@ -8,9 +9,12 @@ import com.phonebid.app.common.errorcode.CommonErrorCode;
 import com.phonebid.app.jwt.JwtUtil;
 import com.phonebid.app.member.domain.Role;
 import com.phonebid.app.member.domain.User;
-import com.phonebid.app.member.repository.UserRepository;
+import com.phonebid.app.member.service.UserService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,8 +27,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
-import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -41,7 +43,7 @@ class AuthControllerTest {
     private RefreshTokenService refreshTokenService;
 
     @Mock
-    private UserRepository userRepository;
+    private UserService userService;
 
     @Mock
     private JwtUtil jwtUtil;
@@ -58,6 +60,8 @@ class AuthControllerTest {
     private User testUser;
     private String testRefreshToken;
     private String testAccessToken;
+    private String newRefreshToken;
+    private RefreshToken refreshTokenEntity;
 
     @BeforeEach
     void setUp() {
@@ -76,21 +80,32 @@ class AuthControllerTest {
 
         testRefreshToken = "test.refresh.token";
         testAccessToken = "Bearer test.access.token";
+        newRefreshToken = "new.refresh.token";
+        
+        refreshTokenEntity = RefreshToken.builder()
+                .user(testUser)
+                .token(testRefreshToken)
+                .expiresAt(LocalDateTime.now().plusDays(30))
+                .build();
 
         // lenient()를 사용하여 일부 테스트에서 사용되지 않아도 되는 stubbing 허용
         lenient().when(environment.getActiveProfiles()).thenReturn(new String[]{"test"});
     }
 
     @Test
-    @DisplayName("유효한 Refresh Token으로 Access Token 갱신 성공")
-    void refresh_WithValidRefreshToken_ShouldReturnNewAccessToken() throws Exception {
+    @DisplayName("유효한 Refresh Token으로 Access Token 갱신 및 Refresh Token 로테이션 성공")
+    void refresh_WithValidRefreshToken_ShouldReturnNewAccessTokenAndRotateRefreshToken() throws Exception {
         // given
         Claims claims = Jwts.claims().setSubject("testuser");
         
         when(jwtUtil.getRefreshTokenFromCookie(any())).thenReturn(testRefreshToken);
         when(refreshTokenService.validateToken(testRefreshToken)).thenReturn(true);
         when(jwtUtil.getUserInfoFromToken(testRefreshToken)).thenReturn(claims);
-        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(userService.findByUsername("testuser")).thenReturn(testUser);
+        when(refreshTokenService.findByToken(testRefreshToken))
+                .thenReturn(Optional.of(refreshTokenEntity));
+        when(refreshTokenService.createRefreshToken(testUser.getId()))
+                .thenReturn(newRefreshToken);
         when(jwtUtil.createToken(testUser.getUsername(), testUser.getRole(), false))
                 .thenReturn(testAccessToken);
 
@@ -105,12 +120,19 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.status").value("OK"))
                 .andExpect(jsonPath("$.message").value("토큰이 성공적으로 갱신되었습니다."))
                 .andExpect(jsonPath("$.data").value(testAccessToken))
-                .andExpect(header().exists("Set-Cookie"));
+                .andExpect(header().stringValues("Set-Cookie", 
+                        org.hamcrest.Matchers.hasItems(
+                                org.hamcrest.Matchers.containsString(JwtUtil.AUTHORIZATION_HEADER),
+                                org.hamcrest.Matchers.containsString(Constants.Jwt.REFRESH_TOKEN_COOKIE_NAME)
+                        )));
 
         verify(jwtUtil).getRefreshTokenFromCookie(any());
         verify(refreshTokenService).validateToken(testRefreshToken);
         verify(jwtUtil).getUserInfoFromToken(testRefreshToken);
-        verify(userRepository).findByUsername("testuser");
+        verify(userService).findByUsername("testuser");
+        verify(refreshTokenService).findByToken(testRefreshToken);
+        verify(refreshTokenService).deleteByUserId(testUser.getId());
+        verify(refreshTokenService).createRefreshToken(testUser.getId());
         verify(jwtUtil).createToken(testUser.getUsername(), testUser.getRole(), false);
     }
 
@@ -129,7 +151,7 @@ class AuthControllerTest {
         verify(jwtUtil).getRefreshTokenFromCookie(any());
         verify(refreshTokenService, never()).validateToken(anyString());
         verify(jwtUtil, never()).getUserInfoFromToken(anyString());
-        verify(userRepository, never()).findByUsername(anyString());
+        verify(userService, never()).findByUsername(anyString());
         verify(jwtUtil, never()).createToken(anyString(), any(Role.class), anyBoolean());
     }
 
@@ -153,7 +175,7 @@ class AuthControllerTest {
         verify(jwtUtil).getRefreshTokenFromCookie(any());
         verify(refreshTokenService).validateToken(testRefreshToken);
         verify(jwtUtil, never()).getUserInfoFromToken(anyString());
-        verify(userRepository, never()).findByUsername(anyString());
+        verify(userService, never()).findByUsername(anyString());
         verify(jwtUtil, never()).createToken(anyString(), any(Role.class), anyBoolean());
     }
 
@@ -177,7 +199,7 @@ class AuthControllerTest {
         verify(jwtUtil).getRefreshTokenFromCookie(any());
         verify(refreshTokenService).validateToken(testRefreshToken);
         verify(jwtUtil, never()).getUserInfoFromToken(anyString());
-        verify(userRepository, never()).findByUsername(anyString());
+        verify(userService, never()).findByUsername(anyString());
         verify(jwtUtil, never()).createToken(anyString(), any(Role.class), anyBoolean());
     }
 
@@ -190,7 +212,8 @@ class AuthControllerTest {
         when(jwtUtil.getRefreshTokenFromCookie(any())).thenReturn(testRefreshToken);
         when(refreshTokenService.validateToken(testRefreshToken)).thenReturn(true);
         when(jwtUtil.getUserInfoFromToken(testRefreshToken)).thenReturn(claims);
-        when(userRepository.findByUsername("nonexistent")).thenReturn(Optional.empty());
+        when(userService.findByUsername("nonexistent"))
+                .thenThrow(new com.phonebid.app.common.exception.CustomException(CommonErrorCode.USER_NOT_FOUND));
 
         // when & then
         mockMvc.perform(post("/api/v1/auth/refresh")
@@ -205,7 +228,7 @@ class AuthControllerTest {
         verify(jwtUtil).getRefreshTokenFromCookie(any());
         verify(refreshTokenService).validateToken(testRefreshToken);
         verify(jwtUtil).getUserInfoFromToken(testRefreshToken);
-        verify(userRepository).findByUsername("nonexistent");
+        verify(userService).findByUsername("nonexistent");
         verify(jwtUtil, never()).createToken(anyString(), any(Role.class), anyBoolean());
     }
 }

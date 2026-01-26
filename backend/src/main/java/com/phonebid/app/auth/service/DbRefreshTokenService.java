@@ -32,12 +32,12 @@ public class DbRefreshTokenService implements RefreshTokenService {
     @Override
     @Transactional
     public String createRefreshToken(UUID userId) {
-        // 기존 RefreshToken 삭제
-        refreshTokenRepository.deleteByUserId(userId);
-
-        // 사용자 조회
+        // 사용자 조회 (삭제 전에 조회하여 영속성 컨텍스트에 로드)
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new CustomException(CommonErrorCode.USER_NOT_FOUND));
+        
+        // 기존 RefreshToken 삭제
+        refreshTokenRepository.deleteByUserId(userId);
 
         // RefreshToken 생성
         String token = jwtUtil.createRefreshToken(user.getUsername());

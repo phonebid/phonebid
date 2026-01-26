@@ -151,4 +151,17 @@ public class UserService {
             .filter(user -> !user.isDeleted())
             .orElseThrow(() -> new CustomException(CommonErrorCode.USER_NOT_FOUND));
     }
+
+    /**
+     * 사용자명으로 활성 사용자 조회
+     * 삭제되지 않은 사용자만 조회하며, 없으면 예외 발생
+     * @param username 사용자명
+     * @return 활성 사용자 엔티티
+     * @throws CustomException 사용자를 찾을 수 없을 경우
+     */
+    public User findByUsername(String username) {
+        return userRepository.findByUsername(username)
+            .filter(user -> !user.isDeleted())
+            .orElseThrow(() -> new CustomException(CommonErrorCode.USER_NOT_FOUND));
+    }
 }   
