@@ -2,6 +2,7 @@ package com.phonebid.app.auth.service;
 
 import com.phonebid.app.auth.domain.RefreshToken;
 import com.phonebid.app.auth.repository.RefreshTokenRepository;
+import com.phonebid.app.auth.util.TokenHashUtil;
 import com.phonebid.app.common.Constants;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.common.errorcode.CommonErrorCode;
@@ -28,6 +29,7 @@ public class DbRefreshTokenService implements RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
+    private final TokenHashUtil tokenHashUtil;
 
     @Override
     @Transactional
@@ -41,12 +43,13 @@ public class DbRefreshTokenService implements RefreshTokenService {
 
         // RefreshToken 생성
         String token = jwtUtil.createRefreshToken(user.getUsername());
+        String hashedToken = tokenHashUtil.hashToken(token);
         LocalDateTime expiresAt = LocalDateTime.now().plus(Constants.Jwt.REFRESH_TOKEN_EXPIRY);
 
-        // DB 저장
+        // DB 저장 (해시된 토큰만 저장)
         RefreshToken refreshToken = RefreshToken.builder()
             .user(user)
-            .token(token)
+            .token(hashedToken)
             .expiresAt(expiresAt)
             .build();
 
@@ -59,7 +62,8 @@ public class DbRefreshTokenService implements RefreshTokenService {
     @Override
     @Transactional(readOnly = true)
     public Optional<RefreshToken> findByToken(String token) {
-        return refreshTokenRepository.findByToken(token);
+        String hashedToken = tokenHashUtil.hashToken(token);
+        return refreshTokenRepository.findByToken(hashedToken);
     }
 
     @Override
@@ -90,8 +94,9 @@ public class DbRefreshTokenService implements RefreshTokenService {
             return false;
         }
 
-        // DB에서 조회하여 존재 여부 확인
-        Optional<RefreshToken> refreshTokenOpt = refreshTokenRepository.findByToken(token);
+        // 토큰을 해시화하여 DB에서 조회
+        String hashedToken = tokenHashUtil.hashToken(token);
+        Optional<RefreshToken> refreshTokenOpt = refreshTokenRepository.findByToken(hashedToken);
         if (refreshTokenOpt.isEmpty()) {
             return false;
         }

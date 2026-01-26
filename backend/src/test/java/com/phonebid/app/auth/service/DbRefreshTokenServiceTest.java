@@ -2,6 +2,7 @@ package com.phonebid.app.auth.service;
 
 import com.phonebid.app.auth.domain.RefreshToken;
 import com.phonebid.app.auth.repository.RefreshTokenRepository;
+import com.phonebid.app.auth.util.TokenHashUtil;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.common.errorcode.CommonErrorCode;
 import com.phonebid.app.jwt.JwtUtil;
@@ -39,6 +40,9 @@ class DbRefreshTokenServiceTest {
     @Mock
     private JwtUtil jwtUtil;
 
+    @Mock
+    private TokenHashUtil tokenHashUtil;
+
     @InjectMocks
     private DbRefreshTokenService dbRefreshTokenService;
 
@@ -46,11 +50,13 @@ class DbRefreshTokenServiceTest {
     private UUID testUserId;
     private RefreshToken existingRefreshToken;
     private String testToken;
+    private String hashedToken;
 
     @BeforeEach
     void setUp() {
         testUserId = UUID.randomUUID();
         testToken = "test.refresh.token";
+        hashedToken = "hashed.test.refresh.token";
 
         testUser = User.builder()
                 .username("testuser")
@@ -71,7 +77,7 @@ class DbRefreshTokenServiceTest {
 
         existingRefreshToken = RefreshToken.builder()
                 .user(testUser)
-                .token("old.refresh.token")
+                .token("hashed.old.refresh.token")
                 .expiresAt(LocalDateTime.now().plusDays(30))
                 .build();
     }
@@ -82,6 +88,7 @@ class DbRefreshTokenServiceTest {
         // given
         when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
         when(jwtUtil.createRefreshToken(testUser.getUsername())).thenReturn(testToken);
+        when(tokenHashUtil.hashToken(testToken)).thenReturn(hashedToken);
         when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> {
             RefreshToken token = invocation.getArgument(0);
             return token;
@@ -95,6 +102,7 @@ class DbRefreshTokenServiceTest {
         verify(refreshTokenRepository).deleteByUserId(testUserId);
         verify(userRepository).findById(testUserId);
         verify(jwtUtil).createRefreshToken(testUser.getUsername());
+        verify(tokenHashUtil).hashToken(testToken);
         verify(refreshTokenRepository).save(any(RefreshToken.class));
     }
 
@@ -104,6 +112,7 @@ class DbRefreshTokenServiceTest {
         // given
         when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
         when(jwtUtil.createRefreshToken(testUser.getUsername())).thenReturn(testToken);
+        when(tokenHashUtil.hashToken(testToken)).thenReturn(hashedToken);
         when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // when
@@ -124,9 +133,10 @@ class DbRefreshTokenServiceTest {
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", CommonErrorCode.USER_NOT_FOUND);
 
-        verify(refreshTokenRepository).deleteByUserId(testUserId);
         verify(userRepository).findById(testUserId);
+        verify(refreshTokenRepository, never()).deleteByUserId(any(UUID.class));
         verify(jwtUtil, never()).createRefreshToken(anyString());
+        verify(tokenHashUtil, never()).hashToken(anyString());
         verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
     }
 
@@ -134,7 +144,8 @@ class DbRefreshTokenServiceTest {
     @DisplayName("토큰으로 RefreshToken 조회 성공")
     void findByToken_ShouldReturnRefreshToken() {
         // given
-        when(refreshTokenRepository.findByToken(testToken))
+        when(tokenHashUtil.hashToken(testToken)).thenReturn(hashedToken);
+        when(refreshTokenRepository.findByToken(hashedToken))
                 .thenReturn(Optional.of(existingRefreshToken));
 
         // when
@@ -142,15 +153,17 @@ class DbRefreshTokenServiceTest {
 
         // then
         assertThat(result).isPresent();
-        assertThat(result.get().getToken()).isEqualTo("old.refresh.token");
-        verify(refreshTokenRepository).findByToken(testToken);
+        assertThat(result.get().getToken()).isEqualTo("hashed.old.refresh.token");
+        verify(tokenHashUtil).hashToken(testToken);
+        verify(refreshTokenRepository).findByToken(hashedToken);
     }
 
     @Test
     @DisplayName("존재하지 않는 토큰으로 조회 시 Optional.empty() 반환")
     void findByToken_WithNonExistentToken_ShouldReturnEmpty() {
         // given
-        when(refreshTokenRepository.findByToken(testToken))
+        when(tokenHashUtil.hashToken(testToken)).thenReturn(hashedToken);
+        when(refreshTokenRepository.findByToken(hashedToken))
                 .thenReturn(Optional.empty());
 
         // when
@@ -158,7 +171,8 @@ class DbRefreshTokenServiceTest {
 
         // then
         assertThat(result).isEmpty();
-        verify(refreshTokenRepository).findByToken(testToken);
+        verify(tokenHashUtil).hashToken(testToken);
+        verify(refreshTokenRepository).findByToken(hashedToken);
     }
 
     @Test
@@ -224,12 +238,13 @@ class DbRefreshTokenServiceTest {
         // given
         RefreshToken validToken = RefreshToken.builder()
                 .user(testUser)
-                .token(testToken)
+                .token(hashedToken)
                 .expiresAt(LocalDateTime.now().plusDays(30))
                 .build();
 
         when(jwtUtil.validateRefreshToken(testToken)).thenReturn(true);
-        when(refreshTokenRepository.findByToken(testToken))
+        when(tokenHashUtil.hashToken(testToken)).thenReturn(hashedToken);
+        when(refreshTokenRepository.findByToken(hashedToken))
                 .thenReturn(Optional.of(validToken));
 
         // when
@@ -238,7 +253,8 @@ class DbRefreshTokenServiceTest {
         // then
         assertThat(result).isTrue();
         verify(jwtUtil).validateRefreshToken(testToken);
-        verify(refreshTokenRepository).findByToken(testToken);
+        verify(tokenHashUtil).hashToken(testToken);
+        verify(refreshTokenRepository).findByToken(hashedToken);
     }
 
     @Test
@@ -261,7 +277,8 @@ class DbRefreshTokenServiceTest {
     void validateToken_WithNonExistentToken_ShouldReturnFalse() {
         // given
         when(jwtUtil.validateRefreshToken(testToken)).thenReturn(true);
-        when(refreshTokenRepository.findByToken(testToken))
+        when(tokenHashUtil.hashToken(testToken)).thenReturn(hashedToken);
+        when(refreshTokenRepository.findByToken(hashedToken))
                 .thenReturn(Optional.empty());
 
         // when
@@ -270,7 +287,8 @@ class DbRefreshTokenServiceTest {
         // then
         assertThat(result).isFalse();
         verify(jwtUtil).validateRefreshToken(testToken);
-        verify(refreshTokenRepository).findByToken(testToken);
+        verify(tokenHashUtil).hashToken(testToken);
+        verify(refreshTokenRepository).findByToken(hashedToken);
     }
 
     @Test
@@ -279,12 +297,13 @@ class DbRefreshTokenServiceTest {
         // given
         RefreshToken expiredToken = RefreshToken.builder()
                 .user(testUser)
-                .token(testToken)
+                .token(hashedToken)
                 .expiresAt(LocalDateTime.now().minusDays(1))
                 .build();
 
         when(jwtUtil.validateRefreshToken(testToken)).thenReturn(true);
-        when(refreshTokenRepository.findByToken(testToken))
+        when(tokenHashUtil.hashToken(testToken)).thenReturn(hashedToken);
+        when(refreshTokenRepository.findByToken(hashedToken))
                 .thenReturn(Optional.of(expiredToken));
 
         // when
@@ -293,7 +312,8 @@ class DbRefreshTokenServiceTest {
         // then
         assertThat(result).isFalse();
         verify(jwtUtil).validateRefreshToken(testToken);
-        verify(refreshTokenRepository).findByToken(testToken);
+        verify(tokenHashUtil).hashToken(testToken);
+        verify(refreshTokenRepository).findByToken(hashedToken);
     }
 }
 
