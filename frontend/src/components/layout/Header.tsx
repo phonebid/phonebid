@@ -5,9 +5,9 @@ import { useState } from "react";
 const Header: React.FC = () => {
   const { isAuthenticated, user, logout } = useAuthStore();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     try {
-      logout();
+      await logout();
     } catch (error) {
       console.error("로그아웃 실패:", error);
     }

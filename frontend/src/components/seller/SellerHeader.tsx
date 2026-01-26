@@ -9,9 +9,9 @@ export const SellerHeader: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [sellerProfile, setSellerProfile] = useState<SellerProfileResponseDto | null>(null);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     try {
-      logout();
+      await logout();
     } catch (error) {
       console.error("로그아웃 실패:", error);
     }

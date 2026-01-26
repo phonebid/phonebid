@@ -37,6 +37,14 @@ export const loginWithNaver = (): void => {
  */
 export const logout = async (): Promise<void> => {
   try {
+    // 백엔드 로그아웃 API 호출 (DB에서 RefreshToken 삭제 및 쿠키 삭제)
+    try {
+      await apiClient.post<ApiResponse<void>>("/users/logout");
+    } catch (apiError) {
+      // API 호출 실패해도 로컬 스토리지는 정리
+      console.error("로그아웃 API 호출 실패:", apiError);
+    }
+
     // 로컬 스토리지 정리
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
@@ -45,6 +53,10 @@ export const logout = async (): Promise<void> => {
     toast.success("로그아웃되었습니다.");
   } catch (error) {
     console.error("로그아웃 중 오류:", error);
+    // 에러가 발생해도 로컬 스토리지는 정리
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("userData");
     toast.error("로그아웃 중 오류가 발생했습니다.");
   }
 };

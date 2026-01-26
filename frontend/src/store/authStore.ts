@@ -1,12 +1,13 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 import type { AuthState, User, ProfileResponseDto } from "types/UserTypes";
+import type { ApiResponse } from "types/ApiTypes";
 import { apiClient } from "services/apiClient";
 
 interface AuthStore extends AuthState {
   // Actions
   login: (user: User) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   forceLogout: () => void;
   initializeAuth: () => Promise<void>;
   checkAuth: () => Promise<void>;
@@ -37,11 +38,19 @@ export const useAuthStore = create<AuthStore>()(
           );
         },
 
-        logout: () => {
+        logout: async () => {
+          try {
+            // 백엔드 로그아웃 API 호출 (DB에서 RefreshToken 삭제 및 쿠키 삭제)
+            await apiClient.post<ApiResponse<void>>("/users/logout");
+          } catch (error) {
+            // API 호출 실패해도 로컬 스토리지는 정리
+            console.error("로그아웃 API 호출 실패:", error);
+          }
+
           localStorage.removeItem("userData");
           // persist 스토리지도 정리
           localStorage.removeItem("auth-storage");
-          // 쿠키는 백엔드에서 삭제해야 함 (프론트엔드에서는 HttpOnly 쿠키 접근 불가)
+          // 쿠키는 백엔드에서 삭제됨 (HttpOnly 쿠키는 프론트엔드에서 접근 불가)
 
           set(
             {
