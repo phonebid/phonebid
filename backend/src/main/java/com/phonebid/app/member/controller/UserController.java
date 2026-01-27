@@ -9,14 +9,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.phonebid.app.common.dto.ApiResponse;
 import com.phonebid.app.common.Constants;
-import com.phonebid.app.jwt.JwtUtil;
+import com.phonebid.app.common.util.CookieUtil;
 import com.phonebid.app.member.dto.request.SignupRequestDto;
 import com.phonebid.app.member.dto.request.LoginRequestDto;
 import com.phonebid.app.member.dto.request.PasswordChangeRequestDto;
 import com.phonebid.app.member.dto.response.LoginResponseDto;
 import com.phonebid.app.member.service.UserService;
-import com.phonebid.app.auth.service.RefreshTokenService;
-import com.phonebid.app.member.repository.UserRepository;
 
 import org.springframework.core.env.Environment;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,8 +26,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -38,8 +34,6 @@ public class UserController {
 
     private final UserService userService;
     private final Environment environment;
-    private final RefreshTokenService refreshTokenService;
-    private final UserRepository userRepository;
 
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<Void>> signup(@Valid @RequestBody SignupRequestDto requestDto) {
@@ -52,43 +46,21 @@ public class UserController {
     public ResponseEntity<ApiResponse<LoginResponseDto>> login(@Valid @RequestBody LoginRequestDto requestDto) {
         LoginResponseDto responseDto = userService.login(requestDto);
         
-        // Access Token을 쿠키에 저장
-        String accessToken = responseDto.getAccessToken();
-        boolean isProduction = Arrays.asList(environment.getActiveProfiles()).contains("prod");
-        
-        // Bearer 접두사 제거하여 쿠키에 저장
-        String accessTokenValue = accessToken.startsWith(JwtUtil.BEARER_PREFIX) 
-            ? accessToken.substring(JwtUtil.BEARER_PREFIX.length()) 
-            : accessToken;
+        // 쿠키 생성
+        boolean isProduction = CookieUtil.isProduction(environment);
         
         // keepLoggedIn 값에 따라 Access Token 쿠키 만료 시간 설정
         Duration accessTokenCookieMaxAge = Boolean.TRUE.equals(requestDto.getKeepLoggedIn())
             ? Constants.Jwt.KEEP_LOGGED_IN_EXPIRY // 30일 유효
             : Constants.Jwt.DEFAULT_EXPIRY; // 1시간 유효
         
-        ResponseCookie accessTokenCookie = ResponseCookie.from(JwtUtil.AUTHORIZATION_HEADER, accessTokenValue)
-                .path("/")
-                .httpOnly(true) // XSS 공격 방지
-                .secure(isProduction) // 프로덕션에서만 HTTPS 필수
-                .sameSite("Strict") // CSRF 공격 방지
-                .maxAge(accessTokenCookieMaxAge)
-                .build();
+        // Access Token 쿠키 생성
+        ResponseCookie accessTokenCookie = CookieUtil.createAccessTokenCookie(
+            responseDto.getAccessToken(), isProduction, accessTokenCookieMaxAge);
 
-        // Refresh Token을 쿠키에 저장 (UserService에서 이미 생성됨)
-        String refreshToken = refreshTokenService.findByUserId(
-            userRepository.findByUsername(responseDto.getUsername())
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."))
-                .getId()
-        ).orElseThrow(() -> new RuntimeException("Refresh Token을 찾을 수 없습니다."))
-            .getToken();
-        
-        ResponseCookie refreshTokenCookie = ResponseCookie.from(Constants.Jwt.REFRESH_TOKEN_COOKIE_NAME, refreshToken)
-                .path("/")
-                .httpOnly(true) // XSS 공격 방지
-                .secure(isProduction) // 프로덕션에서만 HTTPS 필수
-                .sameSite("Strict") // CSRF 공격 방지
-                .maxAge(Constants.Jwt.REFRESH_TOKEN_EXPIRY) // 30일
-                .build();
+        // Refresh Token 쿠키 생성 (DTO에서 직접 가져오기 - 동시성 문제 해결)
+        ResponseCookie refreshTokenCookie = CookieUtil.createRefreshTokenCookie(
+            responseDto.getRefreshToken(), isProduction);
         
         return ResponseEntity.ok()
                 .header("Set-Cookie", accessTokenCookie.toString())
@@ -99,31 +71,15 @@ public class UserController {
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout() {
         String username = getCurrentUsername();
-        UUID userId = userRepository.findByUsername(username)
-            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."))
-            .getId();
         
-        // Refresh Token 삭제
-        refreshTokenService.deleteByUserId(userId);
+        // Refresh Token 삭제 (서비스 레이어에서 처리)
+        userService.logout(username);
         
         // 쿠키 삭제를 위한 빈 쿠키 설정
-        boolean isProduction = Arrays.asList(environment.getActiveProfiles()).contains("prod");
+        boolean isProduction = CookieUtil.isProduction(environment);
         
-        ResponseCookie accessTokenCookie = ResponseCookie.from(JwtUtil.AUTHORIZATION_HEADER, "")
-                .path("/")
-                .httpOnly(true)
-                .secure(isProduction)
-                .sameSite("Strict")
-                .maxAge(Duration.ZERO)
-                .build();
-        
-        ResponseCookie refreshTokenCookie = ResponseCookie.from(Constants.Jwt.REFRESH_TOKEN_COOKIE_NAME, "")
-                .path("/")
-                .httpOnly(true)
-                .secure(isProduction)
-                .sameSite("Strict")
-                .maxAge(Duration.ZERO)
-                .build();
+        ResponseCookie accessTokenCookie = CookieUtil.createAccessTokenDeleteCookie(isProduction);
+        ResponseCookie refreshTokenCookie = CookieUtil.createRefreshTokenDeleteCookie(isProduction);
         
         return ResponseEntity.ok()
                 .header("Set-Cookie", accessTokenCookie.toString())
@@ -134,13 +90,8 @@ public class UserController {
     @DeleteMapping("/profile")
     public ResponseEntity<ApiResponse<Void>> deleteProfile() {
         String username = getCurrentUsername();
-        UUID userId = userRepository.findByUsername(username)
-            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."))
-            .getId();
         
-        // Refresh Token 삭제
-        refreshTokenService.deleteByUserId(userId);
-        
+        // 회원 탈퇴 처리 (서비스 레이어에서 RefreshToken 삭제 포함)
         userService.deleteProfile(username);
         
         return ResponseEntity.ok()

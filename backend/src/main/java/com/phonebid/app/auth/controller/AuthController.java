@@ -5,6 +5,7 @@ import com.phonebid.app.common.Constants;
 import com.phonebid.app.common.dto.ApiResponse;
 import com.phonebid.app.common.errorcode.CommonErrorCode;
 import com.phonebid.app.common.exception.CustomException;
+import com.phonebid.app.common.util.CookieUtil;
 import com.phonebid.app.jwt.JwtUtil;
 import com.phonebid.app.member.domain.User;
 import com.phonebid.app.member.service.UserService;
@@ -18,8 +19,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Arrays;
 
 /**
  * 인증 관련 컨트롤러
@@ -68,32 +67,17 @@ public class AuthController {
 
         // 새로운 Access Token 생성 (기본 만료 시간: 1시간)
         String newAccessToken = jwtUtil.createToken(user.getUsername(), user.getRole(), false);
-        
-        // Bearer 접두사 제거
-        String accessTokenValue = newAccessToken.startsWith(JwtUtil.BEARER_PREFIX) 
-            ? newAccessToken.substring(JwtUtil.BEARER_PREFIX.length()) 
-            : newAccessToken;
 
         // 쿠키 설정
-        boolean isProduction = Arrays.asList(environment.getActiveProfiles()).contains("prod");
+        boolean isProduction = CookieUtil.isProduction(environment);
         
-        // Access Token 쿠키
-        ResponseCookie accessTokenCookie = ResponseCookie.from(JwtUtil.AUTHORIZATION_HEADER, accessTokenValue)
-                .path("/")
-                .httpOnly(true)
-                .secure(isProduction)
-                .sameSite("Strict")
-                .maxAge(Constants.Jwt.DEFAULT_EXPIRY) // 1시간
-                .build();
+        // Access Token 쿠키 생성
+        ResponseCookie accessTokenCookie = CookieUtil.createAccessTokenCookie(
+            newAccessToken, isProduction, Constants.Jwt.DEFAULT_EXPIRY);
 
-        // Refresh Token 쿠키 (로테이션된 새 토큰)
-        ResponseCookie refreshTokenCookie = ResponseCookie.from(Constants.Jwt.REFRESH_TOKEN_COOKIE_NAME, newRefreshToken)
-                .path("/")
-                .httpOnly(true)
-                .secure(isProduction)
-                .sameSite("Strict")
-                .maxAge(Constants.Jwt.REFRESH_TOKEN_EXPIRY) // 30일
-                .build();
+        // Refresh Token 쿠키 생성 (로테이션된 새 토큰)
+        ResponseCookie refreshTokenCookie = CookieUtil.createRefreshTokenCookie(
+            newRefreshToken, isProduction);
 
         log.info("Access Token 및 Refresh Token 갱신 완료: username={}", username);
 
