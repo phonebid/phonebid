@@ -92,14 +92,15 @@ public class UserService {
 
         // 기존 Refresh Token 삭제 및 새로 생성
         refreshTokenService.deleteByUserId(user.getId());
-        refreshTokenService.createRefreshToken(user.getId());
+        String refreshToken = refreshTokenService.createRefreshToken(user.getId());
         
         // Access Token 생성 (keepLoggedIn 값에 따라 만료 시간 결정)
         String accessToken = jwtUtil.createToken(user.getUsername(), user.getRole(), keepLoggedIn);
         
-        // LoginResponseDto 생성 및 반환 (Refresh Token은 쿠키로만 전달되므로 응답에는 포함하지 않음)
+        // LoginResponseDto 생성 및 반환
         return LoginResponseDto.of(
-            accessToken, 
+            accessToken,
+            refreshToken, // 추가된 부분
             user.getUsername(), 
             user.getNickname(), 
             user.getRole().name()
@@ -132,11 +133,23 @@ public class UserService {
     }
 
     /**
+     * 로그아웃 처리 (RefreshToken 삭제)
+     */
+    @Transactional
+    public void logout(String username) {
+        User user = findByUsername(username);
+        refreshTokenService.deleteByUserId(user.getId());
+    }
+
+    /**
      * 회원 탈퇴 (소프트 삭제)
      */
     @Transactional
     public void deleteProfile(String username) {
         User user = loadActiveUser(username);
+
+        // RefreshToken 삭제
+        refreshTokenService.deleteByUserId(user.getId());
 
         // 소프트 삭제 (삭제한 사용자 정보 기록)
         user.softDelete(username);

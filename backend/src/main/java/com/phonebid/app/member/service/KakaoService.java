@@ -68,12 +68,13 @@ public class KakaoService {
             
             // 4. Refresh Token 생성 및 저장
             refreshTokenService.deleteByUserId(kakaoUser.getId());
-            refreshTokenService.createRefreshToken(kakaoUser.getId());
+            String refreshToken = refreshTokenService.createRefreshToken(kakaoUser.getId());
             
             // 5. JWT Access Token 생성 및 반환
             String accessToken = jwtUtil.createToken(kakaoUser.getUsername(), kakaoUser.getRole(), false);
             
-            return LoginResponseDto.of(accessToken, kakaoUser.getUsername(), kakaoUser.getNickname(), kakaoUser.getRole().name());
+            // 6. DTO에 RefreshToken 포함하여 반환
+            return LoginResponseDto.of(accessToken, refreshToken, kakaoUser.getUsername(), kakaoUser.getNickname(), kakaoUser.getRole().name());
         } catch (Exception e) {
             log.error("카카오 로그인 처리 중 예상치 못한 오류 발생", e);
             throw new CustomException(KakaoErrorCode.KAKAO_LOGIN_PROCESSING_FAILED);
