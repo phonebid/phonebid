@@ -22,6 +22,10 @@ public class CookieUtil {
      * @return ResponseCookie
      */
     public static ResponseCookie createAccessTokenCookie(String accessToken, boolean isProduction, Duration maxAge) {
+        if (accessToken == null || accessToken.isBlank()) {
+            throw new IllegalArgumentException("accessToken must not be null or blank");
+        }
+
         // Bearer 접두사 제거
         String accessTokenValue = accessToken.startsWith(JwtUtil.BEARER_PREFIX)
             ? accessToken.substring(JwtUtil.BEARER_PREFIX.length())
