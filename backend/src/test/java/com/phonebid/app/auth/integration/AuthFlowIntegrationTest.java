@@ -103,33 +103,34 @@ class AuthFlowIntegrationTest {
         String oldRefreshToken = refreshTokenService.createRefreshToken(testUser.getId());
         Optional<RefreshToken> oldTokenOpt = refreshTokenService.findByUserId(testUser.getId());
         assertThat(oldTokenOpt).isPresent();
-        assertThat(oldTokenOpt.get().getToken()).isEqualTo(oldRefreshToken);
 
         // JWT 토큰 생성 시 issuedAt 시간이 다르도록 약간의 지연 추가
         Thread.sleep(100);
 
         // when - 로그인 (새로운 RefreshToken 생성)
-        userService.login(loginRequest);
+        LoginResponseDto loginResponse = userService.login(loginRequest);
+        String newRefreshToken = loginResponse.getRefreshToken();
 
         // then - 기존 토큰이 삭제되고 새로운 토큰이 생성되었는지 확인
-        Optional<RefreshToken> newRefreshTokenOpt = refreshTokenService.findByUserId(testUser.getId());
-        assertThat(newRefreshTokenOpt).isPresent();
-        String newRefreshToken = newRefreshTokenOpt.get().getToken();
+        assertThat(newRefreshToken).isNotNull();
         assertThat(newRefreshToken).isNotEqualTo(oldRefreshToken);
         
         // 기존 토큰이 더 이상 존재하지 않는지 확인
         Optional<RefreshToken> deletedTokenOpt = refreshTokenService.findByToken(oldRefreshToken);
         assertThat(deletedTokenOpt).isEmpty();
+        
+        // 새로운 토큰이 DB에 저장되었는지 확인
+        Optional<RefreshToken> newRefreshTokenOpt = refreshTokenService.findByUserId(testUser.getId());
+        assertThat(newRefreshTokenOpt).isPresent();
     }
 
     @Test
     @DisplayName("RefreshToken으로 AccessToken 갱신 및 RefreshToken 로테이션 성공")
     void refresh_WithValidRefreshToken_ShouldReturnNewAccessTokenAndRotateRefreshToken() throws Exception {
         // given - 로그인하여 RefreshToken 생성
-        userService.login(loginRequest);
-        Optional<RefreshToken> refreshTokenOpt = refreshTokenService.findByUserId(testUser.getId());
-        assertThat(refreshTokenOpt).isPresent();
-        String oldRefreshToken = refreshTokenOpt.get().getToken();
+        LoginResponseDto loginResponse = userService.login(loginRequest);
+        String oldRefreshToken = loginResponse.getRefreshToken();
+        assertThat(oldRefreshToken).isNotNull();
         
         // JWT 토큰 생성 시 issuedAt 시간이 다르도록 약간의 지연 추가
         Thread.sleep(100);
@@ -151,15 +152,13 @@ class AuthFlowIntegrationTest {
                                 org.hamcrest.Matchers.containsString(Constants.Jwt.REFRESH_TOKEN_COOKIE_NAME)
                         )));
 
-        // then - 새로운 RefreshToken이 생성되었고 기존 토큰과 다른지 확인
-        Optional<RefreshToken> newRefreshTokenOpt = refreshTokenService.findByUserId(testUser.getId());
-        assertThat(newRefreshTokenOpt).isPresent();
-        String newRefreshToken = newRefreshTokenOpt.get().getToken();
-        assertThat(newRefreshToken).isNotEqualTo(oldRefreshToken); // 새로운 토큰
-        
-        // 기존 RefreshToken이 무효화되었는지 확인 (findByToken으로 조회 시 없어야 함)
+        // then - 기존 RefreshToken이 무효화되었는지 확인 (findByToken으로 조회 시 없어야 함)
         Optional<RefreshToken> oldTokenOpt = refreshTokenService.findByToken(oldRefreshToken);
         assertThat(oldTokenOpt).isEmpty(); // 기존 토큰은 삭제됨
+        
+        // 새로운 RefreshToken이 생성되었는지 확인
+        Optional<RefreshToken> newRefreshTokenOpt = refreshTokenService.findByUserId(testUser.getId());
+        assertThat(newRefreshTokenOpt).isPresent();
     }
 
     @Test
@@ -203,15 +202,11 @@ class AuthFlowIntegrationTest {
         org.springframework.security.core.context.SecurityContextHolder.getContext()
                 .setAuthentication(authentication);
 
-        // when - 로그아웃
+        // when - 로그아웃 (refreshToken 쿠키는 필요 없음 - getCurrentUsername()으로 사용자 식별)
         mockMvc.perform(post("/api/v1/users/logout")
                         .cookie(new jakarta.servlet.http.Cookie(
                                 JwtUtil.AUTHORIZATION_HEADER,
                                 accessToken
-                        ))
-                        .cookie(new jakarta.servlet.http.Cookie(
-                                Constants.Jwt.REFRESH_TOKEN_COOKIE_NAME,
-                                refreshTokenOpt.get().getToken()
                         ))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -235,9 +230,8 @@ class AuthFlowIntegrationTest {
         assertThat(loginResponse.getAccessToken()).isNotNull();
 
         String accessToken = loginResponse.getAccessToken().substring(7);
-        Optional<RefreshToken> refreshTokenOpt = refreshTokenService.findByUserId(testUser.getId());
-        assertThat(refreshTokenOpt).isPresent();
-        String refreshToken = refreshTokenOpt.get().getToken();
+        String refreshToken = loginResponse.getRefreshToken();
+        assertThat(refreshToken).isNotNull();
 
         // 2. RefreshToken으로 AccessToken 갱신 (로테이션 발생)
         mockMvc.perform(post("/api/v1/auth/refresh")
@@ -253,10 +247,9 @@ class AuthFlowIntegrationTest {
         Optional<RefreshToken> oldTokenOpt = refreshTokenService.findByToken(refreshToken);
         assertThat(oldTokenOpt).isEmpty();
         
-        // 새로운 RefreshToken 조회
+        // 새로운 RefreshToken이 생성되었는지 확인
         Optional<RefreshToken> newRefreshTokenOpt = refreshTokenService.findByUserId(testUser.getId());
         assertThat(newRefreshTokenOpt).isPresent();
-        String newRefreshToken = newRefreshTokenOpt.get().getToken();
 
         // 3. SecurityContext 설정 (인증된 사용자로 설정)
         org.springframework.security.core.userdetails.UserDetails userDetails = 
@@ -272,15 +265,11 @@ class AuthFlowIntegrationTest {
         org.springframework.security.core.context.SecurityContextHolder.getContext()
                 .setAuthentication(authentication);
 
-        // 4. 로그아웃
+        // 4. 로그아웃 (refreshToken 쿠키는 필요 없음 - getCurrentUsername()으로 사용자 식별)
         mockMvc.perform(post("/api/v1/users/logout")
                         .cookie(new jakarta.servlet.http.Cookie(
                                 JwtUtil.AUTHORIZATION_HEADER,
                                 accessToken
-                        ))
-                        .cookie(new jakarta.servlet.http.Cookie(
-                                Constants.Jwt.REFRESH_TOKEN_COOKIE_NAME,
-                                newRefreshToken
                         ))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -289,11 +278,11 @@ class AuthFlowIntegrationTest {
         Optional<RefreshToken> deletedTokenOpt = refreshTokenService.findByUserId(testUser.getId());
         assertThat(deletedTokenOpt).isEmpty();
 
-        // 6. 삭제된 RefreshToken으로 갱신 시도 시 실패
+        // 6. 무효화된 RefreshToken으로 갱신 시도 시 실패
         mockMvc.perform(post("/api/v1/auth/refresh")
                         .cookie(new jakarta.servlet.http.Cookie(
                                 Constants.Jwt.REFRESH_TOKEN_COOKIE_NAME,
-                                newRefreshToken
+                                refreshToken
                         ))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
