@@ -59,7 +59,11 @@ export const useAuthStore = create<AuthStore>()(
         },
 
         forceLogout: () => {
+          // 로컬 스토리지 정리
           localStorage.removeItem("userData");
+          
+          // apiClient의 Authorization 헤더 제거 (혹시 모를 헤더 설정 제거)
+          apiClient.clearAuth();
 
           set(
             {
