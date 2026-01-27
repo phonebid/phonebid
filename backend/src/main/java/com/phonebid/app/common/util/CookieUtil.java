@@ -57,6 +57,10 @@ public class CookieUtil {
      * @return ResponseCookie
      */
     public static ResponseCookie createRefreshTokenCookie(String refreshToken, boolean isProduction) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new IllegalArgumentException("refreshToken must not be null or blank");
+        }
+
         return ResponseCookie.from(Constants.Jwt.REFRESH_TOKEN_COOKIE_NAME, refreshToken)
                 .path("/")
                 .httpOnly(true) // XSS 공격 방지
