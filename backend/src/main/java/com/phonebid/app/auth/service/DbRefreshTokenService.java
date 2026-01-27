@@ -110,5 +110,24 @@ public class DbRefreshTokenService implements RefreshTokenService {
 
         return true;
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String getTokenByUsername(String username) {
+        // 사용자 조회
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new CustomException(CommonErrorCode.USER_NOT_FOUND));
+
+        // RefreshToken 존재 여부 확인
+        refreshTokenRepository.findByUserId(user.getId())
+            .orElseThrow(() -> new CustomException(CommonErrorCode.REFRESH_TOKEN_NOT_FOUND));
+
+        // 주의: 이 메서드는 실제로 사용되지 않습니다.
+        // 서비스 레이어(KakaoService, NaverService)에서 createRefreshToken의 반환값을
+        // 저장하여 getRefreshTokenForUsername 메서드로 제공합니다.
+        // 
+        // DB에 저장된 토큰은 해시된 값이므로 원본 토큰을 재생성할 수 없습니다.
+        throw new CustomException(CommonErrorCode.REFRESH_TOKEN_NOT_FOUND);
+    }
 }
 

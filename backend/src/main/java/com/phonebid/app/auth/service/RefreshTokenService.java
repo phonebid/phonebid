@@ -49,5 +49,13 @@ public interface RefreshTokenService {
      * @return 유효하면 true, 그렇지 않으면 false
      */
     boolean validateToken(String token);
+
+    /**
+     * 사용자명으로 RefreshToken 값 조회
+     * @param username 사용자명
+     * @return RefreshToken 값 (해시되지 않은 원본 토큰)
+     * @throws CustomException 사용자를 찾을 수 없거나 RefreshToken을 찾을 수 없는 경우
+     */
+    String getTokenByUsername(String username);
 }
 
