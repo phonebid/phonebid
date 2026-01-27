@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { QuoteDetail } from "types/QuoteTypes";
 import type { BidCreateRequest, AdditionalServiceRequest } from "types/SellerTypes";
 import {
@@ -6,6 +6,7 @@ import {
   calculateMonthlyInstallment,
   calculateTotalMonthlyPayment,
 } from "utils/bidUtils";
+import { BID_FORM_DEFAULTS } from "utils/constants";
 
 const DEFAULT_INSTALLMENT_MONTHS = 24;
 const DEFAULT_INSTALLMENT_INTEREST_RATE = 3.3;
@@ -39,9 +40,9 @@ export interface BidFormErrors {
 
 export const useBidForm = (quote: QuoteDetail | null) => {
   const [formData, setFormData] = useState<BidFormData>({
-    devicePrice: 1231230,
-    publicSubsidy: 301000,
-    additionalSubsidy: 301000,
+    devicePrice: BID_FORM_DEFAULTS.DEVICE_PRICE,
+    publicSubsidy: BID_FORM_DEFAULTS.PUBLIC_SUBSIDY,
+    additionalSubsidy: BID_FORM_DEFAULTS.ADDITIONAL_SUBSIDY,
     purchaseMethod: quote?.purchaseMethod || "DEVICE_CHANGE",
     carrier: quote?.carrier || "SKT",
     currentCarrier: quote?.currentCarrier,
@@ -49,14 +50,27 @@ export const useBidForm = (quote: QuoteDetail | null) => {
     installmentMonths: DEFAULT_INSTALLMENT_MONTHS,
     pricePlanName: "",
     pricePlanPrice: 0,
-    pricePlanMaintenanceMonths: 24,
-    lineMaintenanceMonths: 24,
+    pricePlanMaintenanceMonths: BID_FORM_DEFAULTS.PRICE_PLAN_MAINTENANCE_MONTHS,
+    lineMaintenanceMonths: BID_FORM_DEFAULTS.LINE_MAINTENANCE_MONTHS,
     additionalServices: [],
     additionalServicesMaintenanceMonths: 0,
-    deliveryDays: 3,
+    deliveryDays: BID_FORM_DEFAULTS.DELIVERY_DAYS,
   });
 
   const [errors, setErrors] = useState<BidFormErrors>({});
+
+  // quote 변경 시 formData 동기화
+  useEffect(() => {
+    if (quote) {
+      setFormData((prev) => ({
+        ...prev,
+        purchaseMethod: quote.purchaseMethod || prev.purchaseMethod,
+        carrier: quote.carrier || prev.carrier,
+        currentCarrier: quote.currentCarrier ?? prev.currentCarrier,
+        activationMethod: quote.activationMethod || prev.activationMethod,
+      }));
+    }
+  }, [quote]);
 
   const calculations = useMemo(() => {
     const installmentPrincipal = calculateInstallmentPrincipal(

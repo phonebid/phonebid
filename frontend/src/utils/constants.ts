@@ -101,3 +101,13 @@ export const STORAGE_KEYS = {
   ACCESS_TOKEN: "accessToken",
   USER_DATA: "userData",
 } as const;
+
+// 입찰 폼 기본값
+export const BID_FORM_DEFAULTS = {
+  DEVICE_PRICE: 1231230,
+  PUBLIC_SUBSIDY: 301000,
+  ADDITIONAL_SUBSIDY: 301000,
+  DELIVERY_DAYS: 3,
+  PRICE_PLAN_MAINTENANCE_MONTHS: 24,
+  LINE_MAINTENANCE_MONTHS: 24,
+} as const;
