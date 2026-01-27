@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -99,7 +100,7 @@ class DbRefreshTokenServiceTest {
 
         // then
         assertThat(result).isEqualTo(testToken);
-        verify(refreshTokenRepository).deleteByUserId(testUserId);
+        verify(refreshTokenRepository).deleteByUserId(eq(testUserId), any(LocalDateTime.class));
         verify(userRepository).findById(testUserId);
         verify(jwtUtil).createRefreshToken(testUser.getUsername());
         verify(tokenHashUtil).hashToken(testToken);
@@ -119,7 +120,7 @@ class DbRefreshTokenServiceTest {
         dbRefreshTokenService.createRefreshToken(testUserId);
 
         // then
-        verify(refreshTokenRepository).deleteByUserId(testUserId);
+        verify(refreshTokenRepository).deleteByUserId(eq(testUserId), any(LocalDateTime.class));
     }
 
     @Test
@@ -134,7 +135,7 @@ class DbRefreshTokenServiceTest {
                 .hasFieldOrPropertyWithValue("errorCode", CommonErrorCode.USER_NOT_FOUND);
 
         verify(userRepository).findById(testUserId);
-        verify(refreshTokenRepository, never()).deleteByUserId(any(UUID.class));
+        verify(refreshTokenRepository, never()).deleteByUserId(any(UUID.class), any(LocalDateTime.class));
         verify(jwtUtil, never()).createRefreshToken(anyString());
         verify(tokenHashUtil, never()).hashToken(anyString());
         verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
@@ -207,29 +208,44 @@ class DbRefreshTokenServiceTest {
     }
 
     @Test
-    @DisplayName("사용자 ID로 RefreshToken 삭제 성공")
-    void deleteByUserId_ShouldDeleteToken() {
+    @DisplayName("사용자 ID로 RefreshToken soft delete 성공")
+    void deleteByUserId_ShouldSoftDeleteToken() {
         // given
-        doNothing().when(refreshTokenRepository).deleteByUserId(testUserId);
+        doNothing().when(refreshTokenRepository).deleteByUserId(eq(testUserId), any(LocalDateTime.class));
 
         // when
         dbRefreshTokenService.deleteByUserId(testUserId);
 
         // then
-        verify(refreshTokenRepository).deleteByUserId(testUserId);
+        verify(refreshTokenRepository).deleteByUserId(eq(testUserId), any(LocalDateTime.class));
     }
 
     @Test
-    @DisplayName("만료된 RefreshToken 삭제 성공")
-    void deleteExpiredTokens_ShouldDeleteExpiredTokens() {
+    @DisplayName("만료된 RefreshToken soft delete 성공")
+    void deleteExpiredTokens_ShouldSoftDeleteExpiredTokens() {
         // given
-        doNothing().when(refreshTokenRepository).deleteByExpiresAtBefore(any(LocalDateTime.class));
+        doNothing().when(refreshTokenRepository).deleteByExpiresAtBefore(any(LocalDateTime.class), any(LocalDateTime.class));
 
         // when
         dbRefreshTokenService.deleteExpiredTokens();
 
         // then
-        verify(refreshTokenRepository).deleteByExpiresAtBefore(any(LocalDateTime.class));
+        verify(refreshTokenRepository).deleteByExpiresAtBefore(any(LocalDateTime.class), any(LocalDateTime.class));
+    }
+
+    @Test
+    @DisplayName("삭제된 지 오래된 RefreshToken 하드 삭제 성공")
+    void hardDeleteOldDeletedTokens_ShouldHardDeleteOldTokens() {
+        // given
+        int months = 3;
+        when(refreshTokenRepository.hardDeleteByDeletedAtBefore(any(LocalDateTime.class))).thenReturn(5);
+
+        // when
+        int deletedCount = dbRefreshTokenService.hardDeleteOldDeletedTokens(months);
+
+        // then
+        assertThat(deletedCount).isEqualTo(5);
+        verify(refreshTokenRepository).hardDeleteByDeletedAtBefore(any(LocalDateTime.class));
     }
 
     @Test
