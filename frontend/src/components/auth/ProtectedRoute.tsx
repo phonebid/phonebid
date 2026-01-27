@@ -19,17 +19,27 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requiredRole,
   redirectTo = "/login",
 }) => {
-  const { isAuthenticated, user, checkAuth } = useAuthStore();
+  const { isAuthenticated, isInitializing, user, checkAuth } = useAuthStore();
   const location = useLocation();
-  const [isChecking, setIsChecking] = useState(true);
+  const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => {
     const verifyAuth = async () => {
+      // App.tsx의 initializeAuth가 진행 중이면 대기
+      if (isInitializing) {
+        return;
+      }
+
+      // 이미 인증되어 있으면 확인 불필요
+      if (isAuthenticated) {
+        setIsChecking(false);
+        return;
+      }
+
+      // 인증 상태가 없고 초기화가 완료된 경우에만 확인 시도
+      setIsChecking(true);
       try {
-        // 인증 상태가 없으면 확인 시도
-        if (!isAuthenticated) {
-          await checkAuth();
-        }
+        await checkAuth();
       } catch (error) {
         // 인증 확인 실패 시 로그인 페이지로 리다이렉트
         console.error("인증 확인 실패:", error);
@@ -39,10 +49,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     };
 
     verifyAuth();
-  }, [isAuthenticated, checkAuth]);
+  }, [isAuthenticated, isInitializing, checkAuth]);
 
-  // 인증 확인 중 로딩 상태
-  if (isChecking) {
+  // 인증 초기화 중이거나 확인 중 로딩 상태
+  if (isInitializing || isChecking) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-muted-foreground">인증 확인 중...</div>
