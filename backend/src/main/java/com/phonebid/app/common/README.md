@@ -24,7 +24,11 @@
 
 - **domain/**
   - 공통 도메인 및 베이스 엔티티 클래스
-  - `BaseEntity.java`: JPA 감사(auditing) 필드 포함 베이스 엔티티
+  - `BaseEntity.java`: JPA 감사(auditing) 필드 포함 베이스 엔티티 (일반 엔터티용)
+    - `createdAt`, `updatedAt`, `createdBy`, `updatedBy`, `deletedAt`, `deletedBy`, `isDelete` 포함
+  - `BaseTimeEntity.java`: 최소한의 시간 정보만 포함하는 베이스 엔티티 (Immutable 엔터티용)
+    - `createdAt`, `deletedAt`만 포함
+    - 수정되지 않는 엔터티(예: RefreshToken)에 사용
 
 - **config/**
   - 공통 설정 및 JPA 감사 관련 설정 클래스

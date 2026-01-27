@@ -9,8 +9,11 @@ alwaysApply: false
 
 - **Entity 수정** : Entity가 수정 및 추가 생성되었을 때 이 파일에도 반드시 수정
 - **UUID 기본키**: 모든 테이블은 UUID 타입의 기본키 사용
-- **BaseEntity 상속**: 모든 엔터티는 공통 감사 필드 포함
-- **소프트 삭제**: `is_delete`, `deleted_at`, `deleted_by` 필드로 논리적 삭제
+- **BaseEntity 상속**: 일반 엔터티는 `BaseEntity`를 상속받아 공통 감사 필드 포함
+- **BaseTimeEntity 예외**: immutable한 엔터티(예: RefreshToken)는 `BaseTimeEntity`를 상속받을 수 있음
+  - `BaseTimeEntity`는 `created_at`, `deleted_at`만 포함하며, `is_delete`, `deleted_by` 필드는 포함하지 않음
+  - 이는 의도적인 설계로, 수정되지 않는 엔터티에 최소한의 감사 정보만 제공
+- **소프트 삭제**: 일반 엔터티는 `is_delete`, `deleted_at`, `deleted_by` 필드로 논리적 삭제
 - **네이밍 규칙**: 테이블명은 복수형, 컬럼명은 snake_case
 
 ### 📋 공통 필드 (BaseEntity)
@@ -483,13 +486,18 @@ idx_seller_documents_type       -- seller_documents(type) - 문서 타입별 조
 ### 🔑 기본 원칙
 
 - **UUID 기본키**: 모든 테이블은 UUID 타입의 기본키 사용
-- **BaseEntity 상속**: 모든 엔터티는 공통 감사 필드 포함
-- **소프트 삭제**: `is_delete`, `deleted_at`, `deleted_by` 필드로 논리적 삭제
+- **BaseEntity 상속**: 일반 엔터티는 `BaseEntity`를 상속받아 공통 감사 필드 포함
+- **BaseTimeEntity 예외**: immutable한 엔터티(예: RefreshToken)는 `BaseTimeEntity`를 상속받을 수 있음
+  - `BaseTimeEntity`는 `created_at`, `deleted_at`만 포함하며, `is_delete`, `deleted_by` 필드는 포함하지 않음
+  - 이는 의도적인 설계로, 수정되지 않는 엔터티에 최소한의 감사 정보만 제공
+- **소프트 삭제**: 일반 엔터티는 `is_delete`, `deleted_at`, `deleted_by` 필드로 논리적 삭제
 - **네이밍 규칙**: 테이블명은 복수형, 컬럼명은 snake_case
 
-### 📋 공통 필드 (BaseEntity)
+### 📋 공통 필드
 
-모든 테이블에 포함되는 공통 필드:
+#### BaseEntity (일반 엔터티용)
+
+일반 엔터티(예: User, Product, Quote 등)에 포함되는 공통 필드:
 
 ```sql
 created_at      TIMESTAMP    -- 생성 시각
@@ -500,6 +508,17 @@ deleted_at      TIMESTAMP    -- 삭제 시각 (소프트 삭제)
 deleted_by      VARCHAR(255) -- 삭제자
 is_delete       BOOLEAN      -- 삭제 여부
 ```
+
+#### BaseTimeEntity (Immutable 엔터티용)
+
+Immutable한 엔터티(예: RefreshToken)에 포함되는 최소한의 공통 필드:
+
+```sql
+created_at      TIMESTAMP    -- 생성 시각
+deleted_at      TIMESTAMP    -- 삭제 시각 (소프트 삭제)
+```
+
+**참고**: `BaseTimeEntity`는 수정되지 않는 엔터티에 사용되므로 `updated_at`, `updated_by`, `created_by`, `deleted_by`, `is_delete` 필드를 포함하지 않습니다.
 
 ## 🏗️ 실제 테이블 구조 (11개 테이블)
 
