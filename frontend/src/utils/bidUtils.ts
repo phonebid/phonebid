@@ -4,6 +4,8 @@ export interface BidCalculationInput {
   additionalSubsidy: number;
   installmentMonths: number;
   installmentInterestRate: number;
+  pricePlanPrice?: number;
+  additionalServicesPrice?: number;
 }
 
 export interface BidCalculationResult {
@@ -63,10 +65,16 @@ export const calculateBidAmounts = (
     input.installmentInterestRate
   );
 
+  const totalMonthlyPayment = calculateTotalMonthlyPayment(
+    monthlyInstallment,
+    input.pricePlanPrice ?? 0,
+    input.additionalServicesPrice ?? 0
+  );
+
   return {
     installmentPrincipal,
     monthlyInstallment,
-    totalMonthlyPayment: monthlyInstallment,
+    totalMonthlyPayment,
   };
 };
 
