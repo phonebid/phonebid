@@ -187,6 +187,14 @@ class ApiClient {
     const response = await this.client.delete<ApiResponse<T>>(url);
     return response.data.data;
   }
+
+  /**
+   * 인증 관련 헤더 및 설정 제거
+   * 로그아웃 시 호출하여 토큰 재사용 방지
+   */
+  clearAuth(): void {
+    delete this.client.defaults.headers.common.Authorization;
+  }
 }
 
 export const apiClient = new ApiClient();

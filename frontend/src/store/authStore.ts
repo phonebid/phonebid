@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
+import axios from "axios";
 import type { AuthState, User, ProfileResponseDto } from "types/UserTypes";
 import type { ApiResponse } from "types/ApiTypes";
 import { apiClient } from "services/apiClient";
@@ -45,22 +46,32 @@ export const useAuthStore = create<AuthStore>()(
           } catch (error) {
             // API 호출 실패해도 로컬 스토리지는 정리
             console.error("로그아웃 API 호출 실패:", error);
+          } finally {
+            // API 호출 성공/실패 여부와 관계없이 항상 정리
+            // localStorage에서 토큰 제거
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("refreshToken");
+            localStorage.removeItem("userData");
+            // persist 스토리지도 정리
+            localStorage.removeItem("auth-storage");
+            
+            // apiClient의 Authorization 헤더 제거
+            apiClient.clearAuth();
+            // axios 기본 Authorization 헤더도 제거 (다른 axios 인스턴스에서 사용할 수 있음)
+            delete axios.defaults.headers.common.Authorization;
+            
+            // 쿠키는 백엔드에서 삭제됨 (HttpOnly 쿠키는 프론트엔드에서 접근 불가)
+
+            set(
+              {
+                isAuthenticated: false,
+                user: null,
+                accessToken: null,
+              },
+              false,
+              "auth/logout"
+            );
           }
-
-          localStorage.removeItem("userData");
-          // persist 스토리지도 정리
-          localStorage.removeItem("auth-storage");
-          // 쿠키는 백엔드에서 삭제됨 (HttpOnly 쿠키는 프론트엔드에서 접근 불가)
-
-          set(
-            {
-              isAuthenticated: false,
-              user: null,
-              accessToken: null,
-            },
-            false,
-            "auth/logout"
-          );
         },
 
         forceLogout: () => {
