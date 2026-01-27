@@ -86,14 +86,36 @@ class ApiClient {
 
           try {
             // Refresh Token으로 Access Token 갱신
-            await refreshAccessToken();
-            
-            // 대기 중인 요청들 재시도
+            const newAccessToken = await refreshAccessToken();
+
+            // 토큰 갱신 반영 (헤더 우선 사용 환경 대응)
+            if (newAccessToken) {
+              // Bearer 접두사 제거 후 localStorage에 저장 (request interceptor에서 Bearer 추가)
+              const tokenWithoutBearer = newAccessToken.startsWith("Bearer ")
+                ? newAccessToken.substring(7)
+                : newAccessToken;
+              localStorage.setItem("accessToken", tokenWithoutBearer);
+              
+              // 헤더에 새 토큰 설정
+              this.client.defaults.headers.common.Authorization = `Bearer ${tokenWithoutBearer}`;
+              originalRequest.headers.Authorization = `Bearer ${tokenWithoutBearer}`;
+            } else {
+              // 토큰이 없으면 제거
+              localStorage.removeItem("accessToken");
+              delete this.client.defaults.headers.common.Authorization;
+              delete originalRequest.headers.Authorization;
+            }
+
+            // 갱신 완료 후 큐 해제
+            this.isRefreshing = false;
             this.processQueue(null);
-            
+
             // 원래 요청 재시도
             return this.client(originalRequest);
           } catch (refreshError) {
+            // 갱신 실패 시 즉시 플래그 해제
+            this.isRefreshing = false;
+            
             // 갱신 실패 시 대기 중인 요청들 모두 실패 처리
             this.processQueue(refreshError);
             
@@ -110,8 +132,6 @@ class ApiClient {
             return Promise.reject(
               new ApiErrorClass(errorCode, "인증이 필요합니다.")
             );
-          } finally {
-            this.isRefreshing = false;
           }
         }
 
