@@ -44,6 +44,14 @@ public interface RefreshTokenService {
     void deleteExpiredTokens();
 
     /**
+     * 삭제된 지 일정 기간 이상 지난 RefreshToken 하드 삭제 (영구 삭제)
+     * 배치 작업에서 사용
+     * @param months 삭제 후 경과 기간 (월)
+     * @return 삭제된 레코드 수
+     */
+    int hardDeleteOldDeletedTokens(int months);
+
+    /**
      * RefreshToken 유효성 검증
      * @param token RefreshToken 값
      * @return 유효하면 true, 그렇지 않으면 false

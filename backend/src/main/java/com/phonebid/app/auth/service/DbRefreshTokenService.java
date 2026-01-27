@@ -54,7 +54,6 @@ public class DbRefreshTokenService implements RefreshTokenService {
             .build();
 
         refreshTokenRepository.save(refreshToken);
-        log.info("RefreshToken 생성 완료: userId={}", userId);
 
         return token;
     }
@@ -76,7 +75,6 @@ public class DbRefreshTokenService implements RefreshTokenService {
     @Transactional
     public void deleteByUserId(UUID userId) {
         refreshTokenRepository.deleteByUserId(userId, LocalDateTime.now());
-        log.info("RefreshToken soft delete 완료: userId={}", userId);
     }
 
     @Override
@@ -84,7 +82,13 @@ public class DbRefreshTokenService implements RefreshTokenService {
     public void deleteExpiredTokens() {
         LocalDateTime now = LocalDateTime.now();
         refreshTokenRepository.deleteByExpiresAtBefore(now, now);
-        log.info("만료된 RefreshToken soft delete 완료: 기준 시각={}", now);
+    }
+
+    @Override
+    @Transactional
+    public int hardDeleteOldDeletedTokens(int months) {
+        LocalDateTime cutoffDate = LocalDateTime.now().minusMonths(months);
+        return refreshTokenRepository.hardDeleteByDeletedAtBefore(cutoffDate);
     }
 
     @Override

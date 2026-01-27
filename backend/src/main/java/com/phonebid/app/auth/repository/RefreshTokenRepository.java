@@ -39,5 +39,13 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE RefreshToken rt SET rt.deletedAt = :deletedAt WHERE rt.expiresAt < :dateTime AND rt.deletedAt IS NULL")
     void deleteByExpiresAtBefore(@Param("dateTime") LocalDateTime dateTime, @Param("deletedAt") LocalDateTime deletedAt);
+
+    /**
+     * 삭제된 지 일정 기간 이상 지난 RefreshToken 하드 삭제 (영구 삭제)
+     * 배치 작업에서 사용
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM RefreshToken rt WHERE rt.deletedAt IS NOT NULL AND rt.deletedAt < :cutoffDate")
+    int hardDeleteByDeletedAtBefore(@Param("cutoffDate") LocalDateTime cutoffDate);
 }
 
