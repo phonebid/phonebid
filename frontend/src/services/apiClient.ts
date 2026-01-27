@@ -28,15 +28,10 @@ class ApiClient {
   }
 
   private setupInterceptors() {
-    // Request interceptor for auth token
-    // 쿠키 기반 인증 사용 시 헤더에 토큰을 명시적으로 설정하지 않아도 됨
-    // 하지만 하위 호환성을 위해 localStorage에 토큰이 있으면 헤더에 추가
+    // Request interceptor
+    // 쿠키 기반 인증 사용: 쿠키가 자동으로 전송되므로 헤더에 명시적으로 설정할 필요 없음
     this.client.interceptors.request.use(
       (config) => {
-        const token = localStorage.getItem("accessToken");
-        if (token) {
-          config.headers.Authorization = "Bearer " + token;
-        }
         // FormData인 경우 Content-Type 헤더를 삭제하여 브라우저가 자동으로 boundary를 포함한 올바른 Content-Type을 설정하도록 함
         if (config.data instanceof FormData) {
           delete config.headers["Content-Type"];
@@ -86,31 +81,14 @@ class ApiClient {
 
           try {
             // Refresh Token으로 Access Token 갱신
-            const newAccessToken = await refreshAccessToken();
-
-            // 토큰 갱신 반영 (헤더 우선 사용 환경 대응)
-            if (newAccessToken) {
-              // Bearer 접두사 제거 후 localStorage에 저장 (request interceptor에서 Bearer 추가)
-              const tokenWithoutBearer = newAccessToken.startsWith("Bearer ")
-                ? newAccessToken.substring(7)
-                : newAccessToken;
-              localStorage.setItem("accessToken", tokenWithoutBearer);
-              
-              // 헤더에 새 토큰 설정
-              this.client.defaults.headers.common.Authorization = `Bearer ${tokenWithoutBearer}`;
-              originalRequest.headers.Authorization = `Bearer ${tokenWithoutBearer}`;
-            } else {
-              // 토큰이 없으면 제거
-              localStorage.removeItem("accessToken");
-              delete this.client.defaults.headers.common.Authorization;
-              delete originalRequest.headers.Authorization;
-            }
+            // 쿠키 기반 인증: 백엔드에서 쿠키로 새 토큰을 설정하므로 클라이언트는 별도 처리 불필요
+            await refreshAccessToken();
 
             // 갱신 완료 후 큐 해제
             this.isRefreshing = false;
             this.processQueue(null);
 
-            // 원래 요청 재시도
+            // 원래 요청 재시도 (쿠키에 새 토큰이 자동으로 포함됨)
             return this.client(originalRequest);
           } catch (refreshError) {
             // 갱신 실패 시 즉시 플래그 해제
@@ -191,6 +169,9 @@ class ApiClient {
   /**
    * 인증 관련 헤더 및 설정 제거
    * 로그아웃 시 호출하여 토큰 재사용 방지
+   * 
+   * 주의: 쿠키 기반 인증을 사용하므로 Authorization 헤더를 기본적으로 사용하지 않습니다.
+   * 이 메서드는 혹시 모를 헤더 설정을 제거하기 위한 안전장치입니다.
    */
   clearAuth(): void {
     delete this.client.defaults.headers.common.Authorization;

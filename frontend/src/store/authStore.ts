@@ -20,6 +20,7 @@ export const useAuthStore = create<AuthStore>()(
       (set, get) => ({
         // Initial state
         isAuthenticated: false,
+        isInitializing: true, // 초기 인증 확인 중 상태
         user: null,
         accessToken: null,
 
@@ -40,38 +41,21 @@ export const useAuthStore = create<AuthStore>()(
         },
 
         logout: async () => {
-          try {
-            // 백엔드 로그아웃 API 호출 (DB에서 RefreshToken 삭제 및 쿠키 삭제)
-            await apiClient.post<ApiResponse<void>>("/users/logout");
-          } catch (error) {
-            // API 호출 실패해도 로컬 스토리지는 정리
-            console.error("로그아웃 API 호출 실패:", error);
-          } finally {
-            // API 호출 성공/실패 여부와 관계없이 항상 정리
-            // localStorage에서 토큰 제거
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("refreshToken");
-            localStorage.removeItem("userData");
-            // persist 스토리지도 정리
-            localStorage.removeItem("auth-storage");
-            
-            // apiClient의 Authorization 헤더 제거
-            apiClient.clearAuth();
-            // axios 기본 Authorization 헤더도 제거 (다른 axios 인스턴스에서 사용할 수 있음)
-            delete axios.defaults.headers.common.Authorization;
-            
-            // 쿠키는 백엔드에서 삭제됨 (HttpOnly 쿠키는 프론트엔드에서 접근 불가)
-
-            set(
-              {
-                isAuthenticated: false,
-                user: null,
-                accessToken: null,
-              },
-              false,
-              "auth/logout"
-            );
-          }
+          // authService.logout을 호출하여 중복 제거
+          const { logout: authServiceLogout } = await import("services/authService");
+          await authServiceLogout();
+          
+          // 상태 업데이트
+          localStorage.removeItem("auth-storage");
+          set(
+            {
+              isAuthenticated: false,
+              user: null,
+              accessToken: null,
+            },
+            false,
+            "auth/logout"
+          );
         },
 
         forceLogout: () => {
@@ -97,6 +81,8 @@ export const useAuthStore = create<AuthStore>()(
         initializeAuth: async () => {
           // 쿠키 기반 인증이므로 항상 API 호출로 인증 상태 확인
           // localStorage에 userData가 없어도 쿠키에 토큰이 있을 수 있음 (예: 카카오 로그인 직후)
+          set({ isInitializing: true }, false, "auth/initialize/start");
+          
           try {
             // 쿠키에 토큰이 있는지 확인하기 위해 프로필 API 호출
             await get().checkAuth();
@@ -111,8 +97,10 @@ export const useAuthStore = create<AuthStore>()(
                 accessToken: null,
               },
               false,
-              "auth/initialize"
+              "auth/initialize/fail"
             );
+          } finally {
+            set({ isInitializing: false }, false, "auth/initialize/complete");
           }
         },
 
@@ -159,6 +147,7 @@ export const useAuthStore = create<AuthStore>()(
         name: "auth-storage",
         partialize: (state) => {
           // 로그아웃 상태일 때는 저장하지 않음
+          // isInitializing은 저장하지 않음 (항상 false로 시작)
           if (!state.isAuthenticated) {
             return {};
           }
@@ -166,6 +155,7 @@ export const useAuthStore = create<AuthStore>()(
             isAuthenticated: state.isAuthenticated,
             user: state.user,
             accessToken: state.accessToken,
+            // isInitializing은 저장하지 않음 (초기화 시 항상 true로 시작)
           };
         },
       }
