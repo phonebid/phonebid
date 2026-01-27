@@ -38,8 +38,8 @@ public class DbRefreshTokenService implements RefreshTokenService {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new CustomException(CommonErrorCode.USER_NOT_FOUND));
         
-        // 기존 RefreshToken 삭제
-        refreshTokenRepository.deleteByUserId(userId);
+        // 기존 RefreshToken soft delete
+        refreshTokenRepository.deleteByUserId(userId, LocalDateTime.now());
 
         // RefreshToken 생성
         String token = jwtUtil.createRefreshToken(user.getUsername());
@@ -75,16 +75,16 @@ public class DbRefreshTokenService implements RefreshTokenService {
     @Override
     @Transactional
     public void deleteByUserId(UUID userId) {
-        refreshTokenRepository.deleteByUserId(userId);
-        log.info("RefreshToken 삭제 완료: userId={}", userId);
+        refreshTokenRepository.deleteByUserId(userId, LocalDateTime.now());
+        log.info("RefreshToken soft delete 완료: userId={}", userId);
     }
 
     @Override
     @Transactional
     public void deleteExpiredTokens() {
         LocalDateTime now = LocalDateTime.now();
-        refreshTokenRepository.deleteByExpiresAtBefore(now);
-        log.info("만료된 RefreshToken 정리 완료: 기준 시각={}", now);
+        refreshTokenRepository.deleteByExpiresAtBefore(now, now);
+        log.info("만료된 RefreshToken soft delete 완료: 기준 시각={}", now);
     }
 
     @Override
