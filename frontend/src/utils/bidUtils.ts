@@ -28,6 +28,12 @@ export const calculateMonthlyInstallment = (
   if (months === 0) return principal;
   
   const monthlyRate = interestRate / 100 / 12;
+  
+  // 이자율이 0인 경우 원금을 개월수로 균등 분할
+  if (interestRate === 0 || monthlyRate === 0) {
+    return Math.round(principal / months);
+  }
+  
   const numerator = principal * monthlyRate * Math.pow(1 + monthlyRate, months);
   const denominator = Math.pow(1 + monthlyRate, months) - 1;
   
