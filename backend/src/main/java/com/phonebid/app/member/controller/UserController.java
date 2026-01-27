@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.phonebid.app.common.dto.ApiResponse;
 import com.phonebid.app.common.Constants;
 import com.phonebid.app.common.util.CookieUtil;
+import com.phonebid.app.common.exception.CustomException;
+import com.phonebid.app.common.errorcode.CommonErrorCode;
 import com.phonebid.app.member.dto.request.SignupRequestDto;
 import com.phonebid.app.member.dto.request.LoginRequestDto;
 import com.phonebid.app.member.dto.request.PasswordChangeRequestDto;
@@ -113,7 +115,7 @@ public class UserController {
     private String getCurrentUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new RuntimeException("인증되지 않은 사용자입니다.");
+            throw new CustomException(CommonErrorCode.AUTHENTICATION_ERROR);
         }
         return authentication.getName();
     }
