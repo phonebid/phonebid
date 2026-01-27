@@ -7,18 +7,21 @@ alwaysApply: false
 
 ### 🔑 기본 원칙
 
-- **Entity 수정** : Entity가 수정 및 추가 생성되었을 때 이 파일에도 반드시 수정
+- **Entity 수정**: Entity가 수정 및 추가 생성되었을 때 이 파일에도 반드시 수정
 - **UUID 기본키**: 모든 테이블은 UUID 타입의 기본키 사용
-- **BaseEntity 상속**: 일반 엔터티는 `BaseEntity`를 상속받아 공통 감사 필드 포함
-- **BaseTimeEntity 예외**: immutable한 엔터티(예: RefreshToken)는 `BaseTimeEntity`를 상속받을 수 있음
-  - `BaseTimeEntity`는 `created_at`, `deleted_at`만 포함하며, `is_delete`, `deleted_by` 필드는 포함하지 않음
-  - 이는 의도적인 설계로, 수정되지 않는 엔터티에 최소한의 감사 정보만 제공
-- **소프트 삭제**: 일반 엔터티는 `is_delete`, `deleted_at`, `deleted_by` 필드로 논리적 삭제
+- **엔터티 상속 규칙**:
+  - **일반 엔터티**: `BaseEntity`를 상속받아 모든 감사 필드 포함 (기본 규칙)
+  - **Immutable 엔터티 예외**: 수정되지 않는 엔터티(예: RefreshToken)는 `BaseTimeEntity`를 상속받을 수 있음
+- **소프트 삭제**:
+  - **BaseEntity 엔터티**: `is_delete = true`, `deleted_at`, `deleted_by` 필드로 논리적 삭제
+  - **BaseTimeEntity 엔터티**: `deleted_at` 필드만으로 논리적 삭제 (`is_delete`, `deleted_by` 없음)
 - **네이밍 규칙**: 테이블명은 복수형, 컬럼명은 snake_case
 
-### 📋 공통 필드 (BaseEntity)
+### 📋 공통 필드
 
-모든 테이블에 포함되는 공통 필드:
+#### BaseEntity (일반 엔터티용)
+
+일반 엔터티(예: User, Product, Quote 등)에 포함되는 공통 필드:
 
 ```sql
 created_at      TIMESTAMP    -- 생성 시각
@@ -30,20 +33,20 @@ deleted_by      VARCHAR(255) -- 삭제자
 is_delete       BOOLEAN      -- 삭제 여부
 ```
 
-## 🏗️ 실제 테이블 구조 (11개 테이블)
+#### BaseTimeEntity (Immutable 엔터티용)
 
-### 공통 BaseEntity
+Immutable한 엔터티(예: RefreshToken)에 포함되는 최소한의 공통 필드:
 
 ```sql
--- BaseEntity 필드
-is_delete       BOOLEAN
-created_at      TIMESTAMP
-updated_at      TIMESTAMP
-deleted_at      TIMESTAMP
-created_by      VARCHAR(255)
-updated_by      VARCHAR(255)
-deleted_by      VARCHAR(255)
+created_at      TIMESTAMP    -- 생성 시각
+deleted_at      TIMESTAMP    -- 삭제 시각 (소프트 삭제)
 ```
+
+**참고**: `BaseTimeEntity`는 수정되지 않는 엔터티에 사용되므로 `updated_at`, `updated_by`, `created_by`, `deleted_by`, `is_delete` 필드를 포함하지 않습니다. 소프트 삭제는 `deleted_at IS NULL` 조건으로만 확인합니다.
+
+## 🏗️ 실제 테이블 구조
+
+**참고**: 아래 테이블들은 모두 `BaseEntity`를 상속받는 일반 엔터티입니다. `BaseTimeEntity`를 사용하는 테이블(예: `refresh_tokens`)은 별도로 관리됩니다.
 
 ### 1. users (사용자)
 
@@ -461,11 +464,13 @@ idx_seller_documents_type       -- seller_documents(type) - 문서 타입별 조
 
 ## ⚠️ 주의사항
 
-1. **소프트 삭제**: 모든 삭제는 `is_delete = true` 처리
+1. **소프트 삭제**:
+   - **BaseEntity 엔터티**: `is_delete = true`, `deleted_at`, `deleted_by` 설정
+   - **BaseTimeEntity 엔터티**: `deleted_at`만 설정 (`is_delete`, `deleted_by` 없음)
 2. **UUID 사용**: 모든 ID는 UUID 타입
 3. **Enum 검증**: 문자열 Enum 값은 애플리케이션에서 검증
 4. **외래키 제약**: 데이터 무결성 보장
-5. **감사 로그**: BaseEntity 필드 자동 관리
+5. **감사 로그**: BaseEntity/BaseTimeEntity 필드 자동 관리
 6. **1:1 관계**: UNIQUE 제약으로 보장
 7. **price_plans 테이블**: bids와 1:1 관계로 요금제 정보 분리 저장
 
@@ -479,46 +484,6 @@ idx_seller_documents_type       -- seller_documents(type) - 문서 타입별 조
 
 이 스키마는 휴대폰 역경매 플랫폼의 모든 비즈니스 요구사항을 지원하도록 설계되었으며, 실제 데이터베이스와 정확히 일치합니다.
 
-# Database Schema Rules
-
-## 📊 데이터베이스 스키마 구조 (정확한 실제 스키마)
-
-### 🔑 기본 원칙
-
-- **UUID 기본키**: 모든 테이블은 UUID 타입의 기본키 사용
-- **BaseEntity 상속**: 일반 엔터티는 `BaseEntity`를 상속받아 공통 감사 필드 포함
-- **BaseTimeEntity 예외**: immutable한 엔터티(예: RefreshToken)는 `BaseTimeEntity`를 상속받을 수 있음
-  - `BaseTimeEntity`는 `created_at`, `deleted_at`만 포함하며, `is_delete`, `deleted_by` 필드는 포함하지 않음
-  - 이는 의도적인 설계로, 수정되지 않는 엔터티에 최소한의 감사 정보만 제공
-- **소프트 삭제**: 일반 엔터티는 `is_delete`, `deleted_at`, `deleted_by` 필드로 논리적 삭제
-- **네이밍 규칙**: 테이블명은 복수형, 컬럼명은 snake_case
-
-### 📋 공통 필드
-
-#### BaseEntity (일반 엔터티용)
-
-일반 엔터티(예: User, Product, Quote 등)에 포함되는 공통 필드:
-
-```sql
-created_at      TIMESTAMP    -- 생성 시각
-created_by      VARCHAR(255) -- 생성자
-updated_at      TIMESTAMP    -- 수정 시각
-updated_by      VARCHAR(255) -- 수정자
-deleted_at      TIMESTAMP    -- 삭제 시각 (소프트 삭제)
-deleted_by      VARCHAR(255) -- 삭제자
-is_delete       BOOLEAN      -- 삭제 여부
-```
-
-#### BaseTimeEntity (Immutable 엔터티용)
-
-Immutable한 엔터티(예: RefreshToken)에 포함되는 최소한의 공통 필드:
-
-```sql
-created_at      TIMESTAMP    -- 생성 시각
-deleted_at      TIMESTAMP    -- 삭제 시각 (소프트 삭제)
-```
-
-**참고**: `BaseTimeEntity`는 수정되지 않는 엔터티에 사용되므로 `updated_at`, `updated_by`, `created_by`, `deleted_by`, `is_delete` 필드를 포함하지 않습니다.
 
 ## 🏗️ 실제 테이블 구조 (11개 테이블)
 
@@ -984,11 +949,13 @@ idx_seller_documents_type       -- seller_documents(type) - 문서 타입별 조
 
 ## ⚠️ 주의사항
 
-1. **소프트 삭제**: 모든 삭제는 `is_delete = true` 처리
+1. **소프트 삭제**:
+   - **BaseEntity 엔터티**: `is_delete = true`, `deleted_at`, `deleted_by` 설정
+   - **BaseTimeEntity 엔터티**: `deleted_at`만 설정 (`is_delete`, `deleted_by` 없음)
 2. **UUID 사용**: 모든 ID는 UUID 타입
 3. **Enum 검증**: 문자열 Enum 값은 애플리케이션에서 검증
 4. **외래키 제약**: 데이터 무결성 보장
-5. **감사 로그**: BaseEntity 필드 자동 관리
+5. **감사 로그**: BaseEntity/BaseTimeEntity 필드 자동 관리
 6. **1:1 관계**: UNIQUE 제약으로 보장
 7. **price_plans 테이블**: bids와 1:1 관계로 요금제 정보 분리 저장
 
