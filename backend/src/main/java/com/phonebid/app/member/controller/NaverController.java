@@ -49,13 +49,13 @@ public class NaverController {
     @GetMapping("/callback")
     public void naverCallback(@RequestParam String code, HttpServletResponse response) throws Exception {
         try {
-            log.info("네이버 로그인 콜백 처리 시작: code={}", code);
+            log.debug("네이버 로그인 콜백 처리 시작");
 
             // 인가 코드로 로그인 처리 및 JWT 토큰 생성
             LoginResponseDto loginResponse = naverService.naverLogin(code);
             String token = loginResponse.getAccessToken();
 
-            log.info("네이버 로그인 성공: username={}", loginResponse.getUsername());
+            log.debug("네이버 로그인 성공: username={}", loginResponse.getUsername());
 
             // Access Token과 Refresh Token을 쿠키에 저장
             boolean isProduction = CookieUtil.isProduction(environment);
@@ -94,9 +94,9 @@ public class NaverController {
     @PostMapping("/token")
     public ResponseEntity<ApiResponse<LoginResponseDto>> exchangeNaverToken(@RequestParam String code) {
         try {
-            log.info("프론트엔드 네이버 토큰 교환 시작: code={}", code);
+            log.debug("프론트엔드 네이버 토큰 교환 시작");
             LoginResponseDto response = naverService.naverLogin(code);
-            log.info("네이버 토큰 교환 성공: username={}", response.getUsername());
+            log.debug("네이버 토큰 교환 성공: username={}", response.getUsername());
             return ResponseEntity.ok(
                 ApiResponse.success(HttpStatus.OK, "네이버 로그인 성공", response)
             );

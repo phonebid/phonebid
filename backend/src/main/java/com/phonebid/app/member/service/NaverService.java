@@ -107,7 +107,7 @@ public class NaverService {
                 naverUser = sameEmailUser;
                 naverUser.updateProvider(Provider.NAVER);
                 naverUser.updateProviderId(providerId);
-                log.info("기존 사용자에 네이버 연동: username={}", naverUser.getUsername());
+                log.info("기존 사용자에 네이버 연동 완료: username={}", naverUser.getUsername());
             } else {
                 // 신규 회원가입 - 네이버 이메일을 그대로 username으로 사용
                 String password = UUID.randomUUID().toString();
@@ -261,7 +261,7 @@ public class NaverService {
             String phone = formatPhoneNumber(responseNode.get("mobile").asText());
             String nickname = responseNode.has("nickname") ? responseNode.get("nickname").asText() : name;
             
-            log.info("네이버 사용자 정보 조회 성공: id={}", id);
+            log.debug("네이버 사용자 정보 조회 성공: id={}", id);
             return NaverUserInfoDto.of(id, email, name, phone, nickname);
         } catch (JsonProcessingException e) {
             log.error("네이버 사용자 정보 응답 파싱 실패", e);

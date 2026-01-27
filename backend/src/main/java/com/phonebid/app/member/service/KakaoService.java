@@ -102,7 +102,7 @@ public class KakaoService {
                 kakaoUser = sameEmailUser;
                 kakaoUser.updateProvider(Provider.KAKAO);
                 kakaoUser.updateProviderId(providerId);
-                log.info("기존 사용자에 카카오 연동: username={}", kakaoUser.getUsername());
+                log.info("기존 사용자에 카카오 연동 완료: username={}", kakaoUser.getUsername());
             } else {
                 // 신규 회원가입 - 카카오 이메일을 그대로 username으로 사용
                 String password = UUID.randomUUID().toString();
@@ -253,7 +253,7 @@ public class KakaoService {
                 ? kakaoAccount.get("name").asText() 
                 : nickname;
             
-            log.info("카카오 사용자 정보 조회 성공: id={}", id);
+            log.debug("카카오 사용자 정보 조회 성공: id={}", id);
             return KakaoUserInfoDto.of(id, nickname, email, name, phone);
         } catch (JsonProcessingException e) {
             log.error("카카오 사용자 정보 응답 파싱 실패", e);

@@ -49,13 +49,13 @@ public class KakaoController {
     @GetMapping("/callback")
     public void kakaoCallback(@RequestParam String code, HttpServletResponse response) throws Exception {
         try {
-            log.info("카카오 로그인 콜백 처리 시작: code={}", code);
+            log.debug("카카오 로그인 콜백 처리 시작");
             
             // 인가 코드로 로그인 처리 및 JWT 토큰 생성
             LoginResponseDto loginResponse = kakaoService.kakaoLogin(code);
             String token = loginResponse.getAccessToken();
             
-            log.info("카카오 로그인 성공: username={}", loginResponse.getUsername());
+            log.debug("카카오 로그인 성공: username={}", loginResponse.getUsername());
             
             // Access Token과 Refresh Token을 쿠키에 저장
             boolean isProduction = CookieUtil.isProduction(environment);
@@ -95,9 +95,9 @@ public class KakaoController {
     @PostMapping("/token")
     public ResponseEntity<ApiResponse<LoginResponseDto>> exchangeKakaoToken(@RequestParam String code) {
         try {
-            log.info("프론트엔드 카카오 토큰 교환 시작: code={}", code);
+            log.debug("프론트엔드 카카오 토큰 교환 시작");
             LoginResponseDto response = kakaoService.kakaoLogin(code);
-            log.info("카카오 토큰 교환 성공: username={}", response.getUsername());
+            log.debug("카카오 토큰 교환 성공: username={}", response.getUsername());
             return ResponseEntity.ok(
                 ApiResponse.success(HttpStatus.OK, "카카오 로그인 성공", response)
             );
