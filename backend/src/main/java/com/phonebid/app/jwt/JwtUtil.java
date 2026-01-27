@@ -44,7 +44,7 @@ public class JwtUtil {
      * JWT 토큰 생성 (keepLoggedIn 파라미터 포함)
      * @param username 사용자명
      * @param role 사용자 역할
-     * @param keepLoggedIn 로그인 상태 유지 여부 (true: 30일, false: 1시간)
+     * @param keepLoggedIn 로그인 상태 유지 여부 (true: 30일, false: 30분)
      * @return JWT 토큰 (Bearer 접두사 포함)
      */
     public String createToken(String username, Role role, boolean keepLoggedIn) {
@@ -66,7 +66,7 @@ public class JwtUtil {
     }
     
     /**
-     * JWT 토큰 생성 (기본 만료 시간: 1시간)
+     * JWT 토큰 생성 (기본 만료 시간: 30분)
      * @param username 사용자명
      * @param role 사용자 역할
      * @return JWT 토큰 (Bearer 접두사 포함)
@@ -124,7 +124,7 @@ public class JwtUtil {
     }
 
     /**
-     * Refresh Token 생성 (만료 시간: 30일)
+     * Refresh Token 생성 (만료 시간: 2주)
      * @param username 사용자명
      * @return Refresh Token (Bearer 접두사 없이 순수 토큰만 반환)
      */

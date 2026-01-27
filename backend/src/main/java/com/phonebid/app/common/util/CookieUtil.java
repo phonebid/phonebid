@@ -41,7 +41,7 @@ public class CookieUtil {
     }
 
     /**
-     * Access Token 쿠키 생성 (기본 만료 시간: 1시간)
+     * Access Token 쿠키 생성 (기본 만료 시간: 30분)
      * @param accessToken Access Token 값 (Bearer 접두사 포함 가능)
      * @param isProduction 프로덕션 환경 여부
      * @return ResponseCookie
@@ -62,7 +62,7 @@ public class CookieUtil {
                 .httpOnly(true) // XSS 공격 방지
                 .secure(isProduction) // 프로덕션에서만 HTTPS 필수
                 .sameSite("Strict") // CSRF 공격 방지
-                .maxAge(Constants.Jwt.REFRESH_TOKEN_EXPIRY) // 30일
+                .maxAge(Constants.Jwt.REFRESH_TOKEN_EXPIRY) // 2주
                 .build();
     }
 
