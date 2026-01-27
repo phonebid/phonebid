@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import Layout from "components/layout/Layout";
+import { ProtectedRoute } from "components/auth/ProtectedRoute";
 import LoginPage from "pages/LoginPage";
 import SignupPage from "pages/SignupPage";
 import AuthCallbackPage from "pages/AuthCallbackPage";
@@ -46,8 +47,22 @@ export const AppRouter: React.FC = () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/seller/login" element={<SellerLoginPage />} />
         <Route path="/seller/signup" element={<SellerSignupPage />} />
-        <Route path="/seller-center" element={<SellerDashboardPage />} />
-        <Route path="/seller-center/quotes/:quoteId/bid" element={<SellerBidCreatePage />} />
+        <Route
+          path="/seller-center"
+          element={
+            <ProtectedRoute requiredRole={["SELLER", "ADMIN"]} redirectTo="/seller/login">
+              <SellerDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/seller-center/quotes/:quoteId/bid"
+          element={
+            <ProtectedRoute requiredRole={["SELLER", "ADMIN"]} redirectTo="/seller/login">
+              <SellerBidCreatePage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/confetti" element={<ConfettiTestPage />} />
