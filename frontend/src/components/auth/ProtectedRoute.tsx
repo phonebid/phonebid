@@ -56,14 +56,22 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // 역할이 필요한 경우 역할 체크
-  if (requiredRole && user?.role) {
+  if (requiredRole) {
     const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+    
+    // user.role이 없으면 즉시 리다이렉트
+    if (!user?.role) {
+      const roleRedirectTo = allowedRoles.includes("SELLER") ? "/seller/login" : redirectTo;
+      return <Navigate to={roleRedirectTo} state={{ from: location }} replace />;
+    }
+    
+    // user.role이 있으면 기존 로직대로 체크
     const hasRequiredRole = allowedRoles.includes(user.role);
-
+    
     if (!hasRequiredRole) {
-      // 역할이 맞지 않으면 판매자 로그인 페이지 또는 홈으로 리다이렉트
-      const roleRedirectTo = allowedRoles.includes("SELLER") ? "/seller/login" : "/";
-      return <Navigate to={roleRedirectTo} replace />;
+      // 역할이 맞지 않으면 판매자 로그인 페이지 또는 기본 리다이렉트 경로로 이동
+      const roleRedirectTo = allowedRoles.includes("SELLER") ? "/seller/login" : redirectTo;
+      return <Navigate to={roleRedirectTo} state={{ from: location }} replace />;
     }
   }
 
