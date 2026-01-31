@@ -6,15 +6,38 @@
 
 ## 🏗️ 공통 설계 원칙
 
-### BaseEntity
+### BaseEntity (일반 엔터티)
 
-모든 엔터티는 `BaseEntity`를 상속받아 공통 필드를 포함합니다:
+일반 엔터티(예: User, Product, Quote 등)는 `BaseEntity`를 상속받아 공통 필드를 포함합니다:
 
 - `createdAt`: 생성 시각 (`@CreatedDate`)
 - `updatedAt`: 수정 시각 (`@LastModifiedDate`)
 - `createdBy`: 생성자 (`@CreatedBy`)
 - `lastModifiedBy`: 최종 수정자 (`@LastModifiedBy`)
+- `deletedAt`: 삭제 시각 (소프트 삭제)
+- `deletedBy`: 삭제자
 - `isDelete`: 소프트 삭제 플래그
+
+### BaseTimeEntity (Immutable 엔터티 예외)
+
+**Immutable한 엔터티**(예: RefreshToken)는 `BaseTimeEntity`를 상속받을 수 있습니다:
+
+- `createdAt`: 생성 시각 (`@CreatedDate`)
+- `deletedAt`: 삭제 시각 (소프트 삭제)
+
+**설계 이유**:
+- 수정되지 않는 엔터티는 `updatedAt`, `updatedBy`, `createdBy`, `deletedBy`, `isDelete` 필드가 불필요합니다.
+- 최소한의 감사 정보만 제공하여 불필요한 컬럼을 제거합니다.
+- `BaseTimeEntity`는 `@SQLRestriction("deleted_at IS NULL")`로 소프트 삭제를 지원합니다.
+
+**사용 예시**:
+```java
+@Entity
+@Table(name = "refresh_tokens")
+public class RefreshToken extends BaseTimeEntity {
+    // created_at, deleted_at만 자동 관리됨
+}
+```
 
 ### 식별자 전략
 

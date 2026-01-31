@@ -3,10 +3,10 @@ package com.phonebid.app.member.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.phonebid.app.auth.service.RefreshTokenService;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.common.errorcode.CommonErrorCode;
 import com.phonebid.app.member.domain.Role;
@@ -38,6 +39,9 @@ class UserServiceLoginTest {
     @Mock
     private JwtUtil jwtUtil;
 
+    @Mock
+    private RefreshTokenService refreshTokenService;
+
     @InjectMocks
     private UserService userService;
 
@@ -48,6 +52,7 @@ class UserServiceLoginTest {
 
     @BeforeEach
     void setUp() {
+        UUID userId = UUID.randomUUID();
         testUser = User.builder()
                 .username("testuser")
                 .password("encodedPassword")
@@ -56,6 +61,15 @@ class UserServiceLoginTest {
                 .nickname("테스트닉네임")
                 .role(Role.CONSUMER)
                 .build();
+        
+        // Reflection을 사용하여 id 설정 (Builder에 id 메서드가 없으므로)
+        try {
+            java.lang.reflect.Field idField = User.class.getDeclaredField("id");
+            idField.setAccessible(true);
+            idField.set(testUser, userId);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set user id", e);
+        }
 
         validLoginRequest = LoginRequestDto.builder()
                 .username("testuser")
@@ -78,9 +92,12 @@ class UserServiceLoginTest {
     void loginSuccess() {
         // given
         String expectedToken = "Bearer test.jwt.token";
+        String expectedRefreshToken = "test.refresh.token";
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
         when(passwordEncoder.matches("password123", "encodedPassword")).thenReturn(true);
-        when(jwtUtil.createToken("testuser", Role.CONSUMER)).thenReturn(expectedToken);
+        when(jwtUtil.createToken("testuser", Role.CONSUMER, false)).thenReturn(expectedToken);
+        doNothing().when(refreshTokenService).deleteByUserId(testUser.getId());
+        when(refreshTokenService.createRefreshToken(testUser.getId())).thenReturn(expectedRefreshToken);
 
         // when
         LoginResponseDto result = userService.login(validLoginRequest);
@@ -92,6 +109,10 @@ class UserServiceLoginTest {
         assertThat(result.getRole()).isEqualTo("CONSUMER");
         assertThat(result.getAccessToken()).isEqualTo(expectedToken);
         assertThat(result.getTokenType()).isEqualTo("Bearer");
+        
+        // RefreshToken 생성 확인
+        verify(refreshTokenService).deleteByUserId(testUser.getId());
+        verify(refreshTokenService).createRefreshToken(testUser.getId());
     }
 
     @Test
@@ -132,5 +153,46 @@ class UserServiceLoginTest {
         assertThatThrownBy(() -> userService.login(emptyUsernameRequest))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", CommonErrorCode.INVALID_CREDENTIALS);
+        
+        // RefreshToken 생성되지 않아야 함
+        verify(refreshTokenService, never()).deleteByUserId(any());
+        verify(refreshTokenService, never()).createRefreshToken(any());
+    }
+
+    @Test
+    @DisplayName("로그인 시 기존 RefreshToken 삭제 확인")
+    void login_ShouldDeleteExistingRefreshToken() {
+        // given
+        String expectedToken = "Bearer test.jwt.token";
+        String expectedRefreshToken = "test.refresh.token";
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.matches("password123", "encodedPassword")).thenReturn(true);
+        when(jwtUtil.createToken("testuser", Role.CONSUMER, false)).thenReturn(expectedToken);
+        doNothing().when(refreshTokenService).deleteByUserId(testUser.getId());
+        when(refreshTokenService.createRefreshToken(testUser.getId())).thenReturn(expectedRefreshToken);
+
+        // when
+        userService.login(validLoginRequest);
+
+        // then
+        verify(refreshTokenService).deleteByUserId(testUser.getId());
+        verify(refreshTokenService).createRefreshToken(testUser.getId());
+    }
+
+    @Test
+    @DisplayName("로그인 실패 시 RefreshToken 생성되지 않음")
+    void login_WithInvalidCredentials_ShouldNotCreateRefreshToken() {
+        // given
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.matches("wrongpassword", "encodedPassword")).thenReturn(false);
+
+        // when & then
+        assertThatThrownBy(() -> userService.login(invalidPasswordRequest))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", CommonErrorCode.INVALID_CREDENTIALS);
+        
+        // RefreshToken 생성되지 않아야 함
+        verify(refreshTokenService, never()).deleteByUserId(any());
+        verify(refreshTokenService, never()).createRefreshToken(any());
     }
 } 

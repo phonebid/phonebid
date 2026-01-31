@@ -13,6 +13,7 @@ import com.phonebid.app.member.domain.User;
 import com.phonebid.app.member.domain.Role;
 import com.phonebid.app.member.repository.UserRepository;
 import com.phonebid.app.jwt.JwtUtil;
+import com.phonebid.app.auth.service.RefreshTokenService;
 
 import lombok.RequiredArgsConstructor;
 import java.util.Optional;
@@ -24,6 +25,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final RefreshTokenService refreshTokenService;
 
     /**
      * 회원 가입
@@ -73,7 +75,7 @@ public class UserService {
     /**
      * 로그인
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public LoginResponseDto login(LoginRequestDto requestDto) {
         String username = requestDto.getUsername();
         String password = requestDto.getPassword();
@@ -88,12 +90,17 @@ public class UserService {
             throw new CustomException(CommonErrorCode.INVALID_CREDENTIALS);
         }
 
-        // JWT 토큰 생성 (keepLoggedIn 값에 따라 만료 시간 결정)
-        String token = jwtUtil.createToken(user.getUsername(), user.getRole(), keepLoggedIn);
+        // 기존 Refresh Token 삭제 및 새로 생성
+        refreshTokenService.deleteByUserId(user.getId());
+        String refreshToken = refreshTokenService.createRefreshToken(user.getId());
+        
+        // Access Token 생성 (keepLoggedIn 값에 따라 만료 시간 결정)
+        String accessToken = jwtUtil.createToken(user.getUsername(), user.getRole(), keepLoggedIn);
         
         // LoginResponseDto 생성 및 반환
         return LoginResponseDto.of(
-            token, 
+            accessToken,
+            refreshToken, // 추가된 부분
             user.getUsername(), 
             user.getNickname(), 
             user.getRole().name()
@@ -126,11 +133,23 @@ public class UserService {
     }
 
     /**
+     * 로그아웃 처리 (RefreshToken 삭제)
+     */
+    @Transactional
+    public void logout(String username) {
+        User user = findByUsername(username);
+        refreshTokenService.deleteByUserId(user.getId());
+    }
+
+    /**
      * 회원 탈퇴 (소프트 삭제)
      */
     @Transactional
     public void deleteProfile(String username) {
         User user = loadActiveUser(username);
+
+        // RefreshToken 삭제
+        refreshTokenService.deleteByUserId(user.getId());
 
         // 소프트 삭제 (삭제한 사용자 정보 기록)
         user.softDelete(username);
@@ -141,6 +160,19 @@ public class UserService {
      * 삭제되지 않은 사용자만 조회하며, 없으면 예외 발생
      */
     private User loadActiveUser(String username) {
+        return userRepository.findByUsername(username)
+            .filter(user -> !user.isDeleted())
+            .orElseThrow(() -> new CustomException(CommonErrorCode.USER_NOT_FOUND));
+    }
+
+    /**
+     * 사용자명으로 활성 사용자 조회
+     * 삭제되지 않은 사용자만 조회하며, 없으면 예외 발생
+     * @param username 사용자명
+     * @return 활성 사용자 엔티티
+     * @throws CustomException 사용자를 찾을 수 없을 경우
+     */
+    public User findByUsername(String username) {
         return userRepository.findByUsername(username)
             .filter(user -> !user.isDeleted())
             .orElseThrow(() -> new CustomException(CommonErrorCode.USER_NOT_FOUND));

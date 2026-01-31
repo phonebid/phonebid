@@ -1,5 +1,6 @@
 package com.phonebid.app.member.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,6 +17,10 @@ import lombok.NoArgsConstructor;
 public class LoginResponseDto {
     
     private String accessToken;
+    
+    @JsonIgnore // JSON 직렬화 시 제외 (쿠키로만 전달)
+    private String refreshToken;
+    
     private String tokenType;
     private String username;
     private String nickname;
@@ -24,6 +29,17 @@ public class LoginResponseDto {
     public static LoginResponseDto of(String accessToken, String username, String nickname, String role) {
         return LoginResponseDto.builder()
                 .accessToken(accessToken)
+                .tokenType("Bearer")
+                .username(username)
+                .nickname(nickname)
+                .role(role)
+                .build();
+    }
+    
+    public static LoginResponseDto of(String accessToken, String refreshToken, String username, String nickname, String role) {
+        return LoginResponseDto.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
                 .tokenType("Bearer")
                 .username(username)
                 .nickname(nickname)

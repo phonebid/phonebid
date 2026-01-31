@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.common.errorcode.KakaoErrorCode;
 import com.phonebid.app.jwt.JwtUtil;
+import com.phonebid.app.auth.service.RefreshTokenService;
 import com.phonebid.app.member.domain.Provider;
 import com.phonebid.app.member.domain.Role;
 import com.phonebid.app.member.domain.User;
@@ -39,6 +40,7 @@ public class KakaoService {
     private final UserRepository userRepository;
     private final WebClient webClient;
     private final JwtUtil jwtUtil;
+    private final RefreshTokenService refreshTokenService;
     
     @Value("${oauth.kakao.client-id}")
     private String clientId;
@@ -55,19 +57,24 @@ public class KakaoService {
     @Transactional
     public LoginResponseDto kakaoLogin(String code) throws CustomException {
         try {
-            // 1. 인가 코드로 액세스 토큰 요청
-            String accessToken = getToken(code);
+            // 1. 인가 코드로 카카오 액세스 토큰 요청
+            String kakaoAccessToken = getToken(code);
             
-            // 2. 액세스 토큰으로 카카오 사용자 정보 가져오기
-            KakaoUserInfoDto kakaoUserInfo = getKakaoUserInfo(accessToken);
+            // 2. 카카오 액세스 토큰으로 카카오 사용자 정보 가져오기
+            KakaoUserInfoDto kakaoUserInfo = getKakaoUserInfo(kakaoAccessToken);
             
             // 3. 필요시 회원가입 처리
             User kakaoUser = registerKakaoUserIfNeeded(kakaoUserInfo);
             
-            // 4. JWT 토큰 생성 및 반환
-            String token = jwtUtil.createToken(kakaoUser.getUsername(), kakaoUser.getRole());
+            // 4. Refresh Token 생성 및 저장
+            refreshTokenService.deleteByUserId(kakaoUser.getId());
+            String refreshToken = refreshTokenService.createRefreshToken(kakaoUser.getId());
             
-            return LoginResponseDto.of(token, kakaoUser.getUsername(), kakaoUser.getNickname(), kakaoUser.getRole().name());
+            // 5. JWT Access Token 생성 및 반환
+            String accessToken = jwtUtil.createToken(kakaoUser.getUsername(), kakaoUser.getRole(), false);
+            
+            // 6. DTO에 RefreshToken 포함하여 반환
+            return LoginResponseDto.of(accessToken, refreshToken, kakaoUser.getUsername(), kakaoUser.getNickname(), kakaoUser.getRole().name());
         } catch (Exception e) {
             log.error("카카오 로그인 처리 중 예상치 못한 오류 발생", e);
             throw new CustomException(KakaoErrorCode.KAKAO_LOGIN_PROCESSING_FAILED);
@@ -95,7 +102,7 @@ public class KakaoService {
                 kakaoUser = sameEmailUser;
                 kakaoUser.updateProvider(Provider.KAKAO);
                 kakaoUser.updateProviderId(providerId);
-                log.info("기존 사용자에 카카오 연동: username={}", kakaoUser.getUsername());
+                log.info("기존 사용자에 카카오 연동 완료: username={}", kakaoUser.getUsername());
             } else {
                 // 신규 회원가입 - 카카오 이메일을 그대로 username으로 사용
                 String password = UUID.randomUUID().toString();
@@ -246,7 +253,7 @@ public class KakaoService {
                 ? kakaoAccount.get("name").asText() 
                 : nickname;
             
-            log.info("카카오 사용자 정보 조회 성공: id={}", id);
+            log.debug("카카오 사용자 정보 조회 성공: id={}", id);
             return KakaoUserInfoDto.of(id, nickname, email, name, phone);
         } catch (JsonProcessingException e) {
             log.error("카카오 사용자 정보 응답 파싱 실패", e);

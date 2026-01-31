@@ -3,7 +3,7 @@ package com.phonebid.app.member.controller;
 import com.phonebid.app.common.dto.ApiResponse;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.common.errorcode.KakaoErrorCode;
-import com.phonebid.app.jwt.JwtUtil;
+import com.phonebid.app.common.util.CookieUtil;
 import com.phonebid.app.member.dto.response.LoginResponseDto;
 import com.phonebid.app.member.service.KakaoService;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
-import java.util.Arrays;
 
 /**
  * 카카오 OAuth2 인증 컨트롤러
@@ -50,26 +49,27 @@ public class KakaoController {
     @GetMapping("/callback")
     public void kakaoCallback(@RequestParam String code, HttpServletResponse response) throws Exception {
         try {
-            log.info("카카오 로그인 콜백 처리 시작: code={}", code);
+            log.debug("카카오 로그인 콜백 처리 시작");
             
             // 인가 코드로 로그인 처리 및 JWT 토큰 생성
             LoginResponseDto loginResponse = kakaoService.kakaoLogin(code);
             String token = loginResponse.getAccessToken();
             
-            log.info("카카오 로그인 성공: username={}", loginResponse.getUsername());
+            log.debug("카카오 로그인 성공: username={}", loginResponse.getUsername());
             
-            // JWT 토큰을 보안 강화된 쿠키에 저장 (Bearer 접두사 제거)
-            boolean isProduction = Arrays.asList(environment.getActiveProfiles()).contains("prod");
+            // Access Token과 Refresh Token을 쿠키에 저장
+            boolean isProduction = CookieUtil.isProduction(environment);
             
-            ResponseCookie cookie = ResponseCookie.from(JwtUtil.AUTHORIZATION_HEADER, token.substring(7))
-                    .path("/")
-                    .httpOnly(true) // XSS 공격 방지
-                    .secure(isProduction) // 프로덕션에서만 HTTPS 필수
-                    .sameSite("Strict") // CSRF 공격 방지
-                    .maxAge(Duration.ofHours(1)) // 1시간 유효
-                    .build();
+            // Access Token 쿠키 생성
+            ResponseCookie accessTokenCookie = CookieUtil.createAccessTokenCookie(
+                token, isProduction, Duration.ofHours(1));
             
-            response.addHeader("Set-Cookie", cookie.toString());
+            // Refresh Token 쿠키 생성 (DTO에서 직접 가져오기 - 동시성 문제 해결)
+            ResponseCookie refreshTokenCookie = CookieUtil.createRefreshTokenCookie(
+                loginResponse.getRefreshToken(), isProduction);
+            
+            response.addHeader("Set-Cookie", accessTokenCookie.toString());
+            response.addHeader("Set-Cookie", refreshTokenCookie.toString());
             
             // 프론트엔드 홈 페이지로 리다이렉트 (쿠키에 토큰이 이미 설정됨)
             // 홈 페이지에서 initializeAuth()가 자동으로 실행되어 사용자 정보 조회
@@ -95,9 +95,9 @@ public class KakaoController {
     @PostMapping("/token")
     public ResponseEntity<ApiResponse<LoginResponseDto>> exchangeKakaoToken(@RequestParam String code) {
         try {
-            log.info("프론트엔드 카카오 토큰 교환 시작: code={}", code);
+            log.debug("프론트엔드 카카오 토큰 교환 시작");
             LoginResponseDto response = kakaoService.kakaoLogin(code);
-            log.info("카카오 토큰 교환 성공: username={}", response.getUsername());
+            log.debug("카카오 토큰 교환 성공: username={}", response.getUsername());
             return ResponseEntity.ok(
                 ApiResponse.success(HttpStatus.OK, "카카오 로그인 성공", response)
             );

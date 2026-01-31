@@ -20,6 +20,7 @@ export interface LoginResponse {
 
 export interface AuthState {
   isAuthenticated: boolean;
+  isInitializing: boolean;
   user: User | null;
   accessToken: string | null;
 }

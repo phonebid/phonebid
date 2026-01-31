@@ -197,4 +197,59 @@ class UserServiceTest {
             user.getNickname().equals("테스트닉네임")
         ));
     }
+
+    @Test
+    @DisplayName("활성 사용자 조회 성공")
+    void findByUsername_WithActiveUser_ShouldReturnUser() {
+        // given
+        when(userRepository.findByUsername("testuser"))
+                .thenReturn(Optional.of(savedUser));
+
+        // when
+        User result = userService.findByUsername("testuser");
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.getUsername()).isEqualTo("testuser");
+        assertThat(result.getEmail()).isEqualTo("test@example.com");
+        verify(userRepository).findByUsername("testuser");
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 사용자 조회 시 예외 발생")
+    void findByUsername_WithNonExistentUser_ShouldThrowException() {
+        // given
+        when(userRepository.findByUsername("nonexistent"))
+                .thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> userService.findByUsername("nonexistent"))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", CommonErrorCode.USER_NOT_FOUND);
+
+        verify(userRepository).findByUsername("nonexistent");
+    }
+
+    @Test
+    @DisplayName("삭제된 사용자 조회 시 예외 발생")
+    void findByUsername_WithDeletedUser_ShouldThrowException() {
+        // given
+        User deletedUser = User.builder()
+                .username("deleteduser")
+                .email("deleted@example.com")
+                .name("삭제된 사용자")
+                .nickname("삭제닉네임")
+                .build();
+        deletedUser.softDelete("deleteduser");
+        
+        when(userRepository.findByUsername("deleteduser"))
+                .thenReturn(Optional.of(deletedUser));
+
+        // when & then
+        assertThatThrownBy(() -> userService.findByUsername("deleteduser"))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", CommonErrorCode.USER_NOT_FOUND);
+
+        verify(userRepository).findByUsername("deleteduser");
+    }
 } 

@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.phonebid.app.common.dto.ApiResponse;
 import com.phonebid.app.common.Constants;
-import com.phonebid.app.jwt.JwtUtil;
+import com.phonebid.app.common.util.CookieUtil;
+import com.phonebid.app.common.exception.CustomException;
+import com.phonebid.app.common.errorcode.CommonErrorCode;
 import com.phonebid.app.member.dto.request.SignupRequestDto;
 import com.phonebid.app.member.dto.request.LoginRequestDto;
 import com.phonebid.app.member.dto.request.PasswordChangeRequestDto;
@@ -26,7 +28,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import java.time.Duration;
-import java.util.Arrays;
 
 @RestController
 @RequiredArgsConstructor
@@ -47,36 +48,52 @@ public class UserController {
     public ResponseEntity<ApiResponse<LoginResponseDto>> login(@Valid @RequestBody LoginRequestDto requestDto) {
         LoginResponseDto responseDto = userService.login(requestDto);
         
-        // JWT 토큰을 쿠키에 저장
-        String token = responseDto.getAccessToken();
-        boolean isProduction = Arrays.asList(environment.getActiveProfiles()).contains("prod");
+        // 쿠키 생성
+        boolean isProduction = CookieUtil.isProduction(environment);
         
-        // Bearer 접두사 제거하여 쿠키에 저장
-        String tokenValue = token.startsWith(JwtUtil.BEARER_PREFIX) 
-            ? token.substring(JwtUtil.BEARER_PREFIX.length()) 
-            : token;
-        
-        // keepLoggedIn 값에 따라 쿠키 만료 시간 설정 (토큰 만료 시간과 동일하게)
-        Duration cookieMaxAge = Boolean.TRUE.equals(requestDto.getKeepLoggedIn())
+        // keepLoggedIn 값에 따라 Access Token 쿠키 만료 시간 설정
+        Duration accessTokenCookieMaxAge = Boolean.TRUE.equals(requestDto.getKeepLoggedIn())
             ? Constants.Jwt.KEEP_LOGGED_IN_EXPIRY // 30일 유효
             : Constants.Jwt.DEFAULT_EXPIRY; // 1시간 유효
         
-        ResponseCookie cookie = ResponseCookie.from(JwtUtil.AUTHORIZATION_HEADER, tokenValue)
-                .path("/")
-                .httpOnly(true) // XSS 공격 방지
-                .secure(isProduction) // 프로덕션에서만 HTTPS 필수
-                .sameSite("Lax") // CSRF 공격 방지
-                .maxAge(cookieMaxAge)
-                .build();
+        // Access Token 쿠키 생성
+        ResponseCookie accessTokenCookie = CookieUtil.createAccessTokenCookie(
+            responseDto.getAccessToken(), isProduction, accessTokenCookieMaxAge);
+
+        // Refresh Token 쿠키 생성 (DTO에서 직접 가져오기 - 동시성 문제 해결)
+        ResponseCookie refreshTokenCookie = CookieUtil.createRefreshTokenCookie(
+            responseDto.getRefreshToken(), isProduction);
         
         return ResponseEntity.ok()
-                .header("Set-Cookie", cookie.toString())
+                .header("Set-Cookie", accessTokenCookie.toString())
+                .header("Set-Cookie", refreshTokenCookie.toString())
                 .body(ApiResponse.success(HttpStatus.OK, "로그인이 성공적으로 완료되었습니다.", responseDto));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout() {
+        String username = getCurrentUsername();
+        
+        // Refresh Token 삭제 (서비스 레이어에서 처리)
+        userService.logout(username);
+        
+        // 쿠키 삭제를 위한 빈 쿠키 설정
+        boolean isProduction = CookieUtil.isProduction(environment);
+        
+        ResponseCookie accessTokenCookie = CookieUtil.createAccessTokenDeleteCookie(isProduction);
+        ResponseCookie refreshTokenCookie = CookieUtil.createRefreshTokenDeleteCookie(isProduction);
+        
+        return ResponseEntity.ok()
+                .header("Set-Cookie", accessTokenCookie.toString())
+                .header("Set-Cookie", refreshTokenCookie.toString())
+                .body(ApiResponse.success(HttpStatus.OK, "로그아웃이 성공적으로 완료되었습니다.", null));
     }
 
     @DeleteMapping("/profile")
     public ResponseEntity<ApiResponse<Void>> deleteProfile() {
         String username = getCurrentUsername();
+        
+        // 회원 탈퇴 처리 (서비스 레이어에서 RefreshToken 삭제 포함)
         userService.deleteProfile(username);
         
         return ResponseEntity.ok()
@@ -98,7 +115,7 @@ public class UserController {
     private String getCurrentUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new RuntimeException("인증되지 않은 사용자입니다.");
+            throw new CustomException(CommonErrorCode.AUTHENTICATION_ERROR);
         }
         return authentication.getName();
     }

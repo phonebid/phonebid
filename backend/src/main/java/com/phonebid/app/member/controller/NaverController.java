@@ -1,10 +1,9 @@
 package com.phonebid.app.member.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.phonebid.app.common.dto.ApiResponse;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.common.errorcode.NaverErrorCode;
-import com.phonebid.app.jwt.JwtUtil;
+import com.phonebid.app.common.util.CookieUtil;
 import com.phonebid.app.member.dto.response.LoginResponseDto;
 import com.phonebid.app.member.service.NaverService;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
-import java.util.Arrays;
 
 /**
  * 네이버 OAuth2 인증 컨트롤러
@@ -51,26 +49,27 @@ public class NaverController {
     @GetMapping("/callback")
     public void naverCallback(@RequestParam String code, HttpServletResponse response) throws Exception {
         try {
-            log.info("네이버 로그인 콜백 처리 시작: code={}", code);
+            log.debug("네이버 로그인 콜백 처리 시작");
 
             // 인가 코드로 로그인 처리 및 JWT 토큰 생성
             LoginResponseDto loginResponse = naverService.naverLogin(code);
             String token = loginResponse.getAccessToken();
 
-            log.info("네이버 로그인 성공: username={}", loginResponse.getUsername());
+            log.debug("네이버 로그인 성공: username={}", loginResponse.getUsername());
 
-            // JWT 토큰을 보안 강화된 쿠키에 저장 (Bearer 접두사 제거)
-            boolean isProduction = Arrays.asList(environment.getActiveProfiles()).contains("prod");
+            // Access Token과 Refresh Token을 쿠키에 저장
+            boolean isProduction = CookieUtil.isProduction(environment);
 
-            ResponseCookie cookie = ResponseCookie.from(JwtUtil.AUTHORIZATION_HEADER, token.substring(7))
-                    .path("/")
-                    .httpOnly(true) // XSS 공격 방지
-                    .secure(isProduction) // 프로덕션에서만 HTTPS 필수
-                    .sameSite("Strict") // CSRF 공격 방지
-                    .maxAge(Duration.ofHours(1)) // 1시간 유효
-                    .build();
+            // Access Token 쿠키 생성
+            ResponseCookie accessTokenCookie = CookieUtil.createAccessTokenCookie(
+                token, isProduction, Duration.ofHours(1));
+            
+            // Refresh Token 쿠키 생성 (DTO에서 직접 가져오기 - 동시성 문제 해결)
+            ResponseCookie refreshTokenCookie = CookieUtil.createRefreshTokenCookie(
+                loginResponse.getRefreshToken(), isProduction);
 
-            response.addHeader("Set-Cookie", cookie.toString());
+            response.addHeader("Set-Cookie", accessTokenCookie.toString());
+            response.addHeader("Set-Cookie", refreshTokenCookie.toString());
 
             // 프론트엔드 메인 페이지로 리다이렉트
             response.sendRedirect(frontendUrl + "/");
@@ -95,9 +94,9 @@ public class NaverController {
     @PostMapping("/token")
     public ResponseEntity<ApiResponse<LoginResponseDto>> exchangeNaverToken(@RequestParam String code) {
         try {
-            log.info("프론트엔드 네이버 토큰 교환 시작: code={}", code);
+            log.debug("프론트엔드 네이버 토큰 교환 시작");
             LoginResponseDto response = naverService.naverLogin(code);
-            log.info("네이버 토큰 교환 성공: username={}", response.getUsername());
+            log.debug("네이버 토큰 교환 성공: username={}", response.getUsername());
             return ResponseEntity.ok(
                 ApiResponse.success(HttpStatus.OK, "네이버 로그인 성공", response)
             );
