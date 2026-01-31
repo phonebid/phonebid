@@ -1,6 +1,6 @@
 import { QuoteDetail } from "types/QuoteTypes";
 import { Card, CardContent, CardHeader, CardTitle } from "components/ui/card";
-import { getCarrierDisplayName, getPurchaseMethodDisplayName, getActivationMethodDisplayName } from "utils/quoteUtils";
+import { getCarrierDisplayName, getPurchaseMethodDisplayName } from "utils/quoteUtils";
 import { cn } from "utils/cn";
 
 interface QuoteRequestInfoProps {

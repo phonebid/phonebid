@@ -1,8 +1,6 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
-import axios from "axios";
 import type { AuthState, User, ProfileResponseDto } from "types/UserTypes";
-import type { ApiResponse } from "types/ApiTypes";
 import { apiClient } from "services/apiClient";
 
 interface AuthStore extends AuthState {

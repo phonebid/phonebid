@@ -5,17 +5,9 @@ import { sellerService } from "services/sellerService";
 import type { SellerProfileResponseDto } from "types/SellerTypes";
 
 export const SellerHeader: React.FC = () => {
-  const { isAuthenticated, user, logout } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [sellerProfile, setSellerProfile] = useState<SellerProfileResponseDto | null>(null);
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error("로그아웃 실패:", error);
-    }
-  };
 
   const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
 

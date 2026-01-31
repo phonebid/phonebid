@@ -1,5 +1,5 @@
 import { QuoteListItem } from "types/QuoteTypes";
-import { getCarrierDisplayName, getPurchaseMethodDisplayName } from "utils/quoteUtils";
+import { getPurchaseMethodDisplayName } from "utils/quoteUtils";
 import { formatRelativeTime } from "utils/formatters";
 import { Badge } from "components/ui/badge";
 import { cn } from "utils/cn";
