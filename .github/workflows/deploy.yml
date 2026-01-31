@@ -85,6 +85,8 @@ jobs:
             # backend 런타임 환경변수 (.env)
             sudo tee /opt/phonebid/.env > /dev/null <<'EOF'
             SPRING_PROFILES_ACTIVE=prod
+            AWS_REGION: ap-northeast-2
+            AWS_DEFAULT_REGION: ap-northeast-2
 
             # DB (application-prod.yml 기준)
             DATABASE_URL=${{ secrets.DATABASE_URL }}
