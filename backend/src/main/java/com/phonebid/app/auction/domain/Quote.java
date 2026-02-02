@@ -124,4 +124,18 @@ public class Quote extends BaseEntity {
         }
         this.status = QuoteStatus.CLOSED;
     }
+
+    /**
+     * 견적 계약 완료 (CONTRACTED 상태로 변경)
+     * 입찰 선택 및 계약 생성 시 호출됩니다.
+     * 현재 상태가 OPEN인 경우에만 CONTRACTED로 변경 가능합니다.
+     * 
+     * @throws CustomException 현재 상태가 OPEN이 아닌 경우, AuctionErrorCode.INVALID_QUOTE_STATUS 예외 발생
+     */
+    public void markContracted() {
+        if (!status.isOpen()) {
+            throw new CustomException(AuctionErrorCode.INVALID_QUOTE_STATUS);
+        }
+        this.status = QuoteStatus.CONTRACTED;
+    }
 }

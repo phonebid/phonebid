@@ -105,6 +105,9 @@ public class Contract extends BaseEntity {
             throw new CustomException(TradeErrorCode.INVALID_BID_FOR_QUOTE);
         }
         
-
+        // 입찰이 ACTIVE 상태인지 확인 (계약 생성 시 자동으로 SELECTED로 변경됨)
+        if (!selectedBid.isActive()) {
+            throw new CustomException(TradeErrorCode.BID_NOT_ACTIVE);
+        }
     }
 }

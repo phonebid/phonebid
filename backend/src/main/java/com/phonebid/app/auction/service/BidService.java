@@ -18,6 +18,7 @@ import com.phonebid.app.member.domain.User;
 import com.phonebid.app.member.repository.SellerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -39,6 +40,7 @@ public class BidService {
     private final SellerRepository sellerRepository;
     private final PricePlanRepository pricePlanRepository;
     private final BidAdditionalServiceRepository bidAdditionalServiceRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 입찰 생성
@@ -63,6 +65,15 @@ public class BidService {
 
         log.info("입찰 생성 완료 - bidId: {}, quoteId: {}, sellerId: {}", 
                 bid.getId(), quote.getId(), seller.getSellerId());
+
+        // 입찰 도착 이벤트 발행
+        eventPublisher.publishEvent(new com.phonebid.app.notification.event.BidArrivedEvent(this, bid));
+
+        // 최저가 갱신 여부 확인 및 이벤트 발행
+        Integer previousLowestPrice = bidRepository.findMinInstallmentPrincipalByQuoteId(quote.getId(), BidStatus.ACTIVE);
+        if (previousLowestPrice != null && bid.getPrice() < previousLowestPrice) {
+            eventPublisher.publishEvent(new com.phonebid.app.notification.event.LowestPriceUpdatedEvent(this, bid, previousLowestPrice));
+        }
 
         return BidResponseDto.from(bid);
     }
@@ -187,9 +198,18 @@ public class BidService {
                 .installmentPrincipal(requestDto.getInstallmentPrincipal())
                 .contractMonths(requestDto.getContractMonths())
                 .build();
+        
+        Integer previousPrice = bid.getPrice();
         bid.updateBidDetails(command);
 
         log.info("입찰 수정 완료 - bidId: {}", bid.getId());
+
+        // 최저가 갱신 여부 확인 및 이벤트 발행
+        Integer currentLowestPrice = bidRepository.findMinInstallmentPrincipalByQuoteId(bid.getQuote().getId(), BidStatus.ACTIVE);
+        if (currentLowestPrice != null && requestDto.getPrice() != null && 
+            requestDto.getPrice() < previousPrice && requestDto.getPrice() <= currentLowestPrice) {
+            eventPublisher.publishEvent(new com.phonebid.app.notification.event.LowestPriceUpdatedEvent(this, bid, previousPrice));
+        }
 
         return BidResponseDto.from(bid);
     }
@@ -304,6 +324,34 @@ public class BidService {
     @Transactional(readOnly = true)
     public Integer getMinInstallmentPrincipal(UUID quoteId) {
         return bidRepository.findMinInstallmentPrincipalByQuoteId(quoteId, BidStatus.ACTIVE);
+    }
+
+    /**
+     * 입찰 선택 (Deprecated)
+     * 
+     * @deprecated 계약 생성 시 입찰 선택이 자동으로 처리되므로 이 메서드는 사용하지 않습니다.
+     *             대신 {@link com.phonebid.app.trade.service.ContractService#createContract}를 사용하세요.
+     * 
+     * 입찰 선택과 계약 생성을 트랜잭션으로 통합 처리하기 위해 이 메서드는 더 이상 사용되지 않습니다.
+     * 계약 생성 시 입찰이 자동으로 SELECTED 상태로 변경됩니다.
+     */
+    @Deprecated
+    @Transactional
+    public void selectBid(UUID bidId, User user) {
+        Bid bid = bidRepository.findById(bidId)
+                .orElseThrow(() -> new CustomException(AuctionErrorCode.BID_NOT_FOUND));
+
+        // 견적 소유자인지 확인
+        if (!bid.getQuote().getUser().getId().equals(user.getId())) {
+            throw new CustomException(AuctionErrorCode.QUOTE_NOT_OWNED_BY_USER);
+        }
+
+        // 입찰 선택
+        bid.select();
+        bidRepository.save(bid);
+
+        // 입찰 선택 이벤트 발행
+        eventPublisher.publishEvent(new com.phonebid.app.notification.event.BidSelectedEvent(this, bid));
     }
 }
 
