@@ -77,3 +77,25 @@ rate-limit:
   temp-upload:
     per-minute: 10  # 분당 10회
     per-hour: 30    # 시간당 30회
+
+# SSE (Server-Sent Events) 설정
+sse:
+  # SSE 연결 타임아웃 시간 (기본값: 30분)
+  timeout: 30m
+  # Heartbeat 설정
+  heartbeat:
+    # Heartbeat 활성화 여부 (기본값: true)
+    enabled: true
+    # Heartbeat 전송 간격 (기본값: 30초)
+    interval: 30s
+  # Cleanup 스케줄러 설정
+  cleanup:
+    # Cleanup 활성화 여부 (기본값: true)
+    enabled: true
+    # Cleanup 실행 간격 (기본값: 10분)
+    interval: 10m
+  # 리소스 제한 설정
+  # 최대 연결 수 (0이면 제한 없음, 기본값: 10000)
+  max-connections: 10000
+  # 사용자별 최대 중복 연결 수 (기본값: 3)
+  max-duplicate-connections-per-user: 3
