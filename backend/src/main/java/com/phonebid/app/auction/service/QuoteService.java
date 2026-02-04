@@ -13,10 +13,12 @@ import com.phonebid.app.member.domain.User;
 import com.phonebid.app.phone.domain.PhoneModel;
 import com.phonebid.app.phone.domain.PhoneOption;
 import com.phonebid.app.phone.repository.PhoneModelRepository;
+import com.phonebid.app.notification.event.QuoteCreatedEvent;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -32,6 +34,7 @@ public class QuoteService {
     private final PhoneModelRepository phoneModelRepository;
     private final BidRepository bidRepository;
     private final BidService bidService;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 견적 생성
@@ -60,7 +63,10 @@ public class QuoteService {
 
         Quote quote = quoteRequestDto.toEntity(user, phoneModel, colorOption, storageOption);
         // validateQuote(quote);
-        quoteRepository.save(quote);
+        Quote savedQuote = quoteRepository.save(quote);
+        
+        // 견적 등록 이벤트 발행
+        eventPublisher.publishEvent(new QuoteCreatedEvent(this, savedQuote));
     }
 
     /**
