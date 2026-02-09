@@ -148,8 +148,12 @@ public class QuoteService {
     }
 
     /**
-     * List<Quote>를 List<QuoteResponseDto>로 변환 (N+1 방지)
-     */
+     * Quote 리스트를 DTO 리스트로 변환
+     * 입찰 개수와 최저가를 배치 쿼리로 조회하여 N+1 문제 방지
+     * 
+     * @param quotes 변환할 Quote 리스트
+     * @return QuoteResponseDto 리스트
+    */
     private List<QuoteResponseDto> convertToListDto(List<Quote> quotes) {
         if (quotes.isEmpty()) {
             return List.of();
