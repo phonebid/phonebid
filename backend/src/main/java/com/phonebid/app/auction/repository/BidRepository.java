@@ -111,5 +111,44 @@ public interface BidRepository extends JpaRepository<Bid, UUID> {
     List<Bid> findByQuoteIdAndSellerIdAndStatus(@Param("quoteId") UUID quoteId, 
                                                  @Param("sellerId") UUID sellerId, 
                                                  @Param("status") BidStatus status);
+
+    /**
+     * 여러 견적의 입찰 개수를 한 번에 조회 (N+1 문제 해결용)
+     */
+    @Query("SELECT b.quote.id as quoteId, COUNT(b) as bidCount " +
+           "FROM Bid b " +
+           "WHERE b.quote.id IN :quoteIds " +
+           "AND (b.isDelete = false OR b.isDelete IS NULL) " +
+           "GROUP BY b.quote.id")
+    List<BidCountDto> countByQuoteIds(@Param("quoteIds") List<UUID> quoteIds);
+
+    /**
+     * 여러 견적의 최저 할부원금을 한 번에 조회 (N+1 문제 해결용)
+     */
+    @Query("SELECT b.quote.id as quoteId, MIN(b.installmentPrincipal) as minPrice " +
+           "FROM Bid b " +
+           "WHERE b.quote.id IN :quoteIds " +
+           "AND b.status = :status " +
+           "AND (b.isDelete = false OR b.isDelete IS NULL) " +
+           "GROUP BY b.quote.id")
+    List<BidMinPriceDto> findMinInstallmentPrincipalByQuoteIds(
+            @Param("quoteIds") List<UUID> quoteIds,
+            @Param("status") BidStatus status);
+
+    /**
+     * 입찰 개수 Projection 인터페이스
+     */
+    interface BidCountDto {
+        UUID getQuoteId();
+        Long getBidCount();
+    }
+
+    /**
+     * 최저 할부원금 Projection 인터페이스
+     */
+    interface BidMinPriceDto {
+        UUID getQuoteId();
+        Integer getMinPrice();
+    }
 }
 

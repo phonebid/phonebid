@@ -114,14 +114,12 @@ public class Quote extends BaseEntity {
 
     /**
      * 견적 종료 (CLOSED 상태로 변경)
-     * 현재 상태가 OPEN인 경우에만 CLOSED로 변경 가능합니다.
+     * 내부에서 종료 가능 여부를 검증합니다.
      * 
-     * @throws CustomException 현재 상태가 OPEN이 아닌 경우, AuctionErrorCode.QUOTE_CANNOT_CLOSE 예외 발생
+     * @throws CustomException 이미 종료되었거나 계약 완료된 견적인 경우 예외 발생
      */
     public void close() {
-        if (!status.canClose()) {
-            throw new CustomException(AuctionErrorCode.QUOTE_CANNOT_CLOSE);
-        }
+        validateCanBeClosed();
         this.status = QuoteStatus.CLOSED;
     }
 
@@ -137,5 +135,42 @@ public class Quote extends BaseEntity {
             throw new CustomException(AuctionErrorCode.INVALID_QUOTE_STATUS);
         }
         this.status = QuoteStatus.CONTRACTED;
+    }
+
+    /**
+     * 삭제된 견적인지 검증
+     * 
+     * @throws CustomException 삭제된 견적인 경우, AuctionErrorCode.QUOTE_NOT_FOUND 예외 발생
+     */
+    public void validateNotDeleted() {
+        if (this.isDelete != null && this.isDelete) {
+            throw new CustomException(AuctionErrorCode.QUOTE_NOT_FOUND);
+        }
+    }
+
+    /**
+     * 견적 소유자 검증
+     * 
+     * @param userId 검증할 사용자 ID
+     * @throws CustomException 소유자가 아닌 경우, AuctionErrorCode.QUOTE_NOT_OWNED_BY_USER 예외 발생
+     */
+    public void validateOwnership(UUID userId) {
+        if (!this.user.getId().equals(userId)) {
+            throw new CustomException(AuctionErrorCode.QUOTE_NOT_OWNED_BY_USER);
+        }
+    }
+
+    /**
+     * 종료 가능 여부 검증
+     * 
+     * @throws CustomException 이미 종료되었거나 계약 완료된 견적인 경우 예외 발생
+     */
+    public void validateCanBeClosed() {
+        if (this.status == QuoteStatus.CLOSED) {
+            throw new CustomException(AuctionErrorCode.QUOTE_ALREADY_CLOSED);
+        }
+        if (this.status == QuoteStatus.CONTRACTED) {
+            throw new CustomException(AuctionErrorCode.INVALID_QUOTE_STATUS);
+        }
     }
 }
