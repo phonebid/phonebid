@@ -1,5 +1,5 @@
 import { Card, CardContent } from "components/ui/card";
-import { cn } from "utils/cn";
+import { cn } from "@/utils/cn";
 
 interface StatCardProps {
   title: string;

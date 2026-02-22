@@ -1,7 +1,7 @@
 import { Carrier } from "types/QuoteTypes";
 import { getCarrierDisplayName } from "utils/quoteUtils";
 import { Card, CardContent } from "components/ui/card";
-import { cn } from "utils/cn";
+import { cn } from "@/utils/cn";
 
 interface QuoteFilterBarProps {
   selectedCarrier: Carrier | "ALL";
