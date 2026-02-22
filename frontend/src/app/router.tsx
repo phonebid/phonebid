@@ -38,6 +38,7 @@ import BidDetailPage from "pages/BidDetailPage";
 import DeliveryAddressPage from "pages/DeliveryAddressPage";
 import DeliveryAddressListPage from "pages/DeliveryAddressListPage";
 import PurchaseCompletePage from "pages/PurchaseCompletePage";
+import LandingPage from "pages/LandingPage";
 
 export const AppRouter: React.FC = () => {
   return (
@@ -50,7 +51,10 @@ export const AppRouter: React.FC = () => {
         <Route
           path="/seller-center"
           element={
-            <ProtectedRoute requiredRole={["SELLER", "ADMIN"]} redirectTo="/seller/login">
+            <ProtectedRoute
+              requiredRole={["SELLER", "ADMIN"]}
+              redirectTo="/seller/login"
+            >
               <SellerDashboardPage />
             </ProtectedRoute>
           }
@@ -58,7 +62,10 @@ export const AppRouter: React.FC = () => {
         <Route
           path="/seller-center/quotes/:quoteId/bid"
           element={
-            <ProtectedRoute requiredRole={["SELLER", "ADMIN"]} redirectTo="/seller/login">
+            <ProtectedRoute
+              requiredRole={["SELLER", "ADMIN"]}
+              redirectTo="/seller/login"
+            >
               <SellerBidCreatePage />
             </ProtectedRoute>
           }
@@ -81,17 +88,47 @@ export const AppRouter: React.FC = () => {
         <Route path="/mypage/addresses" element={<DeliveryAddressListPage />} />
         <Route path="/mypage/quotes" element={<MyQuotesPage />} />
         <Route path="/mypage/quotes/:quoteId" element={<QuoteDetailPage />} />
-        <Route path="/mypage/quotes/:quoteId/bids/:bidId" element={<BidDetailPage />} />
-        <Route path="/mypage/quotes/:quoteId/bids/:bidId/delivery" element={<DeliveryAddressPage />} />
-        <Route path="/mypage/quotes/:quoteId/bids/:bidId/complete" element={<PurchaseCompletePage />} />
-        <Route path="/mypage/customer-service" element={<CustomerServicePage />} />
-        <Route path="/mypage/customer-service/inquiry" element={<InquiryPage />} />
-        <Route path="/mypage/customer-service/inquiries/my" element={<MyInquiriesPage />} />
-        <Route path="/mypage/customer-service/inquiries/:inquiryId" element={<InquiryDetailPage />} />
-        <Route path="/mypage/customer-service/notices" element={<NoticeListPage />} />
-        <Route path="/mypage/customer-service/notices/:noticeId" element={<NoticeDetailPage />} />
+        <Route
+          path="/mypage/quotes/:quoteId/bids/:bidId"
+          element={<BidDetailPage />}
+        />
+        <Route
+          path="/mypage/quotes/:quoteId/bids/:bidId/delivery"
+          element={<DeliveryAddressPage />}
+        />
+        <Route
+          path="/mypage/quotes/:quoteId/bids/:bidId/complete"
+          element={<PurchaseCompletePage />}
+        />
+        <Route
+          path="/mypage/customer-service"
+          element={<CustomerServicePage />}
+        />
+        <Route
+          path="/mypage/customer-service/inquiry"
+          element={<InquiryPage />}
+        />
+        <Route
+          path="/mypage/customer-service/inquiries/my"
+          element={<MyInquiriesPage />}
+        />
+        <Route
+          path="/mypage/customer-service/inquiries/:inquiryId"
+          element={<InquiryDetailPage />}
+        />
+        <Route
+          path="/mypage/customer-service/notices"
+          element={<NoticeListPage />}
+        />
+        <Route
+          path="/mypage/customer-service/notices/:noticeId"
+          element={<NoticeDetailPage />}
+        />
         <Route path="/mypage/customer-service/faqs" element={<FAQListPage />} />
-        <Route path="/mypage/customer-service/faqs/:faqId" element={<FAQDetailPage />} />
+        <Route
+          path="/mypage/customer-service/faqs/:faqId"
+          element={<FAQDetailPage />}
+        />
 
         {/* Layout이 포함된 일반 페이지들 */}
         <Route
@@ -100,6 +137,7 @@ export const AppRouter: React.FC = () => {
             <Layout>
               <Routes>
                 <Route path="/" element={<WeeklyRankingPage />} />
+                <Route path="/landing" element={<LandingPage />} />
                 {/* 추후 추가될 라우트들 */}
                 <Route path="/auctions" element={<AuctionListPage />} />
                 <Route
