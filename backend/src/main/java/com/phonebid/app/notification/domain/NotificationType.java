@@ -89,4 +89,18 @@ public enum NotificationType {
             case QUOTE_CREATED, SELLER_APPROVAL_REQUESTED, STATISTICS_SUMMARY -> 2; // 낮음
         };
     }
+
+    /**
+     * 그룹화 시 N건 요약 메시지 포맷
+     * 그룹화 가능한 타입에만 정의, 그 외는 null
+     */
+    public String getGroupedMessageFormat(int count) {
+        return switch (this) {
+            case BID_ARRIVED -> "입찰 %d건이 도착했습니다";
+            case QUOTE_CREATED -> "견적 %d건이 등록되었습니다";
+            case LOWEST_PRICE_UPDATED -> "최저가 %d건이 갱신되었습니다";
+            case CHAT_MESSAGE_RECEIVED -> "채팅 메시지 %d건이 도착했습니다";
+            default -> null;
+        };
+    }
 } 
