@@ -2,6 +2,7 @@ package com.phonebid.app.notification.sender;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.phonebid.app.notification.domain.Notification;
+import com.phonebid.app.notification.dto.response.NotificationDisplayItem;
 import com.phonebid.app.notification.domain.NotificationChannel;
 import com.phonebid.app.notification.dto.response.NotificationResponseDto;
 import com.phonebid.app.notification.sse.SseEmitterManager;
@@ -68,13 +69,13 @@ public class SseNotificationSender implements NotificationSender {
     }
 
     /**
-     * 초기 알림 일괄 전송 (SSE 연결 시 사용)
-     * 
+     * 초기 알림 일괄 전송 (SSE 연결 시 사용, 그룹화 적용된 결과)
+     *
      * @param userId 사용자 ID
-     * @param notifications 전송할 알림 목록
+     * @param items 전송할 알림 목록 (그룹화 적용된 표시용 데이터)
      * @return 전송 성공 여부
      */
-    public boolean sendInitialNotifications(UUID userId, java.util.List<Notification> notifications) {
+    public boolean sendInitialNotifications(UUID userId, java.util.List<NotificationDisplayItem> items) {
         SseEmitter emitter = sseEmitterManager.getConnection(userId);
 
         if (emitter == null) {
@@ -83,7 +84,7 @@ public class SseNotificationSender implements NotificationSender {
         }
 
         try {
-            java.util.List<NotificationResponseDto> dtos = notifications.stream()
+            java.util.List<NotificationResponseDto> dtos = items.stream()
                     .map(NotificationResponseDto::from)
                     .toList();
 
@@ -94,7 +95,7 @@ public class SseNotificationSender implements NotificationSender {
                     .data(jsonData);
 
             emitter.send(event);
-            log.info("SSE 초기 알림 전송 성공: userId={}, count={}", userId, notifications.size());
+            log.info("SSE 초기 알림 전송 성공: userId={}, count={}", userId, items.size());
             return true;
 
         } catch (IOException e) {
