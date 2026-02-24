@@ -35,5 +35,19 @@ public class NotificationResponseDto {
                 .updatedAt(notification.getUpdatedAt())
                 .build();
     }
+
+    public static NotificationResponseDto from(NotificationDisplayItem item) {
+        return NotificationResponseDto.builder()
+                .id(item.id())
+                .type(item.type())
+                .channel(item.channel())
+                .title(item.title())
+                .message(item.message())
+                .isRead(item.isRead())
+                .referenceId(item.referenceId())
+                .createdAt(item.createdAt())
+                .updatedAt(item.updatedAt())
+                .build();
+    }
 }
 
