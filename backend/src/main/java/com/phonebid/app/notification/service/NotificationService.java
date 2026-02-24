@@ -4,6 +4,7 @@ import com.phonebid.app.common.errorcode.NotificationErrorCode;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.member.domain.User;
 import com.phonebid.app.notification.domain.Notification;
+import com.phonebid.app.notification.dto.response.NotificationDisplayItem;
 import com.phonebid.app.notification.domain.NotificationChannel;
 import com.phonebid.app.notification.domain.NotificationType;
 import com.phonebid.app.notification.factory.NotificationFactory;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,6 +38,7 @@ public class NotificationService {
     private final List<NotificationSender> notificationSenders;
     private final RetryableNotificationSender retryableNotificationSender;
     private final UserNotificationSettingService userNotificationSettingService;
+    private final NotificationGroupingService notificationGroupingService;
 
     /**
      * 알림 생성 및 발송
@@ -118,21 +121,24 @@ public class NotificationService {
 
     /**
      * 최근 미읽음 알림 조회 (SSE 초기 전송용)
-     * 
+     * 5분 이내 동일 타입 알림은 그룹화하여 요약 형태로 반환
+     *
      * @param userId 사용자 ID
      * @param limit 최대 조회 개수
-     * @return 최근 미읽음 알림 목록
+     * @return 그룹화 적용된 최근 미읽음 알림 목록
      */
     @Transactional(readOnly = true)
-    public List<Notification> getRecentUnreadNotifications(UUID userId, int limit) {
+    public List<NotificationDisplayItem> getRecentUnreadNotifications(UUID userId, int limit) {
         LocalDateTime since = LocalDateTime.now().minusHours(24); // 최근 24시간
         Pageable pageable = PageRequest.of(0, Math.min(limit, 50)); // 최대 50개
 
         List<Notification> notifications = notificationRepository.findRecentUnreadByUserId(
                 userId, since, pageable);
 
-        log.debug("최근 미읽음 알림 조회: userId={}, count={}", userId, notifications.size());
-        return notifications;
+        List<NotificationDisplayItem> grouped = new ArrayList<>(
+                notificationGroupingService.groupNotifications(userId, notifications));
+        log.debug("최근 미읽음 알림 조회: userId={}, count={}", userId, grouped.size());
+        return grouped;
     }
 
     /**
