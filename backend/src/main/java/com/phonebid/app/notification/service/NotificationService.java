@@ -122,7 +122,7 @@ public class NotificationService {
     /**
      * 최근 미읽음 알림 조회 (SSE 초기 전송용)
      * 5분 이내 동일 타입 알림은 그룹화하여 요약 형태로 반환
-     *
+     * 
      * @param userId 사용자 ID
      * @param limit 최대 조회 개수
      * @return 그룹화 적용된 최근 미읽음 알림 목록
@@ -132,9 +132,11 @@ public class NotificationService {
         LocalDateTime since = LocalDateTime.now().minusHours(24); // 최근 24시간
         Pageable pageable = PageRequest.of(0, Math.min(limit, 50)); // 최대 50개
 
+        // DB에서 원본 Notification 엔티티 조회
         List<Notification> notifications = notificationRepository.findRecentUnreadByUserId(
                 userId, since, pageable);
 
+        // 그룹화 서비스를 통해 DisplayItem으로 변환 (메시지 커스터마이징)
         List<NotificationDisplayItem> grouped = new ArrayList<>(
                 notificationGroupingService.groupNotifications(userId, notifications));
         log.debug("최근 미읽음 알림 조회: userId={}, count={}", userId, grouped.size());
