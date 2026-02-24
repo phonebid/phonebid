@@ -1,6 +1,6 @@
 package com.phonebid.app.notification.controller;
 
-import com.phonebid.app.notification.domain.Notification;
+import com.phonebid.app.notification.dto.response.NotificationDisplayItem;
 import com.phonebid.app.notification.sender.SseNotificationSender;
 import com.phonebid.app.notification.service.NotificationService;
 import com.phonebid.app.notification.sse.SseEmitterManager;
@@ -54,12 +54,11 @@ public class NotificationSseController {
                 .header("Cache-Control", "no-cache")
                 .header("Connection", "keep-alive");
 
-        // 초기 알림 전송 (최근 24시간 내 미읽음 알림, 최대 50개)
+        // 초기 알림 전송 (최근 24시간 내 미읽음 알림, 최대 50개, 그룹화 적용)
         try {
-            List<Notification> recentNotifications = notificationService.getRecentUnreadNotifications(userId, 50);
+            List<NotificationDisplayItem> recentNotifications = notificationService.getRecentUnreadNotifications(userId, 50);
             if (!recentNotifications.isEmpty()) {
                 sseNotificationSender.sendInitialNotifications(userId, recentNotifications);
-                //log.info("SSE 초기 알림 전송 완료: userId={}, count={}", userId, recentNotifications.size());
             }
         } catch (Exception e) {
             log.error("SSE 초기 알림 전송 실패: userId={}", userId, e);
