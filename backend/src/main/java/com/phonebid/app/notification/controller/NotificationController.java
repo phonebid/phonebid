@@ -81,5 +81,37 @@ public class NotificationController {
         
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "미읽음 개수 조회 성공", UnreadCountResponseDto.of(count)));
     }
+
+    /**
+     * 모든 알림 읽음 처리 (일괄 읽음)
+     * 
+     * @param userDetails 인증된 사용자 정보
+     * @return 성공 응답 (읽음 처리된 개수 포함)
+     */
+    @PutMapping("/read-all")
+    public ResponseEntity<ApiResponse<Integer>> markAllAsRead(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+        
+        UUID userId = userDetails.getUser().getId();
+        int count = notificationService.markAllAsRead(userId);
+        
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, 
+                String.format("%d개의 알림을 읽음 처리했습니다", count), count));
+    }
+
+    /**
+     * 모든 알림 삭제 (일괄 삭제)
+     * 
+     * @param userDetails 인증된 사용자 정보
+     * @return 성공 응답 (삭제된 개수 포함)
+     */
+    @DeleteMapping("/all")
+    public ResponseEntity<ApiResponse<Integer>> deleteAllNotifications(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+        
+        UUID userId = userDetails.getUser().getId();
+        int count = notificationService.deleteAllNotifications(userId);
+        
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, 
+                String.format("%d개의 알림을 삭제했습니다", count), count));
+    }
 }
 

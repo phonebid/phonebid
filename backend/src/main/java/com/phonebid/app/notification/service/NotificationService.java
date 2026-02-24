@@ -173,6 +173,43 @@ public class NotificationService {
     }
 
     /**
+     * 모든 알림 읽음 처리 (일괄 읽음)
+     * 
+     * @param userId 사용자 ID
+     * @return 읽음 처리된 알림 개수
+     */
+    @Transactional
+    public int markAllAsRead(UUID userId) {
+        List<Notification> unreadNotifications = notificationRepository.findUnreadByUserId(userId);
+        
+        for (Notification notification : unreadNotifications) {
+            notification.markAsRead();
+        }
+        
+        notificationRepository.saveAll(unreadNotifications);
+        
+        int count = unreadNotifications.size();
+        return count;
+    }
+
+    /**
+     * 모든 알림 삭제 (일괄 삭제 - 소프트 삭제)
+     * 
+     * @param userId 사용자 ID
+     * @return 삭제된 알림 개수
+     */
+    @Transactional
+    public int deleteAllNotifications(UUID userId) {
+        List<Notification> notifications = notificationRepository.findAllByUserId(userId);
+        
+        // 소프트 삭제 (BaseEntity의 @SQLDelete 어노테이션에 의해 is_delete = true로 업데이트)
+        notificationRepository.deleteAll(notifications);
+        
+        int count = notifications.size();
+        return count;
+    }
+
+    /**
      * 채널별 발송자 찾기
      */
     private NotificationSender findSender(NotificationChannel channel) {

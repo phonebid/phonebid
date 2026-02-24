@@ -81,5 +81,23 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
             @Param("userId") UUID userId,
             @Param("type") NotificationType type,
             @Param("since") LocalDateTime since);
+
+    /**
+     * 사용자별 모든 알림 조회 (소프트 삭제 제외)
+     * 일괄 읽음 처리 및 일괄 삭제용
+     */
+    @Query("SELECT n FROM Notification n " +
+           "WHERE n.user.id = :userId " +
+           "AND (n.isDelete = false OR n.isDelete IS NULL)")
+    List<Notification> findAllByUserId(@Param("userId") UUID userId);
+
+    /**
+     * 사용자별 미읽음 알림 조회 (일괄 읽음 처리용)
+     */
+    @Query("SELECT n FROM Notification n " +
+           "WHERE n.user.id = :userId " +
+           "AND n.isRead = false " +
+           "AND (n.isDelete = false OR n.isDelete IS NULL)")
+    List<Notification> findUnreadByUserId(@Param("userId") UUID userId);
 }
 
