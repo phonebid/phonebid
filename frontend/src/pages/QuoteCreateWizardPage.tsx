@@ -185,9 +185,10 @@ const QuoteCreateWizardPage: React.FC = () => {
     if (step === 6) {
       const payload: QuoteCreateRequestDto = {
         phoneModelId: draft.model ?? "",
-        carrier: draft.carrier ?? "ANY" as Carrier,
-        purchaseMethod: draft.purchaseMethod as PurchaseMethod,
-        activationMethod: draft.activationMethod as ActivationMethod,
+
+        carrier: draft.carrier ?? "ANY",
+        purchaseMethod: draft.purchaseMethod ?? "ANY",
+        activationMethod: draft.activationMethod ?? "ANY",
       };
 
       // 옵션이 선택된 경우에만 포함
@@ -206,8 +207,9 @@ const QuoteCreateWizardPage: React.FC = () => {
           setShowSuccess(true);
         })
         .catch((error) => {
-          toast.error(error.message);
+          toast.error(error.message || "견적 요청 중 오류가 발생했습니다.");
         });
+      return;
     }
     setLocalStep((prev) => Math.min(6, prev + 1));
   };
