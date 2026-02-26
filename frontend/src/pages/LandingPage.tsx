@@ -299,7 +299,7 @@ const LandingPage: React.FC = () => {
             <span className="text-xs text-slate-300">실시간 업데이트 중</span>
           </div>
         </div>
-        <div className="flex overflow-x-auto gap-4 pb-8 px-2 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:overflow-visible">
+        <div className="max-w-7xl mx-auto flex overflow-x-auto gap-4 pb-8 px-2 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:overflow-visible sm:justify-center">
           {LIVE_QUOTES.map((quote) => (
             <div
               key={quote.id}
