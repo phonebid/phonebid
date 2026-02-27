@@ -78,11 +78,16 @@ export default {
           from: { backgroundPosition: "50% 50%, 50% 50%" },
           to: { backgroundPosition: "350% 50%, 350% 50%" },
         },
+        "aurora-slide": {
+          from: { transform: "translateX(0)" },
+          to: { transform: "translateX(-75%)" },
+        },
       },
       animation: {
         marquee: "marquee 20s linear infinite",
         "bell-ring": "bell-ring 1s ease-in-out",
         aurora: "aurora 60s linear infinite",
+        "aurora-slide": "aurora-slide 60s linear infinite",
       },
       boxShadow: {
         glow: "0 0 20px rgba(139, 92, 246, 0.5)",

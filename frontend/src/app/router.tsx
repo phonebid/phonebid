@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import Layout from "components/layout/Layout";
 import { ProtectedRoute } from "components/auth/ProtectedRoute";
+import { useAuthStore } from "store/authStore";
 import LoginPage from "pages/LoginPage";
 import SignupPage from "pages/SignupPage";
 import AuthCallbackPage from "pages/AuthCallbackPage";
@@ -39,6 +40,28 @@ import DeliveryAddressPage from "pages/DeliveryAddressPage";
 import DeliveryAddressListPage from "pages/DeliveryAddressListPage";
 import PurchaseCompletePage from "pages/PurchaseCompletePage";
 import LandingPage from "pages/LandingPage";
+
+const RootPage: React.FC = () => {
+  const { isAuthenticated, isInitializing } = useAuthStore();
+
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-muted-foreground">로딩 중...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <LandingPage />;
+  }
+
+  return (
+    <Layout>
+      <WeeklyRankingPage />
+    </Layout>
+  );
+};
 
 export const AppRouter: React.FC = () => {
   return (
@@ -130,15 +153,16 @@ export const AppRouter: React.FC = () => {
           element={<FAQDetailPage />}
         />
 
+        {/* 루트: 비로그인 시 랜딩페이지, 로그인 시 Layout+WeeklyRankingPage */}
+        <Route path="/" element={<RootPage />} />
+        <Route path="/landing" element={<LandingPage />} />
+
         {/* Layout이 포함된 일반 페이지들 */}
         <Route
           path="/*"
           element={
             <Layout>
               <Routes>
-                <Route path="/" element={<WeeklyRankingPage />} />
-                <Route path="/landing" element={<LandingPage />} />
-                {/* 추후 추가될 라우트들 */}
                 <Route path="/auctions" element={<AuctionListPage />} />
                 <Route
                   path="/admin/phone-models"
