@@ -1,0 +1,102 @@
+package com.phonebid.app.notification.config;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.validation.annotation.Validated;
+
+import java.time.Duration;
+
+/**
+ * 알리고(Aligo) 카카오 알림톡 API 설정
+ * application.yml의 aligo.* 속성을 바인딩
+ */
+@Getter
+@Setter
+@Validated
+@ConfigurationProperties(prefix = "aligo")
+public class AligoProperties {
+    
+    @Valid
+    @NotNull
+    private Api api = new Api();
+    
+    @Valid
+    @NotNull
+    private Sender sender = new Sender();
+    
+    @Valid
+    @NotNull
+    private Template template = new Template();
+    
+    @Valid
+    private Timeout timeout = new Timeout();
+    
+    @Valid
+    private Retry retry = new Retry();
+    
+    /**
+     * API 기본 설정
+     */
+    @Getter
+    @Setter
+    public static class Api {
+        @NotBlank(message = "알리고 Base URL은 필수입니다")
+        private String baseUrl;
+        
+        @NotBlank(message = "알리고 User ID는 필수입니다")
+        private String userId;
+        
+        @NotBlank(message = "알리고 API Key는 필수입니다")
+        private String apiKey;
+    }
+    
+    /**
+     * 발신자 설정
+     */
+    @Getter
+    @Setter
+    public static class Sender {
+        @NotBlank(message = "발신 프로필 키는 필수입니다")
+        private String key;
+        
+        private String phone;
+    }
+    
+    /**
+     * 템플릿 코드 설정
+     */
+    @Getter
+    @Setter
+    public static class Template {
+        private String bidArrived;
+        private String bidSelected;
+        private String contractSigned;
+        private String paymentCompleted;
+        private String deliveryStarted;
+        private String deliveryCompleted;
+    }
+    
+    /**
+     * 타임아웃 설정
+     */
+    @Getter
+    @Setter
+    public static class Timeout {
+        private Duration connect = Duration.ofSeconds(5);
+        private Duration read = Duration.ofSeconds(10);
+    }
+    
+    /**
+     * 재시도 설정
+     */
+    @Getter
+    @Setter
+    public static class Retry {
+        private int maxAttempts = 3;
+        private Duration backoffDelay = Duration.ofSeconds(1);
+    }
+}
