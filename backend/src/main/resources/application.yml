@@ -99,3 +99,26 @@ sse:
   max-connections: 10000
   # 사용자별 최대 중복 연결 수 (기본값: 3)
   max-duplicate-connections-per-user: 3
+
+# 카카오 알림톡 설정 (알리고)
+aligo:
+  api:
+    base-url: https://apis.aligo.in
+    user-id: ${ALIGO_USER_ID}
+    api-key: ${ALIGO_API_KEY}
+  sender:
+    key: ${ALIGO_SENDER_KEY}
+    phone: ${ALIGO_SENDER_PHONE:}
+  template:
+    bid-arrived: ${ALIGO_TEMPLATE_BID_ARRIVED:}
+    bid-selected: ${ALIGO_TEMPLATE_BID_SELECTED:}
+    contract-signed: ${ALIGO_TEMPLATE_CONTRACT_SIGNED:}
+    payment-completed: ${ALIGO_TEMPLATE_PAYMENT_COMPLETED:}
+    delivery-started: ${ALIGO_TEMPLATE_DELIVERY_STARTED:}
+    delivery-completed: ${ALIGO_TEMPLATE_DELIVERY_COMPLETED:}
+  timeout:
+    connect: 5s
+    read: 10s
+  retry:
+    max-attempts: 3
+    backoff-delay: 1s
