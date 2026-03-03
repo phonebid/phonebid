@@ -16,7 +16,13 @@ public enum NotificationErrorCode implements ErrorCode {
     SSE_CONNECTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "SSE 연결에 실패했습니다."),
     KAKAO_TALK_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "카카오 알림톡 발송에 실패했습니다."),
     NOTIFICATION_CONSENT_REQUIRED(HttpStatus.BAD_REQUEST, "알림 수신 동의가 필요합니다."),
-    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "알림을 찾을 수 없습니다.");
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "알림을 찾을 수 없습니다."),
+    
+    // 카카오 알림톡 관련 (알리고)
+    KAKAO_ALIMTALK_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "알림톡 발송에 실패했습니다."),
+    KAKAO_ALIMTALK_INVALID_PHONE(HttpStatus.BAD_REQUEST, "유효하지 않은 전화번호입니다."),
+    KAKAO_ALIMTALK_TEMPLATE_NOT_FOUND(HttpStatus.NOT_FOUND, "알림톡 템플릿을 찾을 수 없습니다."),
+    KAKAO_ALIMTALK_API_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "알림톡 API 오류가 발생했습니다.");
 
     private final HttpStatus status;
     private final String message;
