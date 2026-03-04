@@ -201,16 +201,17 @@ public class BidService {
                 .contractMonths(requestDto.getContractMonths())
                 .build();
         
-        Integer previousPrice = bid.getPrice();
+        Integer previousInstallmentPrincipal = bid.getInstallmentPrincipal();
         bid.updateBidDetails(command);
 
         log.info("입찰 수정 완료 - bidId: {}", bid.getId());
 
         // 최저가 갱신 여부 확인 및 이벤트 발행
-        Integer currentLowestPrice = bidRepository.findMinInstallmentPrincipalByQuoteId(bid.getQuote().getId(), BidStatus.ACTIVE);
-        if (currentLowestPrice != null && requestDto.getPrice() != null && 
-            requestDto.getPrice() < previousPrice && requestDto.getPrice() <= currentLowestPrice) {
-            eventPublisher.publishEvent(new com.phonebid.app.notification.event.LowestPriceUpdatedEvent(this, bid, previousPrice));
+        Integer currentLowestInstallmentPrincipal = bidRepository.findMinInstallmentPrincipalByQuoteId(bid.getQuote().getId(), BidStatus.ACTIVE);
+        if (requestDto.getInstallmentPrincipal() != null && 
+            currentLowestInstallmentPrincipal != null && 
+            requestDto.getInstallmentPrincipal() <= currentLowestInstallmentPrincipal) {
+            eventPublisher.publishEvent(new com.phonebid.app.notification.event.LowestPriceUpdatedEvent(this, bid, previousInstallmentPrincipal));
         }
 
         return BidResponseDto.from(bid);
