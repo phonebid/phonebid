@@ -54,13 +54,16 @@ public class BidService {
         // 2. 견적 조회 및 검증
         Quote quote = validateAndGetQuote(requestDto.getQuoteId());
 
-        // 3. 요금제 생성 및 저장
+        // 3. 최저가 갱신 여부 확인을 위해 입찰 저장 전에 기존 최저 할부원금 조회
+        Integer previousLowestInstallmentPrincipal = bidRepository.findMinInstallmentPrincipalByQuoteId(quote.getId(), BidStatus.ACTIVE);
+
+        // 4. 요금제 생성 및 저장
         PricePlan pricePlan = createAndSavePricePlan(requestDto);
 
-        // 4. 입찰 생성
+        // 5. 입찰 생성
         Bid bid = createAndSaveBid(requestDto, quote, seller, pricePlan);
 
-        // 5. 부가서비스 생성
+        // 6. 부가서비스 생성
         saveAdditionalServices(requestDto, bid);
 
         log.info("입찰 생성 완료 - bidId: {}, quoteId: {}, sellerId: {}", 
@@ -70,9 +73,8 @@ public class BidService {
         eventPublisher.publishEvent(new com.phonebid.app.notification.event.BidArrivedEvent(this, bid));
 
         // 최저가 갱신 여부 확인 및 이벤트 발행
-        Integer previousLowestPrice = bidRepository.findMinInstallmentPrincipalByQuoteId(quote.getId(), BidStatus.ACTIVE);
-        if (previousLowestPrice != null && bid.getPrice() < previousLowestPrice) {
-            eventPublisher.publishEvent(new com.phonebid.app.notification.event.LowestPriceUpdatedEvent(this, bid, previousLowestPrice));
+        if (previousLowestInstallmentPrincipal == null || bid.getInstallmentPrincipal() < previousLowestInstallmentPrincipal) {
+            eventPublisher.publishEvent(new com.phonebid.app.notification.event.LowestPriceUpdatedEvent(this, bid, previousLowestInstallmentPrincipal));
         }
 
         return BidResponseDto.from(bid);
