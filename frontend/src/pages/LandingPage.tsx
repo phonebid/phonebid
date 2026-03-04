@@ -235,8 +235,8 @@ const LandingPage: React.FC = () => {
               <div
                 className="absolute pointer-events-none"
                 style={{
-                  width: "410px",
-                  height: "144px",
+                  width: "540px",
+                  height: "190px",
                   border: "1.5px solid rgba(129,140,248,0.75)",
                   borderRadius: "50%",
                   transform: "translate(-50%,-50%) rotate(18deg)",
@@ -252,8 +252,8 @@ const LandingPage: React.FC = () => {
               <div
                 className="absolute pointer-events-none"
                 style={{
-                  width: "320px",
-                  height: "112px",
+                  width: "440px",
+                  height: "155px",
                   border: "1.5px solid rgba(192,132,252,0.65)",
                   borderRadius: "50%",
                   transform: "translate(-50%,-50%) rotate(-12deg)",
@@ -270,10 +270,9 @@ const LandingPage: React.FC = () => {
                 className="relative flex items-end justify-center w-full px-4"
                 style={{ zIndex: 20 }}
               >
-                {/* Galaxy S26 앞면 */}
                 <img
                   alt="Galaxy S26 Front"
-                  className="w-[550px] lg:w-[800px] -translate-x-8 -rotate-[3deg] drop-shadow-2xl hover:scale-105 transition duration-500"
+                  className="w-[620px] lg:w-[900px] -rotate-[8deg] drop-shadow-2xl transition duration-500"
                   src="https://images.samsung.com/is/image/samsung/p6pim/us/s2602/gallery/us-galaxy-s26-s947-sm-s947uzvaxaa-550994937?fmt=png-alpha&wid=480"
                 />
               </div>
@@ -282,8 +281,8 @@ const LandingPage: React.FC = () => {
               <div
                 className="absolute pointer-events-none"
                 style={{
-                  width: "410px",
-                  height: "144px",
+                  width: "540px",
+                  height: "190px",
                   border: "2px solid rgba(34,211,238,0.9)",
                   borderRadius: "50%",
                   transform: "translate(-50%,-50%) rotate(18deg)",
@@ -304,8 +303,8 @@ const LandingPage: React.FC = () => {
                   background: "#fff",
                   boxShadow:
                     "0 0 0 2px rgba(34,211,238,0.4), 0 0 12px 5px rgba(34,211,238,0.9)",
-                  top: "calc(50% + 63px)",
-                  left: "calc(50% + 195px)",
+                  top: "calc(50% + 83px)",
+                  left: "calc(50% + 257px)",
                   transform: "translate(-50%,-50%)",
                   zIndex: 40,
                 }}
@@ -315,8 +314,8 @@ const LandingPage: React.FC = () => {
               <div
                 className="absolute pointer-events-none"
                 style={{
-                  width: "320px",
-                  height: "112px",
+                  width: "440px",
+                  height: "155px",
                   border: "2px solid rgba(167,139,250,0.85)",
                   borderRadius: "50%",
                   transform: "translate(-50%,-50%) rotate(-12deg)",
@@ -337,8 +336,8 @@ const LandingPage: React.FC = () => {
                   background: "#fff",
                   boxShadow:
                     "0 0 0 2px rgba(167,139,250,0.4), 0 0 10px 4px rgba(167,139,250,0.9)",
-                  top: "calc(50% - 32px)",
-                  left: "calc(50% + 152px)",
+                  top: "calc(50% - 44px)",
+                  left: "calc(50% + 209px)",
                   transform: "translate(-50%,-50%)",
                   zIndex: 40,
                 }}
