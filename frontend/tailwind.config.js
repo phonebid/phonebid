@@ -88,6 +88,8 @@ export default {
         "bell-ring": "bell-ring 1s ease-in-out",
         aurora: "aurora 60s linear infinite",
         "aurora-slide": "aurora-slide 60s linear infinite",
+        "spin-slow": "spin 12s linear infinite",
+        "spin-slow-reverse": "spin 8s linear infinite reverse",
       },
       boxShadow: {
         glow: "0 0 20px rgba(139, 92, 246, 0.5)",

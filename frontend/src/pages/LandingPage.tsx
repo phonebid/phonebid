@@ -227,16 +227,127 @@ const LandingPage: React.FC = () => {
                 </Link>
               </div>
             </div>
-            <div className="flex-1 relative w-full max-w-sm lg:max-w-md order-1 lg:order-2">
-              <div className="absolute inset-0 bg-violet-500/20 blur-3xl rounded-full" />
-              <img
-                alt="Purple Smartphone Mockup"
-                className="relative z-10 w-full transform -rotate-12 drop-shadow-2xl hover:-rotate-6 transition duration-500 ease-out"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUPo-C3JYWMNX5NIlbkwYrSQsKCf1noyM4WwHZNPXciG9NqFTpjdrpUlDFEABCyYztUUEW8hJdGEYk74n7ey6mcz02ZWg5ExU9a39hmKmPlRIA5QkeveHhuv85YJM2XBIKkQKQdlOMcOsMc78sd7aOVdREXisWM0vLejoiAAjXKvMsCpNgiIY-Z14JLTWDGrNekEQif4V4FbzmecGTOdJnIg1zA859HycUMZGArcN3FOCzhceDfpKQOCIoPAoPlHj9BMcOzevapjwK"
-              />
+            <div className="flex-1 relative w-full max-w-lg order-1 lg:order-2 flex items-center justify-center min-h-[420px]">
+              {/* 배경 글로우 */}
+              <div className="absolute inset-0 bg-violet-500/20 blur-3xl rounded-full pointer-events-none" />
+
+              {/* 링 1 - 위쪽 호 (폰 뒤) */}
               <div
-                className="absolute bottom-8 -right-4 sm:right-4 lg:right-8 z-20 bg-white/10 backdrop-blur-xl border border-white/20 p-4 rounded-2xl shadow-2xl animate-bounce min-w-[180px]"
-                style={{ animationDuration: "3s" }}
+                className="absolute pointer-events-none"
+                style={{
+                  width: "410px",
+                  height: "144px",
+                  border: "1.5px solid rgba(129,140,248,0.75)",
+                  borderRadius: "50%",
+                  transform: "translate(-50%,-50%) rotate(18deg)",
+                  clipPath: "polygon(0% 0%, 100% 0%, 100% 50%, 0% 50%)",
+                  filter: "drop-shadow(0 0 6px rgba(99,102,241,0.9))",
+                  top: "50%",
+                  left: "50%",
+                  zIndex: 5,
+                }}
+              />
+
+              {/* 링 2 - 위쪽 호 (폰 뒤) */}
+              <div
+                className="absolute pointer-events-none"
+                style={{
+                  width: "320px",
+                  height: "112px",
+                  border: "1.5px solid rgba(192,132,252,0.65)",
+                  borderRadius: "50%",
+                  transform: "translate(-50%,-50%) rotate(-12deg)",
+                  clipPath: "polygon(0% 0%, 100% 0%, 100% 50%, 0% 50%)",
+                  filter: "drop-shadow(0 0 5px rgba(168,85,247,0.7))",
+                  top: "50%",
+                  left: "50%",
+                  zIndex: 5,
+                }}
+              />
+
+              {/* 폰 이미지 */}
+              <div
+                className="relative flex items-end justify-center w-full px-4"
+                style={{ zIndex: 20 }}
+              >
+                {/* Galaxy S26 앞면 */}
+                <img
+                  alt="Galaxy S26 Front"
+                  className="w-[550px] lg:w-[800px] -translate-x-8 -rotate-[3deg] drop-shadow-2xl hover:scale-105 transition duration-500"
+                  src="https://images.samsung.com/is/image/samsung/p6pim/us/s2602/gallery/us-galaxy-s26-s947-sm-s947uzvaxaa-550994937?fmt=png-alpha&wid=480"
+                />
+              </div>
+
+              {/* 링 1 - 아래쪽 호 (폰 앞) */}
+              <div
+                className="absolute pointer-events-none"
+                style={{
+                  width: "410px",
+                  height: "144px",
+                  border: "2px solid rgba(34,211,238,0.9)",
+                  borderRadius: "50%",
+                  transform: "translate(-50%,-50%) rotate(18deg)",
+                  clipPath: "polygon(0% 50%, 100% 50%, 100% 100%, 0% 100%)",
+                  filter: "drop-shadow(0 0 8px rgba(34,211,238,1))",
+                  top: "50%",
+                  left: "50%",
+                  zIndex: 35,
+                }}
+              />
+
+              {/* 링 1 오른쪽 끝 빛나는 점 */}
+              <div
+                className="absolute pointer-events-none rounded-full"
+                style={{
+                  width: "10px",
+                  height: "10px",
+                  background: "#fff",
+                  boxShadow:
+                    "0 0 0 2px rgba(34,211,238,0.4), 0 0 12px 5px rgba(34,211,238,0.9)",
+                  top: "calc(50% + 63px)",
+                  left: "calc(50% + 195px)",
+                  transform: "translate(-50%,-50%)",
+                  zIndex: 40,
+                }}
+              />
+
+              {/* 링 2 - 아래쪽 호 (폰 앞) */}
+              <div
+                className="absolute pointer-events-none"
+                style={{
+                  width: "320px",
+                  height: "112px",
+                  border: "2px solid rgba(167,139,250,0.85)",
+                  borderRadius: "50%",
+                  transform: "translate(-50%,-50%) rotate(-12deg)",
+                  clipPath: "polygon(0% 50%, 100% 50%, 100% 100%, 0% 100%)",
+                  filter: "drop-shadow(0 0 6px rgba(167,139,250,0.9))",
+                  top: "50%",
+                  left: "50%",
+                  zIndex: 35,
+                }}
+              />
+
+              {/* 링 2 오른쪽 끝 빛나는 점 */}
+              <div
+                className="absolute pointer-events-none rounded-full"
+                style={{
+                  width: "8px",
+                  height: "8px",
+                  background: "#fff",
+                  boxShadow:
+                    "0 0 0 2px rgba(167,139,250,0.4), 0 0 10px 4px rgba(167,139,250,0.9)",
+                  top: "calc(50% - 32px)",
+                  left: "calc(50% + 152px)",
+                  transform: "translate(-50%,-50%)",
+                  zIndex: 40,
+                }}
+              />
+
+              {/* 실시간 입찰 floating card */}
+              <div
+                className="absolute bottom-4 right-0 lg:right-4 bg-white/10 backdrop-blur-xl border border-white/20 p-4 rounded-2xl shadow-2xl animate-bounce min-w-[400px]"
+                style={{ animationDuration: "3s", zIndex: 50 }}
               >
                 <div className="flex items-center justify-between mb-2">
                   <MaterialIcon name="bolt" className="text-blue-400 text-sm" />
@@ -251,17 +362,9 @@ const LandingPage: React.FC = () => {
                   </div>
                 </div>
                 <p className="text-sm text-white font-medium mb-1">
-                  [서울-김OO님] S24...
+                  [서울-김OO님] S26 512GB ₩550,000 구매
                 </p>
-                <p className="text-[10px] text-slate-300 mb-3">5성 전</p>
-                <div className="flex items-center justify-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-                </div>
-                <p className="text-[10px] text-slate-400 text-center mt-1">
-                  더 많은 견
-                </p>
+                <p className="text-[10px] text-slate-300 mb-3">5분 전</p>
               </div>
             </div>
           </div>
