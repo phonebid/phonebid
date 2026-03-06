@@ -149,7 +149,15 @@ public class NotificationEventListener {
     @Async("notificationExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleDeliveryStatusChanged(DeliveryStatusChangedEvent event) {
-        log.debug("배송 상태 변경 이벤트 처리: deliveryId={}", event.getReferenceId());
+        log.debug("배송 상태 변경 이벤트 처리: deliveryId={}, newStatus={}", 
+                  event.getReferenceId(), event.getNewStatus());
+        
+        // READY 상태는 내부 상태로 알림 발송하지 않음
+        if (!event.shouldNotify()) {
+            log.debug("배송 준비 중 상태는 알림 발송하지 않음: deliveryId={}", event.getReferenceId());
+            return;
+        }
+        
         sendNotificationToEventUser(event, List.of(NotificationChannel.SSE, NotificationChannel.KAKAO));
     }
 
