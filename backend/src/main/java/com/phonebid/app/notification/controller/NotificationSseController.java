@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -64,41 +63,9 @@ public class NotificationSseController {
             log.error("SSE 초기 알림 전송 실패: userId={}", userId, e);
         }
 
-        // Heartbeat 전송 시작 (별도 스레드에서 실행)
-        startHeartbeat(userId, emitter);
+        // Heartbeat는 SseEmitterManager의 @Scheduled 메소드에서 전역적으로 처리됨
 
         return responseBuilder.body(emitter);
-    }
-
-    /**
-     * Heartbeat 전송 (30초 간격)
-     * 연결 유지 및 타임아웃 방지
-     */
-    private void startHeartbeat(UUID userId, SseEmitter emitter) {
-        new Thread(() -> {
-            try {
-                long interval = sseEmitterManager.getHeartbeatInterval();
-                while (sseEmitterManager.isConnected(userId)) {
-                    Thread.sleep(interval);
-                    
-                    if (!sseEmitterManager.isConnected(userId)) {
-                        break;
-                    }
-                    
-                    try {
-                        emitter.send(SseEmitter.event()
-                                .name("heartbeat")
-                                .data("ping"));
-                    } catch (IOException e) {
-                        log.debug("Heartbeat 전송 실패 (연결 종료 가능): userId={}", userId);
-                        break;
-                    }
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                log.debug("Heartbeat 스레드 인터럽트: userId={}", userId);
-            }
-        }, "sse-heartbeat-" + userId).start();
     }
 }
 
