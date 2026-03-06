@@ -63,6 +63,8 @@ public enum NotificationType {
     // 수신 대상별 분류
     public boolean isForConsumer() {
         return this == BID_ARRIVED || this == QUOTE_EXPIRING_SOON || 
+               this == LOWEST_PRICE_UPDATED ||
+               this == CONTRACT_SIGNED || this == PAYMENT_COMPLETED ||
                this == DELIVERY_STARTED || this == DELIVERY_COMPLETED || 
                this == CHAT_MESSAGE_RECEIVED;
     }

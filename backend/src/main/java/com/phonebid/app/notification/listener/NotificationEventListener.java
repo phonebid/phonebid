@@ -117,7 +117,11 @@ public class NotificationEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleLowestPriceUpdated(LowestPriceUpdatedEvent event) {
         log.debug("최저가 갱신 이벤트 처리: bidId={}", event.getReferenceId());
-        sendNotificationToEventUser(event, List.of(NotificationChannel.SSE));
+        
+        // 구매자와 판매자 모두에게 알림 발송
+        List<NotificationChannel> channels = List.of(NotificationChannel.SSE, NotificationChannel.KAKAO);
+        sendNotificationToUser(event.getUserId(), event, channels);
+        sendNotificationToUser(event.getSellerUserId(), event, channels);
     }
 
     @Async("notificationExecutor")
