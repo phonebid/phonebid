@@ -2,6 +2,7 @@ package com.phonebid.app.notification.client;
 
 import com.phonebid.app.common.errorcode.NotificationErrorCode;
 import com.phonebid.app.common.exception.CustomException;
+import com.phonebid.app.common.util.MaskingUtil;
 import com.phonebid.app.notification.config.AligoProperties;
 import com.phonebid.app.notification.dto.aligo.AligoKakaoRequest;
 import com.phonebid.app.notification.dto.aligo.AligoResponse;
@@ -37,6 +38,7 @@ public class AligoKakaoClient {
      */
     public Mono<AligoResponse> sendKakaoNotification(AligoKakaoRequest request) {
         MultiValueMap<String, String> formData = buildFormData(request);
+        String maskedReceiver = MaskingUtil.maskPhoneNumber(request.getReceiver());
         
         return webClient.post()
                 .uri("/akv10/alimtalk/send/")
@@ -55,16 +57,16 @@ public class AligoKakaoClient {
                 .doOnSuccess(response -> {
                     if (response.isSuccess()) {
                         log.debug("알림톡 발송 성공: receiver={}, resultCode={}, msgCount={}", 
-                                 request.getReceiver(), response.getResultCode(), response.getMsgCount());
+                                 maskedReceiver, response.getResultCode(), response.getMsgCount());
                     } else {
                         log.warn("알림톡 발송 실패: receiver={}, resultCode={}, message={}", 
-                                request.getReceiver(), response.getResultCode(), response.getMessage());
+                                maskedReceiver, response.getResultCode(), response.getMessage());
                     }
                 })
-                .doOnError(error -> 
+                .doOnError(error -> {
                     log.error("알림톡 발송 중 예외 발생: receiver={}, error={}", 
-                             request.getReceiver(), error.getMessage(), error)
-                );
+                             maskedReceiver, error.getMessage(), error);
+                });
     }
     
     /**
