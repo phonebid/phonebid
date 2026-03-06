@@ -1,8 +1,11 @@
 package com.phonebid.app.notification.config;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -36,7 +39,12 @@ public class AligoProperties {
     private Timeout timeout = new Timeout();
     
     @Valid
+    @NotNull
     private Retry retry = new Retry();
+    
+    @Valid
+    @NotNull
+    private ConnectionPool connectionPool = new ConnectionPool();
     
     /**
      * API 기본 설정
@@ -52,6 +60,11 @@ public class AligoProperties {
         
         @NotBlank(message = "알리고 API Key는 필수입니다")
         private String apiKey;
+        
+        @AssertTrue(message = "Base URL은 HTTPS를 사용해야 합니다")
+        private boolean isSecureUrl() {
+            return baseUrl != null && baseUrl.toLowerCase().startsWith("https://");
+        }
     }
     
     /**
@@ -86,8 +99,18 @@ public class AligoProperties {
     @Getter
     @Setter
     public static class Timeout {
+        @NotNull(message = "Connect timeout은 필수입니다")
+        @Positive(message = "Connect timeout은 양수여야 합니다")
+        @Max(value = Integer.MAX_VALUE / 1000, message = "Connect timeout은 최대 " + (Integer.MAX_VALUE / 1000) + "초입니다")
         private Duration connect = Duration.ofSeconds(5);
+        
+        @NotNull(message = "Read timeout은 필수입니다")
+        @Positive(message = "Read timeout은 양수여야 합니다")
         private Duration read = Duration.ofSeconds(10);
+        
+        @NotNull(message = "Write timeout은 필수입니다")
+        @Positive(message = "Write timeout은 양수여야 합니다")
+        private Duration write = Duration.ofSeconds(10);
     }
     
     /**
@@ -98,5 +121,19 @@ public class AligoProperties {
     public static class Retry {
         private int maxAttempts = 3;
         private Duration backoffDelay = Duration.ofSeconds(1);
+    }
+    
+    /**
+     * Connection Pool 설정
+     */
+    @Getter
+    @Setter
+    public static class ConnectionPool {
+        @Positive(message = "최대 연결 수는 양수여야 합니다")
+        private int maxConnections = 50;
+        
+        @NotNull(message = "연결 대기 타임아웃은 필수입니다")
+        @Positive(message = "연결 대기 타임아웃은 양수여야 합니다")
+        private Duration pendingAcquireTimeout = Duration.ofSeconds(30);
     }
 }
