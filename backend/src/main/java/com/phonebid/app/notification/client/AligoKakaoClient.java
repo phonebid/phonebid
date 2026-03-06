@@ -1,5 +1,7 @@
 package com.phonebid.app.notification.client;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.phonebid.app.common.errorcode.NotificationErrorCode;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.common.util.MaskingUtil;
@@ -17,6 +19,9 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * 알리고 카카오 알림톡 API 클라이언트
  */
@@ -29,6 +34,7 @@ public class AligoKakaoClient {
     private final WebClient webClient;
     
     private final AligoProperties aligoProperties;
+    private final ObjectMapper objectMapper;
     
     /**
      * 카카오 알림톡 발송
@@ -63,10 +69,10 @@ public class AligoKakaoClient {
                                 maskedReceiver, response.getResultCode(), response.getMessage());
                     }
                 })
-                .doOnError(error -> {
+                .doOnError(error -> 
                     log.error("알림톡 발송 중 예외 발생: receiver={}, error={}", 
-                             maskedReceiver, error.getMessage(), error);
-                });
+                             maskedReceiver, error.getMessage(), error)
+                );
     }
     
     /**
@@ -88,11 +94,26 @@ public class AligoKakaoClient {
             String buttonName = request.getButtonName() != null ? 
                                request.getButtonName() : "자세히보기";
             
-            String buttonJson = String.format(
-                "{\"button\":[{\"name\":\"%s\",\"linkType\":\"WL\",\"linkTypeName\":\"웹링크\",\"linkMo\":\"%s\",\"linkPc\":\"%s\"}]}", 
-                buttonName, request.getButtonUrl(), request.getButtonUrl()
-            );
-            formData.add("button", buttonJson);
+            try {
+                Map<String, Object> buttonStructure = Map.of(
+                    "button", List.of(
+                        Map.of(
+                            "name", buttonName,
+                            "linkType", "WL",
+                            "linkTypeName", "웹링크",
+                            "linkMo", request.getButtonUrl(),
+                            "linkPc", request.getButtonUrl()
+                        )
+                    )
+                );
+                
+                String buttonJson = objectMapper.writeValueAsString(buttonStructure);
+                formData.add("button", buttonJson);
+            } catch (JsonProcessingException e) {
+                log.error("버튼 JSON 직렬화 실패: buttonName={}, buttonUrl={}", 
+                         buttonName, request.getButtonUrl(), e);
+                throw new CustomException(NotificationErrorCode.KAKAO_ALIMTALK_API_ERROR);
+            }
         }
         
         return formData;
