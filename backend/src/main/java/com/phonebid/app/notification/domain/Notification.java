@@ -17,6 +17,8 @@ import org.hibernate.annotations.Comment;
 @Entity
 @Table(name = "notifications", indexes = {
     @Index(name = "idx_notifications_user_id", columnList = "user_id"),
+    @Index(name = "idx_notifications_user_created", columnList = "user_id, created_at"),
+    @Index(name = "idx_notifications_created_at", columnList = "created_at"),
     @Index(name = "idx_notifications_type", columnList = "type"),
     @Index(name = "idx_notifications_channel", columnList = "channel"),
     @Index(name = "idx_notifications_is_read", columnList = "is_read")

@@ -61,11 +61,12 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
 
     /**
      * 아카이빙 대상 알림 조회 (90일 경과 알림)
+     * 페이징을 통해 메모리 효율적으로 조회
      */
     @Query("SELECT n FROM Notification n " +
            "WHERE n.createdAt < :cutoffDate " +
            "AND (n.isDelete = false OR n.isDelete IS NULL)")
-    List<Notification> findNotificationsOlderThan(@Param("cutoffDate") LocalDateTime cutoffDate);
+    Page<Notification> findNotificationsOlderThan(@Param("cutoffDate") LocalDateTime cutoffDate, Pageable pageable);
 
     /**
      * 특정 타입의 알림 조회 (알림 그룹화용)
