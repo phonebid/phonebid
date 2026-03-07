@@ -66,7 +66,8 @@ public class NotificationService {
             log.debug("알림 생성 완료: notificationId={}, userId={}, type={}, channel={}", 
                      savedNotification.getId(), user.getId(), type, channel);
 
-            // 비동기 발송은 이벤트 리스너에서 처리
+            // 알림 발송 (트랜잭션 커밋 후 비동기로 실행됨)
+            sendNotification(savedNotification);
         }
     }
 
@@ -91,6 +92,9 @@ public class NotificationService {
             Notification savedNotification = notificationRepository.save(notification);
             log.debug("알림 생성 완료 (커스텀): notificationId={}, userId={}, type={}, channel={}", 
                      savedNotification.getId(), user.getId(), type, channel);
+
+            // 알림 발송 (트랜잭션 커밋 후 비동기로 실행됨)
+            sendNotification(savedNotification);
         }
     }
 
