@@ -2,11 +2,14 @@ package com.phonebid.app.auction.repository;
 
 import com.phonebid.app.auction.domain.Quote;
 import com.phonebid.app.auction.domain.QuoteStatus;
+import jakarta.persistence.LockModeType;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -63,5 +66,16 @@ public interface QuoteRepository extends JpaRepository<Quote, UUID> {
     Page<Quote> findByUserIdAndStatusIn(@Param("userId") UUID userId,
                                         @Param("statuses") List<QuoteStatus> statuses,
                                         Pageable pageable);
+
+    /**
+     * 비관적 락을 사용한 견적 조회 (계약 생성 시 동시성 제어)
+     * FOR UPDATE 쿼리로 해당 행에 배타적 락을 획득
+     * 
+     * @param id 견적 ID
+     * @return 비관적 락이 적용된 견적
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT q FROM Quote q WHERE q.id = :id")
+    Optional<Quote> findByIdWithLock(@Param("id") UUID id);
 }
 
