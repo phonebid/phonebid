@@ -5,6 +5,7 @@ import com.phonebid.app.notification.domain.NotificationType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -83,22 +84,51 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
             @Param("type") NotificationType type,
             @Param("since") LocalDateTime since);
 
-    /**
-     * 사용자별 모든 알림 조회 (소프트 삭제 제외)
-     * 일괄 읽음 처리 및 일괄 삭제용
-     */
-    @Query("SELECT n FROM Notification n " +
-           "WHERE n.user.id = :userId " +
-           "AND (n.isDelete = false OR n.isDelete IS NULL)")
-    List<Notification> findAllByUserId(@Param("userId") UUID userId);
+    // 벌크 업데이트 방식으로 대체됨 (성능 최적화)
+    // /**
+    //  * 사용자별 모든 알림 조회 (소프트 삭제 제외)
+    //  * 일괄 읽음 처리 및 일괄 삭제용
+    //  */
+    // @Query("SELECT n FROM Notification n " +
+    //        "WHERE n.user.id = :userId " +
+    //        "AND (n.isDelete = false OR n.isDelete IS NULL)")
+    // List<Notification> findAllByUserId(@Param("userId") UUID userId);
+
+    // 벌크 업데이트 방식으로 대체됨 (성능 최적화)
+    // /**
+    //  * 사용자별 미읽음 알림 조회 (일괄 읽음 처리용)
+    //  */
+    // @Query("SELECT n FROM Notification n " +
+    //        "WHERE n.user.id = :userId " +
+    //        "AND n.isRead = false " +
+    //        "AND (n.isDelete = false OR n.isDelete IS NULL)")
+    // List<Notification> findUnreadByUserId(@Param("userId") UUID userId);
 
     /**
-     * 사용자별 미읽음 알림 조회 (일괄 읽음 처리용)
+     * 사용자별 모든 미읽음 알림 일괄 읽음 처리 (벌크 업데이트)
+     * 
+     * @param userId 사용자 ID
+     * @return 업데이트된 행 수
      */
-    @Query("SELECT n FROM Notification n " +
+    @Modifying
+    @Query("UPDATE Notification n " +
+           "SET n.isRead = true " +
            "WHERE n.user.id = :userId " +
            "AND n.isRead = false " +
            "AND (n.isDelete = false OR n.isDelete IS NULL)")
-    List<Notification> findUnreadByUserId(@Param("userId") UUID userId);
+    int markAllAsReadByUserId(@Param("userId") UUID userId);
+
+    /**
+     * 사용자별 모든 알림 일괄 소프트 삭제 (벌크 업데이트)
+     * 
+     * @param userId 사용자 ID
+     * @return 업데이트된 행 수
+     */
+    @Modifying
+    @Query("UPDATE Notification n " +
+           "SET n.isDelete = true " +
+           "WHERE n.user.id = :userId " +
+           "AND (n.isDelete = false OR n.isDelete IS NULL)")
+    int softDeleteAllByUserId(@Param("userId") UUID userId);
 }
 

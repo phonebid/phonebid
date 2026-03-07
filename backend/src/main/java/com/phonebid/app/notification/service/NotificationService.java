@@ -184,16 +184,7 @@ public class NotificationService {
      */
     @Transactional
     public int markAllAsRead(UUID userId) {
-        List<Notification> unreadNotifications = notificationRepository.findUnreadByUserId(userId);
-        
-        for (Notification notification : unreadNotifications) {
-            notification.markAsRead();
-        }
-        
-        notificationRepository.saveAll(unreadNotifications);
-        
-        int count = unreadNotifications.size();
-        return count;
+        return notificationRepository.markAllAsReadByUserId(userId);
     }
 
     /**
@@ -204,13 +195,7 @@ public class NotificationService {
      */
     @Transactional
     public int deleteAllNotifications(UUID userId) {
-        List<Notification> notifications = notificationRepository.findAllByUserId(userId);
-        
-        // 소프트 삭제 (BaseEntity의 @SQLDelete 어노테이션에 의해 is_delete = true로 업데이트)
-        notificationRepository.deleteAll(notifications);
-        
-        int count = notifications.size();
-        return count;
+        return notificationRepository.softDeleteAllByUserId(userId);
     }
 
     /**
