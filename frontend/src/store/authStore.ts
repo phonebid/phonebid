@@ -39,12 +39,12 @@ export const useAuthStore = create<AuthStore>()(
         },
 
         logout: async () => {
-          // authService.logout을 호출하여 중복 제거
           const { logout: authServiceLogout } = await import("services/authService");
           await authServiceLogout();
           
-          // 상태 업데이트
+          localStorage.removeItem("userData");
           localStorage.removeItem("auth-storage");
+          apiClient.clearAuth();
           set(
             {
               isAuthenticated: false,
@@ -57,10 +57,8 @@ export const useAuthStore = create<AuthStore>()(
         },
 
         forceLogout: () => {
-          // 로컬 스토리지 정리
           localStorage.removeItem("userData");
-          
-          // apiClient의 Authorization 헤더 제거 (혹시 모를 헤더 설정 제거)
+          localStorage.removeItem("auth-storage");
           apiClient.clearAuth();
 
           set(
@@ -73,8 +71,8 @@ export const useAuthStore = create<AuthStore>()(
             "auth/forceLogout"
           );
 
-          // 이미 로그인 페이지에 있으면 리다이렉트하지 않음 (무한 루프 방지)
           if (window.location.pathname !== "/login") {
+            alert("인증이 만료되었거나 권한이 없습니다. 다시 로그인해주세요.");
             window.location.href = "/login";
           }
         },

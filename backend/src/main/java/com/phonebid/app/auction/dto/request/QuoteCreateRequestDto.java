@@ -43,9 +43,9 @@ public class QuoteCreateRequestDto {
             .phoneModel(phoneModel)
             .storage(storageOption)
             .color(colorOption)
-            .carrier(carrier)
-            .purchaseMethod(purchaseMethod)
-            .activationMethod(activationMethod)
+            .carrier(carrier != null ? carrier : Carrier.ANY)
+            .purchaseMethod(purchaseMethod != null ? purchaseMethod : PurchaseMethod.ANY)
+            .activationMethod(activationMethod != null ? activationMethod : ActivationMethod.ANY)
             .currentCarrier(currentCarrier)
             .build();
     }

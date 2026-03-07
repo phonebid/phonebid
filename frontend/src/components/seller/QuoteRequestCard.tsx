@@ -2,7 +2,7 @@ import { QuoteListItem } from "types/QuoteTypes";
 import { getPurchaseMethodDisplayName } from "utils/quoteUtils";
 import { formatRelativeTime } from "utils/formatters";
 import { Badge } from "components/ui/badge";
-import { cn } from "utils/cn";
+import { cn } from "@/utils/cn";
 
 interface QuoteRequestCardProps {
   quote: QuoteListItem;

@@ -58,7 +58,6 @@ class ApiClient {
           // Refresh Token 갱신 요청은 인터셉터 제외
           if (requestUrl.includes("/auth/refresh")) {
             const { forceLogout } = useAuthStore.getState();
-            toast.error("세션이 만료되었습니다. 다시 로그인해주세요.");
             forceLogout();
             return Promise.reject(new ApiErrorClass(errorCode, "인증이 필요합니다."));
           }
@@ -102,13 +101,6 @@ class ApiClient {
             const isOnLoginPage = window.location.pathname === "/login";
 
             if (!isAuthCheckRequest && !isOnLoginPage) {
-              // 명시적 cleanup: Authorization 헤더 제거 (안전장치)
-              this.clearAuth();
-              
-              // toast 표시
-              toast.error("세션이 만료되었습니다. 다시 로그인해주세요.");
-              
-              // forceLogout 호출 (내부에서 localStorage 정리 및 상태 초기화)
               const { forceLogout } = useAuthStore.getState();
               forceLogout();
             }
@@ -126,7 +118,6 @@ class ApiClient {
 
           if (!isAuthCheckRequest && !isOnLoginPage) {
             const { forceLogout } = useAuthStore.getState();
-            toast.error("권한이 없습니다.");
             forceLogout();
           }
 

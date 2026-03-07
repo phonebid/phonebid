@@ -85,10 +85,10 @@ public class Quote extends BaseEntity {
         this.phoneModel = phoneModel;
         this.storage = storage;
         this.color = color;
-        this.carrier = carrier;
-        this.purchaseMethod = purchaseMethod;
+        this.carrier = carrier != null ? carrier : Carrier.ANY;
+        this.purchaseMethod = purchaseMethod != null ? purchaseMethod : PurchaseMethod.ANY;
         this.currentCarrier = currentCarrier;
-        this.activationMethod = activationMethod;
+        this.activationMethod = activationMethod != null ? activationMethod : ActivationMethod.ANY;
         this.status = QuoteStatus.OPEN; // 기본값: 진행중
         this.expiredAt = expiredAt != null ? expiredAt : LocalDateTime.now().plusHours(24); // 기본 24시간
     }

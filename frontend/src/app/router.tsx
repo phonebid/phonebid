@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import Layout from "components/layout/Layout";
 import { ProtectedRoute } from "components/auth/ProtectedRoute";
+import { useAuthStore } from "store/authStore";
 import LoginPage from "pages/LoginPage";
 import SignupPage from "pages/SignupPage";
 import AuthCallbackPage from "pages/AuthCallbackPage";
@@ -38,6 +39,29 @@ import BidDetailPage from "pages/BidDetailPage";
 import DeliveryAddressPage from "pages/DeliveryAddressPage";
 import DeliveryAddressListPage from "pages/DeliveryAddressListPage";
 import PurchaseCompletePage from "pages/PurchaseCompletePage";
+import LandingPage from "pages/LandingPage";
+
+const RootPage: React.FC = () => {
+  const { isAuthenticated, isInitializing } = useAuthStore();
+
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-muted-foreground">로딩 중...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <LandingPage />;
+  }
+
+  return (
+    <Layout>
+      <WeeklyRankingPage />
+    </Layout>
+  );
+};
 
 export const AppRouter: React.FC = () => {
   return (
@@ -50,7 +74,10 @@ export const AppRouter: React.FC = () => {
         <Route
           path="/seller-center"
           element={
-            <ProtectedRoute requiredRole={["SELLER", "ADMIN"]} redirectTo="/seller/login">
+            <ProtectedRoute
+              requiredRole={["SELLER", "ADMIN"]}
+              redirectTo="/seller/login"
+            >
               <SellerDashboardPage />
             </ProtectedRoute>
           }
@@ -58,7 +85,10 @@ export const AppRouter: React.FC = () => {
         <Route
           path="/seller-center/quotes/:quoteId/bid"
           element={
-            <ProtectedRoute requiredRole={["SELLER", "ADMIN"]} redirectTo="/seller/login">
+            <ProtectedRoute
+              requiredRole={["SELLER", "ADMIN"]}
+              redirectTo="/seller/login"
+            >
               <SellerBidCreatePage />
             </ProtectedRoute>
           }
@@ -81,17 +111,51 @@ export const AppRouter: React.FC = () => {
         <Route path="/mypage/addresses" element={<DeliveryAddressListPage />} />
         <Route path="/mypage/quotes" element={<MyQuotesPage />} />
         <Route path="/mypage/quotes/:quoteId" element={<QuoteDetailPage />} />
-        <Route path="/mypage/quotes/:quoteId/bids/:bidId" element={<BidDetailPage />} />
-        <Route path="/mypage/quotes/:quoteId/bids/:bidId/delivery" element={<DeliveryAddressPage />} />
-        <Route path="/mypage/quotes/:quoteId/bids/:bidId/complete" element={<PurchaseCompletePage />} />
-        <Route path="/mypage/customer-service" element={<CustomerServicePage />} />
-        <Route path="/mypage/customer-service/inquiry" element={<InquiryPage />} />
-        <Route path="/mypage/customer-service/inquiries/my" element={<MyInquiriesPage />} />
-        <Route path="/mypage/customer-service/inquiries/:inquiryId" element={<InquiryDetailPage />} />
-        <Route path="/mypage/customer-service/notices" element={<NoticeListPage />} />
-        <Route path="/mypage/customer-service/notices/:noticeId" element={<NoticeDetailPage />} />
+        <Route
+          path="/mypage/quotes/:quoteId/bids/:bidId"
+          element={<BidDetailPage />}
+        />
+        <Route
+          path="/mypage/quotes/:quoteId/bids/:bidId/delivery"
+          element={<DeliveryAddressPage />}
+        />
+        <Route
+          path="/mypage/quotes/:quoteId/bids/:bidId/complete"
+          element={<PurchaseCompletePage />}
+        />
+        <Route
+          path="/mypage/customer-service"
+          element={<CustomerServicePage />}
+        />
+        <Route
+          path="/mypage/customer-service/inquiry"
+          element={<InquiryPage />}
+        />
+        <Route
+          path="/mypage/customer-service/inquiries/my"
+          element={<MyInquiriesPage />}
+        />
+        <Route
+          path="/mypage/customer-service/inquiries/:inquiryId"
+          element={<InquiryDetailPage />}
+        />
+        <Route
+          path="/mypage/customer-service/notices"
+          element={<NoticeListPage />}
+        />
+        <Route
+          path="/mypage/customer-service/notices/:noticeId"
+          element={<NoticeDetailPage />}
+        />
         <Route path="/mypage/customer-service/faqs" element={<FAQListPage />} />
-        <Route path="/mypage/customer-service/faqs/:faqId" element={<FAQDetailPage />} />
+        <Route
+          path="/mypage/customer-service/faqs/:faqId"
+          element={<FAQDetailPage />}
+        />
+
+        {/* 루트: 비로그인 시 랜딩페이지, 로그인 시 Layout+WeeklyRankingPage */}
+        <Route path="/" element={<RootPage />} />
+        <Route path="/landing" element={<LandingPage />} />
 
         {/* Layout이 포함된 일반 페이지들 */}
         <Route
@@ -99,8 +163,6 @@ export const AppRouter: React.FC = () => {
           element={
             <Layout>
               <Routes>
-                <Route path="/" element={<WeeklyRankingPage />} />
-                {/* 추후 추가될 라우트들 */}
                 <Route path="/auctions" element={<AuctionListPage />} />
                 <Route
                   path="/admin/phone-models"

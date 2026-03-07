@@ -19,3 +19,7 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp 
+
+# Cursor
+.cursor/
+.agents/
