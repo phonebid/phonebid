@@ -50,16 +50,21 @@ public class SseNotificationSender implements NotificationSender {
                      userId, notification.getId());
             return true;
 
-        } catch (IOException e) {
-            log.error("SSE 알림 발송 실패: userId={}, notificationId={}, error={}", 
-                     userId, notification.getId(), e.getMessage(), e);
-            // 연결이 끊어진 경우 저장소에서 제거
+        } catch (IllegalStateException e) {
+            log.error("SSE 연결 상태 에러: userId={}, notificationId={}", 
+                     userId, notification.getId(), e);
             sseEmitterManager.removeConnection(userId);
             return false;
-        } catch (Exception e) {
-            log.error("SSE 알림 발송 중 예상치 못한 에러: userId={}, notificationId={}", 
+        } catch (IOException e) {
+            log.error("SSE 알림 발송 실패 (I/O): userId={}, notificationId={}", 
                      userId, notification.getId(), e);
+            sseEmitterManager.removeConnection(userId);
             return false;
+        } catch (RuntimeException e) {
+            log.error("SSE 알림 발송 중 런타임 에러: userId={}, notificationId={}", 
+                     userId, notification.getId(), e);
+            sseEmitterManager.removeConnection(userId);
+            throw e;
         }
     }
 
@@ -98,13 +103,18 @@ public class SseNotificationSender implements NotificationSender {
             log.info("SSE 초기 알림 전송 성공: userId={}, count={}", userId, items.size());
             return true;
 
-        } catch (IOException e) {
-            log.error("SSE 초기 알림 전송 실패: userId={}, error={}", userId, e.getMessage(), e);
+        } catch (IllegalStateException e) {
+            log.error("SSE 연결 상태 에러 (초기 알림): userId={}", userId, e);
             sseEmitterManager.removeConnection(userId);
             return false;
-        } catch (Exception e) {
-            log.error("SSE 초기 알림 전송 중 예상치 못한 에러: userId={}", userId, e);
+        } catch (IOException e) {
+            log.error("SSE 초기 알림 전송 실패 (I/O): userId={}", userId, e);
+            sseEmitterManager.removeConnection(userId);
             return false;
+        } catch (RuntimeException e) {
+            log.error("SSE 초기 알림 전송 중 런타임 에러: userId={}", userId, e);
+            sseEmitterManager.removeConnection(userId);
+            throw e;
         }
     }
 }
