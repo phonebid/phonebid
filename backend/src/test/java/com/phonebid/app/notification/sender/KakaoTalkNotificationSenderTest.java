@@ -58,7 +58,7 @@ class KakaoTalkNotificationSenderTest {
         mockTemplate.setBidSelected("TPL_BID_002");
         mockTemplate.setContractSigned("TPL_CONTRACT_001");
         
-        when(aligoProperties.getTemplate()).thenReturn(mockTemplate);
+        lenient().when(aligoProperties.getTemplate()).thenReturn(mockTemplate);
     }
 
     @Test
@@ -121,7 +121,7 @@ class KakaoTalkNotificationSenderTest {
     @DisplayName("템플릿 코드 없음 - 발송 스킵")
     void sendKakaoNotification_NoTemplateCode() {
         // Given
-        when(aligoProperties.getTemplate().getBidArrived()).thenReturn(null);
+        mockTemplate.setBidArrived(null);
 
         Notification notification = Notification.builder()
                 .user(testUser)
