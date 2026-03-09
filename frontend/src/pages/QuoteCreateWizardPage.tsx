@@ -5,7 +5,6 @@ import { useQuoteCreateStore } from "store/quoteCreateStore";
 import type {
   PurchaseMethod,
   Carrier,
-  ActivationMethod,
   QuoteCreateRequestDto,
 } from "types/QuoteTypes";
 import { getPhoneModels } from "services/phoneModelService";
@@ -81,7 +80,7 @@ const QuoteCreateWizardPage: React.FC = () => {
       return [] as PhoneOptionResponse[];
     }
     return selectedModel.options.filter(
-      (option) => option.optionType === "COLOR"
+      (option) => option.optionType === "COLOR",
     );
   }, [selectedModel]);
 
@@ -90,7 +89,7 @@ const QuoteCreateWizardPage: React.FC = () => {
       return [] as PhoneOptionResponse[];
     }
     return selectedModel.options.filter(
-      (option) => option.optionType === "STORAGE"
+      (option) => option.optionType === "STORAGE",
     );
   }, [selectedModel]);
 
