@@ -2,6 +2,7 @@ package com.phonebid.app.notification.listener;
 
 import com.phonebid.app.member.domain.Role;
 import com.phonebid.app.member.domain.User;
+import com.phonebid.app.member.repository.SellerRepository;
 import com.phonebid.app.member.repository.UserRepository;
 import com.phonebid.app.notification.domain.NotificationChannel;
 import com.phonebid.app.notification.event.*;
@@ -30,6 +31,7 @@ public class NotificationEventListener {
 
     private final NotificationService notificationService;
     private final UserRepository userRepository;
+    private final SellerRepository sellerRepository;
 
     /**
      * 이벤트에 포함된 사용자에게 알림 전송 (단일 사용자)
@@ -87,9 +89,10 @@ public class NotificationEventListener {
     public void handleQuoteCreated(QuoteCreatedEvent event) {
         log.debug("견적 등록 이벤트 처리: quoteId={}", event.getReferenceId());
         
-        // 판매자에게 알림 발송
-        List<User> sellers = userRepository.findByRole(Role.SELLER);
-        sendNotificationToUsers(sellers, event, List.of(NotificationChannel.SSE));
+        // 승인된 판매자의 User를 직접 조회 (N+1 방지)
+        List<User> approvedSellerUsers = sellerRepository.findUsersOfApprovedSellers();
+        
+        sendNotificationToUsers(approvedSellerUsers, event, List.of(NotificationChannel.SSE));
     }
 
     @Async("notificationExecutor")
