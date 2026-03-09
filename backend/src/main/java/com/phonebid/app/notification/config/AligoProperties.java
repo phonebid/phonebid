@@ -2,12 +2,13 @@ package com.phonebid.app.notification.config;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.validator.constraints.time.DurationMax;
+import org.hibernate.validator.constraints.time.DurationMin;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
@@ -100,16 +101,18 @@ public class AligoProperties {
     @Setter
     public static class Timeout {
         @NotNull(message = "Connect timeout은 필수입니다")
-        @Positive(message = "Connect timeout은 양수여야 합니다")
-        @Max(value = Integer.MAX_VALUE / 1000, message = "Connect timeout은 최대 " + (Integer.MAX_VALUE / 1000) + "초입니다")
+        @DurationMin(millis = 1, message = "Connect timeout은 0보다 커야 합니다")
+        @DurationMax(seconds = 300, message = "Connect timeout은 최대 300초입니다")
         private Duration connect = Duration.ofSeconds(5);
         
         @NotNull(message = "Read timeout은 필수입니다")
-        @Positive(message = "Read timeout은 양수여야 합니다")
+        @DurationMin(millis = 1, message = "Read timeout은 0보다 커야 합니다")
+        @DurationMax(seconds = 600, message = "Read timeout은 최대 600초입니다")
         private Duration read = Duration.ofSeconds(10);
         
         @NotNull(message = "Write timeout은 필수입니다")
-        @Positive(message = "Write timeout은 양수여야 합니다")
+        @DurationMin(millis = 1, message = "Write timeout은 0보다 커야 합니다")
+        @DurationMax(seconds = 600, message = "Write timeout은 최대 600초입니다")
         private Duration write = Duration.ofSeconds(10);
     }
     
@@ -133,7 +136,8 @@ public class AligoProperties {
         private int maxConnections = 50;
         
         @NotNull(message = "연결 대기 타임아웃은 필수입니다")
-        @Positive(message = "연결 대기 타임아웃은 양수여야 합니다")
+        @DurationMin(millis = 1, message = "연결 대기 타임아웃은 0보다 커야 합니다")
+        @DurationMax(seconds = 300, message = "연결 대기 타임아웃은 최대 300초입니다")
         private Duration pendingAcquireTimeout = Duration.ofSeconds(30);
     }
 }
