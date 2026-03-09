@@ -195,7 +195,9 @@ public class NotificationService {
      */
     @Transactional
     public int deleteAllNotifications(UUID userId) {
-        return notificationRepository.softDeleteAllByUserId(userId);
+        LocalDateTime deletedAt = LocalDateTime.now();
+        String deletedBy = userId.toString(); // 사용자 자신이 삭제
+        return notificationRepository.softDeleteAllByUserId(userId, deletedAt, deletedBy);
     }
 
     /**
