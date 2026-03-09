@@ -53,6 +53,13 @@ public interface SellerRepository extends JpaRepository<Seller, UUID> {
     List<Seller> findApprovedSellers();
 
     /**
+     * 승인된 판매자의 User 목록 조회 (N+1 방지)
+     * 알림 발송 등 User 정보만 필요한 경우 사용
+     */
+    @Query("SELECT s.user FROM Seller s WHERE s.approvalStatus = 'APPROVED'")
+    List<com.phonebid.app.member.domain.User> findUsersOfApprovedSellers();
+
+    /**
      * User ID로 판매자 조회
      */
     @Query("SELECT s FROM Seller s WHERE s.user.id = :userId")
