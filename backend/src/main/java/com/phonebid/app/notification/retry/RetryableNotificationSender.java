@@ -7,8 +7,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * 재시도 가능한 알림 발송 래퍼
- * 지수 백오프(Exponential Backoff) 기반 재시도 메커니즘 제공
+ * 알림 발송 실패 시,
+ * 지수 백오프(Exponential Backoff) 방식 기반으로 자동으로 재시도하는 래퍼 클래스
+ * 
+ * 카카오 알림톡 같은 외부 API 호출 시에만 사용되며, SSE 같은 내부 처리는 재시도 없이 바로 발송
  */
 @Slf4j
 @Component
