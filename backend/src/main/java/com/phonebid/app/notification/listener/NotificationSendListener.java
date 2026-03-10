@@ -2,12 +2,14 @@ package com.phonebid.app.notification.listener;
 
 import com.phonebid.app.notification.domain.Notification;
 import com.phonebid.app.notification.event.NotificationSendEvent;
+import com.phonebid.app.notification.repository.NotificationRepository;
 import com.phonebid.app.notification.retry.RetryableNotificationSender;
 import com.phonebid.app.notification.sender.NotificationSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
@@ -24,6 +26,7 @@ public class NotificationSendListener {
 
     private final List<NotificationSender> notificationSenders;
     private final RetryableNotificationSender retryableNotificationSender;
+    private final NotificationRepository notificationRepository;
 
     /**
      * 알림 발송 이벤트 처리
@@ -31,8 +34,16 @@ public class NotificationSendListener {
      */
     @Async("notificationExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional
     public void handleNotificationSend(NotificationSendEvent event) {
         Notification notification = event.getNotification();
+        
+        // 멱등성 보장: 이미 발송된 알림은 재발송하지 않음
+        if (notification.isSent()) {
+            log.debug("알림이 이미 발송됨, 스킵: notificationId={}", notification.getId());
+            return;
+        }
+        
         log.debug("알림 발송 이벤트 수신: notificationId={}, channel={}", 
                  notification.getId(), notification.getChannel());
 
@@ -40,6 +51,8 @@ public class NotificationSendListener {
         if (sender == null) {
             log.warn("지원하지 않는 채널: channel={}, notificationId={}", 
                     notification.getChannel(), notification.getId());
+            notification.markAsFailed();
+            notificationRepository.save(notification);
             return;
         }
 
@@ -51,12 +64,16 @@ public class NotificationSendListener {
             success = sender.send(notification);
         }
 
-        if (!success) {
-            log.warn("알림 발송 실패: notificationId={}, channel={}", 
-                    notification.getId(), notification.getChannel());
-        } else {
+        if (success) {
+            notification.markAsSent();
+            notificationRepository.save(notification);
             log.debug("알림 발송 성공: notificationId={}, channel={}", 
                      notification.getId(), notification.getChannel());
+        } else {
+            notification.markAsFailed();
+            notificationRepository.save(notification);
+            log.warn("알림 발송 실패: notificationId={}, channel={}", 
+                    notification.getId(), notification.getChannel());
         }
     }
 
