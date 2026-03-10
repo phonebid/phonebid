@@ -39,10 +39,17 @@ public class MaskingUtil {
      * 
      * @param accountNumber 원본 계좌번호
      * @return 마스킹된 계좌번호 (예: 1234-****-5678)
+     * 
+     * <pre>
+     * 예시:
+     * - "123456789012" → "1234-****-9012"
+     * - null → "***"
+     * - "1234567" → "***" (8자리 미만)
+     * </pre>
      */
     public static String maskAccountNumber(String accountNumber) {
         if (accountNumber == null || accountNumber.length() < 8) {
-            return accountNumber;
+            return MASKED_VALUE;
         }
         
         int length = accountNumber.length();
