@@ -7,12 +7,12 @@ import com.phonebid.app.notification.domain.Notification;
 import com.phonebid.app.notification.dto.response.NotificationDisplayItem;
 import com.phonebid.app.notification.domain.NotificationChannel;
 import com.phonebid.app.notification.domain.NotificationType;
+import com.phonebid.app.notification.event.NotificationSendEvent;
 import com.phonebid.app.notification.factory.NotificationFactory;
 import com.phonebid.app.notification.repository.NotificationRepository;
-import com.phonebid.app.notification.retry.RetryableNotificationSender;
-import com.phonebid.app.notification.sender.NotificationSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -35,10 +35,9 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final NotificationFactory notificationFactory;
-    private final List<NotificationSender> notificationSenders;
-    private final RetryableNotificationSender retryableNotificationSender;
     private final UserNotificationSettingService userNotificationSettingService;
     private final NotificationGroupingService notificationGroupingService;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 알림 생성 및 발송
@@ -66,8 +65,8 @@ public class NotificationService {
             log.debug("알림 생성 완료: notificationId={}, userId={}, type={}, channel={}", 
                      savedNotification.getId(), user.getId(), type, channel);
 
-            // 알림 발송 (트랜잭션 커밋 후 비동기로 실행됨)
-            sendNotification(savedNotification);
+            // 알림 발송 이벤트 발행 (트랜잭션 커밋 후 비동기로 처리됨)
+            eventPublisher.publishEvent(new NotificationSendEvent(this, savedNotification));
         }
     }
 
@@ -93,33 +92,8 @@ public class NotificationService {
             log.debug("알림 생성 완료 (커스텀): notificationId={}, userId={}, type={}, channel={}", 
                      savedNotification.getId(), user.getId(), type, channel);
 
-            // 알림 발송 (트랜잭션 커밋 후 비동기로 실행됨)
-            sendNotification(savedNotification);
-        }
-    }
-
-    /**
-     * 알림 발송 (이벤트 리스너에서 호출)
-     */
-    public void sendNotification(Notification notification) {
-        NotificationSender sender = findSender(notification.getChannel());
-        if (sender == null) {
-            log.warn("지원하지 않는 채널: channel={}, notificationId={}", 
-                    notification.getChannel(), notification.getId());
-            return;
-        }
-
-        // 외부 API 연동이 필요한 채널은 재시도 메커니즘 적용
-        boolean success;
-        if (notification.getChannel().requiresExternalApi()) {
-            success = retryableNotificationSender.sendWithRetry(sender, notification);
-        } else {
-            success = sender.send(notification);
-        }
-
-        if (!success) {
-            log.warn("알림 발송 실패: notificationId={}, channel={}", 
-                    notification.getId(), notification.getChannel());
+            // 알림 발송 이벤트 발행 (트랜잭션 커밋 후 비동기로 처리됨)
+            eventPublisher.publishEvent(new NotificationSendEvent(this, savedNotification));
         }
     }
 
@@ -198,16 +172,6 @@ public class NotificationService {
         LocalDateTime deletedAt = LocalDateTime.now();
         String deletedBy = userId.toString(); // 사용자 자신이 삭제
         return notificationRepository.softDeleteAllByUserId(userId, deletedAt, deletedBy);
-    }
-
-    /**
-     * 채널별 발송자 찾기
-     */
-    private NotificationSender findSender(NotificationChannel channel) {
-        return notificationSenders.stream()
-                .filter(sender -> sender.supports(channel))
-                .findFirst()
-                .orElse(null);
     }
 }
 
