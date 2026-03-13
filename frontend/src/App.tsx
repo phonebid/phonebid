@@ -5,6 +5,7 @@ import AppRouter from "app/router";
 
 import { useAuthStore } from "store/authStore";
 import SWRProvider from "app/providers/SWRProvider";
+import { IdentityVerificationGuard } from "components/auth/IdentityVerificationGuard";
 
 function App() {
   // 앱 시작 시 인증 상태 복원 (마운트 시 한 번만 실행)
@@ -23,7 +24,9 @@ function App() {
 
   return (
     <SWRProvider>
-      <AppRouter />
+      <IdentityVerificationGuard>
+        <AppRouter />
+      </IdentityVerificationGuard>
       <ToastContainer
         position="top-right"
         autoClose={3000}

@@ -1,5 +1,7 @@
 package com.phonebid.app.auction.service;
 
+import com.phonebid.app.auction.domain.Carrier;
+import com.phonebid.app.auction.domain.PurchaseMethod;
 import com.phonebid.app.auction.domain.Quote;
 import com.phonebid.app.auction.domain.QuoteStatus;
 import com.phonebid.app.auction.dto.request.QuoteCreateRequestDto;
@@ -39,6 +41,14 @@ public class QuoteService {
      */
     @Transactional
     public void createQuote(QuoteCreateRequestDto quoteRequestDto, User user) {
+        // 본인인증 확인
+        if (!Boolean.TRUE.equals(user.getIsIdentityVerified())) {
+            throw new CustomException(AuctionErrorCode.IDENTITY_VERIFICATION_REQUIRED);
+        }
+
+        // 통신사 관련 검증
+        validateCarrierRules(quoteRequestDto, user);
+
         PhoneModel phoneModel = phoneModelRepository.findById(quoteRequestDto.getPhoneModelId())
             .orElseThrow(() -> new CustomException(PhoneErrorCode.PHONE_MODEL_NOT_FOUND));
 
@@ -49,7 +59,7 @@ public class QuoteService {
                 .findFirst()
                 .orElseThrow(() -> new CustomException(PhoneErrorCode.PHONE_OPTION_NOT_FOUND));
         }
-        
+
         PhoneOption storageOption = null;
         if (quoteRequestDto.getStorageOptionId() != null) {
             storageOption = phoneModel.getOptions().stream()
@@ -59,8 +69,39 @@ public class QuoteService {
         }
 
         Quote quote = quoteRequestDto.toEntity(user, phoneModel, colorOption, storageOption);
-        // validateQuote(quote);
         quoteRepository.save(quote);
+    }
+
+    private void validateCarrierRules(QuoteCreateRequestDto dto, User user) {
+        PurchaseMethod purchaseMethod = dto.getPurchaseMethod();
+        if (purchaseMethod == null) return;
+
+        Carrier userCarrier = user.getCarrier();
+
+        if (purchaseMethod == PurchaseMethod.DEVICE_CHANGE) {
+            // 알뜰폰 사용자는 기기변경 불가
+            if (userCarrier != null && userCarrier.isMVNO()) {
+                throw new CustomException(AuctionErrorCode.MVNO_DEVICE_CHANGE_NOT_ALLOWED);
+            }
+            // 기기변경 시 현재 통신사와 동일해야 함
+            Carrier requestedCarrier = dto.getCurrentCarrier();
+            if (userCarrier != null && requestedCarrier != null && requestedCarrier != userCarrier) {
+                throw new CustomException(AuctionErrorCode.INVALID_DEVICE_CHANGE_CARRIER);
+            }
+        }
+
+        if (purchaseMethod == PurchaseMethod.NUMBER_TRANSFER) {
+            // 번호이동 시 대상 통신사는 현재 통신사 제외한 주요 통신사만
+            Carrier targetCarrier = dto.getCarrier();
+            if (targetCarrier != null) {
+                if (!targetCarrier.isMajor()) {
+                    throw new CustomException(AuctionErrorCode.INVALID_NUMBER_TRANSFER_CARRIER);
+                }
+                if (userCarrier != null && targetCarrier == userCarrier) {
+                    throw new CustomException(AuctionErrorCode.INVALID_NUMBER_TRANSFER_CARRIER);
+                }
+            }
+        }
     }
 
     /**

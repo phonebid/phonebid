@@ -10,6 +10,7 @@ interface AuthStore extends AuthState {
   forceLogout: () => void;
   initializeAuth: () => Promise<void>;
   checkAuth: () => Promise<void>;
+  setIdentityVerified: () => void;
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -106,6 +107,15 @@ export const useAuthStore = create<AuthStore>()(
           }
         },
 
+        setIdentityVerified: () => {
+          const currentUser = get().user;
+          if (currentUser) {
+            const updatedUser = { ...currentUser, isIdentityVerified: true };
+            set({ user: updatedUser }, false, "auth/setIdentityVerified");
+            localStorage.setItem("userData", JSON.stringify(updatedUser));
+          }
+        },
+
         checkAuth: async () => {
           try {
             // 쿠키에 토큰이 있는지 확인하기 위해 프로필 API 호출
@@ -115,6 +125,7 @@ export const useAuthStore = create<AuthStore>()(
               username: profile.username,
               nickname: profile.nickname,
               role: profile.role,
+              isIdentityVerified: profile.isIdentityVerified,
             };
 
             // 사용자 정보 업데이트

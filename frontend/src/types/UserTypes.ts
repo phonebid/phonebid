@@ -2,6 +2,7 @@ export interface User {
   username: string;
   nickname: string;
   role: string;
+  isIdentityVerified?: boolean;
 }
 
 export interface LoginRequest {
@@ -16,6 +17,7 @@ export interface LoginResponse {
   username: string;
   nickname: string;
   role: string;
+  isIdentityVerified?: boolean;
 }
 
 export interface AuthState {
@@ -45,4 +47,6 @@ export interface ProfileResponseDto {
   providerId: string | null;
   createdAt: string;
   updatedAt: string;
+  isIdentityVerified?: boolean;
+  carrier?: string | null;
 }

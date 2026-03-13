@@ -1,5 +1,8 @@
 package com.phonebid.app.auction.domain;
 
+import java.util.Arrays;
+import java.util.List;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -27,5 +30,19 @@ public enum Carrier {
 
     public boolean isLGU() {
         return this == LGU;
+    }
+
+    public boolean isMVNO() {
+        return this == SKT_ALD || this == KT_ALD || this == LGU_ALD;
+    }
+
+    public boolean isMajor() {
+        return this == SKT || this == KT || this == LGU;
+    }
+
+    public static List<Carrier> getMajorCarriersExcluding(Carrier current) {
+        return Arrays.stream(values())
+                .filter(c -> c.isMajor() && c != current)
+                .toList();
     }
 }
