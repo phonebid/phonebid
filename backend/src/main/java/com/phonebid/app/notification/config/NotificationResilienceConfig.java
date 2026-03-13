@@ -6,28 +6,34 @@ import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryRegistry;
 import io.github.resilience4j.timelimiter.TimeLimiter;
 import io.github.resilience4j.timelimiter.TimeLimiterRegistry;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import jakarta.annotation.PostConstruct;
+
 /**
  * 알림 발송을 위한 Resilience4j 설정
  * Circuit Breaker, Retry, TimeLimiter를 조합하여 외부 API 호출의 안정성 확보
+ * Spring Boot 자동 구성으로 생성된 레지스트리를 사용하여 application.yml 설정 반영
  */
 @Slf4j
 @Configuration
+@RequiredArgsConstructor
 public class NotificationResilienceConfig {
 
+    private final CircuitBreakerRegistry circuitBreakerRegistry;
+    private final RetryRegistry retryRegistry;
+
     /**
-     * CircuitBreaker Registry Bean
-     * application.yml의 설정을 기반으로 CircuitBreaker 인스턴스 관리
+     * 이벤트 리스너 등록
+     * application.yml의 설정이 적용된 레지스트리에 로깅 이벤트 리스너를 추가
      */
-    @Bean
-    public CircuitBreakerRegistry circuitBreakerRegistry() {
-        CircuitBreakerRegistry registry = CircuitBreakerRegistry.ofDefaults();
-        
-        // 이벤트 리스너 등록 - 상태 변경 시 로깅
-        registry.circuitBreaker("notification").getEventPublisher()
+    @PostConstruct
+    public void registerEventListeners() {
+        // CircuitBreaker 이벤트 리스너 등록
+        circuitBreakerRegistry.circuitBreaker("notification").getEventPublisher()
             .onStateTransition(event -> {
                 log.warn("Circuit Breaker 상태 변경: {} -> {}", 
                     event.getStateTransition().getFromState(),
@@ -37,19 +43,8 @@ public class NotificationResilienceConfig {
                 log.error("Circuit Breaker 에러 발생: {}", event.getThrowable().getMessage());
             });
         
-        return registry;
-    }
-
-    /**
-     * Retry Registry Bean
-     * application.yml의 설정을 기반으로 Retry 인스턴스 관리
-     */
-    @Bean
-    public RetryRegistry retryRegistry() {
-        RetryRegistry registry = RetryRegistry.ofDefaults();
-        
-        // 이벤트 리스너 등록 - 재시도 발생 시 로깅
-        registry.retry("notification").getEventPublisher()
+        // Retry 이벤트 리스너 등록
+        retryRegistry.retry("notification").getEventPublisher()
             .onRetry(event -> {
                 log.warn("알림 발송 재시도: attempt={}, lastException={}", 
                     event.getNumberOfRetryAttempts(),
@@ -59,21 +54,11 @@ public class NotificationResilienceConfig {
                 log.error("알림 발송 최종 실패 (모든 재시도 소진): attempts={}", 
                     event.getNumberOfRetryAttempts());
             });
-        
-        return registry;
-    }
-
-    /**
-     * TimeLimiter Registry Bean
-     * application.yml의 설정을 기반으로 TimeLimiter 인스턴스 관리
-     */
-    @Bean
-    public TimeLimiterRegistry timeLimiterRegistry() {
-        return TimeLimiterRegistry.ofDefaults();
     }
 
     /**
      * 알림 발송용 CircuitBreaker 인스턴스
+     * Spring Boot 자동 구성으로 생성된 레지스트리에서 가져옴
      */
     @Bean
     public CircuitBreaker notificationCircuitBreaker(CircuitBreakerRegistry registry) {
@@ -82,6 +67,7 @@ public class NotificationResilienceConfig {
 
     /**
      * 알림 발송용 Retry 인스턴스
+     * Spring Boot 자동 구성으로 생성된 레지스트리에서 가져옴
      */
     @Bean
     public Retry notificationRetry(RetryRegistry registry) {
@@ -90,6 +76,7 @@ public class NotificationResilienceConfig {
 
     /**
      * 알림 발송용 TimeLimiter 인스턴스
+     * Spring Boot 자동 구성으로 생성된 레지스트리에서 가져옴
      */
     @Bean
     public TimeLimiter notificationTimeLimiter(TimeLimiterRegistry registry) {
