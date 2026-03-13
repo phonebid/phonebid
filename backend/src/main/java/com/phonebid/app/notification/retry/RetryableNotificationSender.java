@@ -16,6 +16,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 
 /**
  * 알림 발송 실패 시, Resilience4j를 활용한 비동기 재시도 처리
@@ -126,7 +127,11 @@ public class RetryableNotificationSender {
     public boolean sendWithRetry(NotificationSender sender, Notification notification) {
         try {
             return sendWithRetryAsync(sender, notification).get();
-        } catch (Exception e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("알림 발송 대기 중 인터럽트 발생: notificationId={}", notification.getId(), e);
+            return false;
+        } catch (ExecutionException e) {
             log.error("알림 발송 대기 중 예외 발생: notificationId={}", notification.getId(), e);
             return false;
         }
