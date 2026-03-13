@@ -163,15 +163,40 @@ public class NotificationService {
 
     /**
      * 모든 알림 삭제 (일괄 삭제 - 소프트 삭제)
+     * 페이지 단위로 처리하여 Hibernate 엔티티 라이프사이클 및 @SQLDelete 적용
      * 
      * @param userId 사용자 ID
      * @return 삭제된 알림 개수
      */
     @Transactional
     public int deleteAllNotifications(UUID userId) {
-        LocalDateTime deletedAt = LocalDateTime.now();
-        String deletedBy = userId.toString(); // 사용자 자신이 삭제
-        return notificationRepository.softDeleteAllByUserId(userId, deletedAt, deletedBy);
+        int totalDeleted = 0;
+        final int batchSize = 1000;
+        
+        while (true) {
+            // 항상 첫 페이지를 조회 (삭제하면서 데이터가 줄어들기 때문)
+            Pageable pageable = PageRequest.of(0, batchSize);
+            Page<Notification> page = notificationRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
+            
+            if (page.isEmpty()) {
+                break;
+            }
+            
+            List<Notification> notifications = page.getContent();
+            notificationRepository.deleteAll(notifications);
+            totalDeleted += notifications.size();
+            
+            log.debug("배치 삭제 완료: {}개 (누적 {}개), userId={}", 
+                     notifications.size(), totalDeleted, userId);
+            
+            // 한 페이지보다 적게 조회되면 마지막 배치
+            if (notifications.size() < batchSize) {
+                break;
+            }
+        }
+        
+        log.debug("모든 알림 삭제 완료: 총 {}개, userId={}", totalDeleted, userId);
+        return totalDeleted;
     }
 }
 
