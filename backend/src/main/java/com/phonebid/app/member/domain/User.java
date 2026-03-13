@@ -1,5 +1,6 @@
 package com.phonebid.app.member.domain;
 
+import com.phonebid.app.auction.domain.Carrier;
 import com.phonebid.app.common.domain.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -41,7 +42,7 @@ public class User extends BaseEntity {
     @Comment("이메일 주소 (유니크)")
     private String email;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", nullable = true)
     @Comment("실명")
     private String name;
 
@@ -74,6 +75,19 @@ public class User extends BaseEntity {
     @Comment("프로필 사진 URL")
     private String profileImageUrl;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "carrier", nullable = true)
+    @Comment("본인인증된 통신사")
+    private Carrier carrier;
+
+    @Column(name = "is_identity_verified", nullable = false, columnDefinition = "boolean default false")
+    @Comment("본인인증 완료 여부")
+    private Boolean isIdentityVerified = false;
+
+    @Column(name = "verified_at", nullable = true)
+    @Comment("본인인증 완료 시각")
+    private LocalDateTime verifiedAt;
+
     @Builder
     public User(String username, String password, String email, String name, String nickname, String phone, Role role, Provider provider, String providerId, String profileImageUrl) {
         this.username = username;
@@ -86,6 +100,7 @@ public class User extends BaseEntity {
         this.provider = provider;
         this.providerId = providerId;
         this.profileImageUrl = profileImageUrl;
+        this.isIdentityVerified = false;
     }
 
     // 비즈니스 메서드
@@ -135,6 +150,14 @@ public class User extends BaseEntity {
 
     public void updateProfileImageUrl(String profileImageUrl) {
         this.profileImageUrl = profileImageUrl;
+    }
+
+    public void completeIdentityVerification(String verifiedName, String verifiedPhone, Carrier carrier) {
+        this.name = verifiedName;
+        this.phone = verifiedPhone;
+        this.carrier = carrier;
+        this.isIdentityVerified = true;
+        this.verifiedAt = LocalDateTime.now();
     }
 
     // 논리적 삭제
