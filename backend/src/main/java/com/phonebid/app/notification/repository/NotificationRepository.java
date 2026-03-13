@@ -110,7 +110,7 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
      * @param userId 사용자 ID
      * @return 업데이트된 행 수
      */
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE Notification n " +
            "SET n.isRead = true " +
            "WHERE n.user.id = :userId " +
@@ -122,19 +122,17 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
      * 사용자별 모든 알림 일괄 소프트 삭제 (벌크 업데이트)
      * 
      * @param userId 사용자 ID
-     * @param deletedAt 삭제 시각
      * @param deletedBy 삭제자
      * @return 업데이트된 행 수
      */
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE Notification n " +
            "SET n.isDelete = true, " +
-           "n.deletedAt = :deletedAt, " +
+           "n.deletedAt = CURRENT_TIMESTAMP, " +
            "n.deletedBy = :deletedBy " +
            "WHERE n.user.id = :userId " +
            "AND (n.isDelete = false OR n.isDelete IS NULL)")
     int softDeleteAllByUserId(@Param("userId") UUID userId,
-                              @Param("deletedAt") LocalDateTime deletedAt,
                               @Param("deletedBy") String deletedBy);
 }
 
