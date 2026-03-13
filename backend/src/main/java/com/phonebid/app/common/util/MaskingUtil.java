@@ -58,7 +58,7 @@ public class MaskingUtil {
         }
 
         String digits = accountNumber.replaceAll("\\D", "");
-        if (digits.length() < 8) {
+        if (digits.length() <= 8) {
             return MASKED_VALUE;
         }
 
