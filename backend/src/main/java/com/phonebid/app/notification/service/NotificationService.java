@@ -65,8 +65,8 @@ public class NotificationService {
             log.debug("알림 생성 완료: notificationId={}, userId={}, type={}, channel={}", 
                      savedNotification.getId(), user.getId(), type, channel);
 
-            // 알림 발송 이벤트 발행 (트랜잭션 커밋 후 비동기로 처리됨)
-            eventPublisher.publishEvent(new NotificationSendEvent(this, savedNotification));
+            // 알림 발송 이벤트 발행 (ID만 전달, 트랜잭션 커밋 후 비동기로 처리됨)
+            eventPublisher.publishEvent(new NotificationSendEvent(this, savedNotification.getId()));
         }
     }
 
@@ -92,8 +92,8 @@ public class NotificationService {
             log.debug("알림 생성 완료 (커스텀): notificationId={}, userId={}, type={}, channel={}", 
                      savedNotification.getId(), user.getId(), type, channel);
 
-            // 알림 발송 이벤트 발행 (트랜잭션 커밋 후 비동기로 처리됨)
-            eventPublisher.publishEvent(new NotificationSendEvent(this, savedNotification));
+            // 알림 발송 이벤트 발행 (ID만 전달, 트랜잭션 커밋 후 비동기로 처리됨)
+            eventPublisher.publishEvent(new NotificationSendEvent(this, savedNotification.getId()));
         }
     }
 

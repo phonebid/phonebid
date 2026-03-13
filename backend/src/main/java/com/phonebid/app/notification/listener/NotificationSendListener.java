@@ -14,6 +14,7 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 알림 발송 이벤트 리스너
@@ -36,21 +37,28 @@ public class NotificationSendListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional
     public void handleNotificationSend(NotificationSendEvent event) {
-        Notification notification = event.getNotification();
+        UUID notificationId = event.getNotificationId();
+        
+        // ID 기반으로 최신 managed 엔티티 조회 (동시성 안전성 보장)
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> {
+                    log.error("알림을 찾을 수 없음: notificationId={}", notificationId);
+                    return new IllegalStateException("Notification not found: " + notificationId);
+                });
         
         // 멱등성 보장: 이미 발송된 알림은 재발송하지 않음
         if (notification.isSent()) {
-            log.debug("알림이 이미 발송됨, 스킵: notificationId={}", notification.getId());
+            log.debug("알림이 이미 발송됨, 스킵: notificationId={}", notificationId);
             return;
         }
         
         log.debug("알림 발송 이벤트 수신: notificationId={}, channel={}", 
-                 notification.getId(), notification.getChannel());
+                 notificationId, notification.getChannel());
 
         NotificationSender sender = findSender(notification);
         if (sender == null) {
             log.warn("지원하지 않는 채널: channel={}, notificationId={}", 
-                    notification.getChannel(), notification.getId());
+                    notification.getChannel(), notificationId);
             notification.markAsFailed();
             notificationRepository.save(notification);
             return;
@@ -68,12 +76,12 @@ public class NotificationSendListener {
             notification.markAsSent();
             notificationRepository.save(notification);
             log.debug("알림 발송 성공: notificationId={}, channel={}", 
-                     notification.getId(), notification.getChannel());
+                     notificationId, notification.getChannel());
         } else {
             notification.markAsFailed();
             notificationRepository.save(notification);
             log.warn("알림 발송 실패: notificationId={}, channel={}", 
-                    notification.getId(), notification.getChannel());
+                    notificationId, notification.getChannel());
         }
     }
 
