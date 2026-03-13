@@ -25,5 +25,15 @@ public class PortOneClient {
                 .retrieve()
                 .bodyToMono(String.class);
     }
+
+    public Mono<String> getIdentityVerification(String identityVerificationId) {
+        return webClient
+                .get()
+                .uri("https://api.portone.io/identity-verifications/{identityVerificationId}", identityVerificationId)
+                .accept(MediaType.APPLICATION_JSON)
+                .header("Authorization", "PortOne " + portOneV2Properties.getApiSecret())
+                .retrieve()
+                .bodyToMono(String.class);
+    }
 }
 

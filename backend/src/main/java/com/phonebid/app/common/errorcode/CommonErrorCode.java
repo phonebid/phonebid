@@ -71,7 +71,12 @@ public enum CommonErrorCode implements ErrorCode {
     // Refresh Token 관련 에러
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 Refresh Token입니다."),
     EXPIRED_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "만료된 Refresh Token입니다."),
-    REFRESH_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "Refresh Token을 찾을 수 없습니다.");
+    REFRESH_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "Refresh Token을 찾을 수 없습니다."),
+
+    // 본인인증 관련 에러
+    ALREADY_VERIFIED(HttpStatus.CONFLICT, "이미 본인인증이 완료된 사용자입니다."),
+    IDENTITY_VERIFICATION_FAILED(HttpStatus.BAD_REQUEST, "본인인증에 실패했습니다."),
+    DUPLICATE_IDENTITY(HttpStatus.CONFLICT, "이미 다른 계정으로 본인인증된 정보입니다.");
 
     private final HttpStatus status;
     private final String message;

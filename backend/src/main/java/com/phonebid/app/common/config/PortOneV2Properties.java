@@ -8,6 +8,7 @@ public class PortOneV2Properties {
     private String storeId;
     private String apiSecret;
     private String channelKey;
+    private String identityChannelKey;
     private String webhookSecret;
 
     public String getStoreId() {
@@ -40,6 +41,14 @@ public class PortOneV2Properties {
 
     public void setWebhookSecret(String webhookSecret) {
         this.webhookSecret = webhookSecret;
+    }
+
+    public String getIdentityChannelKey() {
+        return identityChannelKey;
+    }
+
+    public void setIdentityChannelKey(String identityChannelKey) {
+        this.identityChannelKey = identityChannelKey;
     }
 }
 
