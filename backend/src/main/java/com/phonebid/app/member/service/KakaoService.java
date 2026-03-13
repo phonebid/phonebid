@@ -74,7 +74,7 @@ public class KakaoService {
             String accessToken = jwtUtil.createToken(kakaoUser.getUsername(), kakaoUser.getRole(), false);
             
             // 6. DTO에 RefreshToken 포함하여 반환
-            return LoginResponseDto.of(accessToken, refreshToken, kakaoUser.getUsername(), kakaoUser.getNickname(), kakaoUser.getRole().name());
+            return LoginResponseDto.of(accessToken, refreshToken, kakaoUser.getUsername(), kakaoUser.getNickname(), kakaoUser.getRole().name(), kakaoUser.getIsIdentityVerified());
         } catch (Exception e) {
             log.error("카카오 로그인 처리 중 예상치 못한 오류 발생", e);
             throw new CustomException(KakaoErrorCode.KAKAO_LOGIN_PROCESSING_FAILED);

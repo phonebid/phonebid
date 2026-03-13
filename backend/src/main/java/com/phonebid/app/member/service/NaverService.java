@@ -79,7 +79,7 @@ public class NaverService {
             String accessToken = jwtUtil.createToken(naverUser.getUsername(), naverUser.getRole(), false);
             
             // 6. DTO에 RefreshToken 포함하여 반환
-            return LoginResponseDto.of(accessToken, refreshToken, naverUser.getUsername(), naverUser.getNickname(), naverUser.getRole().name());
+            return LoginResponseDto.of(accessToken, refreshToken, naverUser.getUsername(), naverUser.getNickname(), naverUser.getRole().name(), naverUser.getIsIdentityVerified());
         } catch (Exception e) {
             log.error("네이버 로그인 처리 중 예상치 못한 오류 발생", e);
             throw new CustomException(NaverErrorCode.NAVER_LOGIN_PROCESSING_FAILED);

@@ -100,10 +100,11 @@ public class UserService {
         // LoginResponseDto 생성 및 반환
         return LoginResponseDto.of(
             accessToken,
-            refreshToken, // 추가된 부분
-            user.getUsername(), 
-            user.getNickname(), 
-            user.getRole().name()
+            refreshToken,
+            user.getUsername(),
+            user.getNickname(),
+            user.getRole().name(),
+            user.getIsIdentityVerified()
         );
     }
 

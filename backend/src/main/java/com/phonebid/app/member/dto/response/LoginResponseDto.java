@@ -25,18 +25,20 @@ public class LoginResponseDto {
     private String username;
     private String nickname;
     private String role;
-    
-    public static LoginResponseDto of(String accessToken, String username, String nickname, String role) {
+    private Boolean isIdentityVerified;
+
+    public static LoginResponseDto of(String accessToken, String username, String nickname, String role, Boolean isIdentityVerified) {
         return LoginResponseDto.builder()
                 .accessToken(accessToken)
                 .tokenType("Bearer")
                 .username(username)
                 .nickname(nickname)
                 .role(role)
+                .isIdentityVerified(isIdentityVerified)
                 .build();
     }
-    
-    public static LoginResponseDto of(String accessToken, String refreshToken, String username, String nickname, String role) {
+
+    public static LoginResponseDto of(String accessToken, String refreshToken, String username, String nickname, String role, Boolean isIdentityVerified) {
         return LoginResponseDto.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
@@ -44,6 +46,7 @@ public class LoginResponseDto {
                 .username(username)
                 .nickname(nickname)
                 .role(role)
+                .isIdentityVerified(isIdentityVerified)
                 .build();
     }
 } 
