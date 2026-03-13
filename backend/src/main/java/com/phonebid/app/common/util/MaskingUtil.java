@@ -25,12 +25,17 @@ public class MaskingUtil {
      * </pre>
      */
     public static String maskPhoneNumber(String phoneNumber) {
-        if (phoneNumber == null || phoneNumber.length() < 8) {
+        if (phoneNumber == null) {
             return MASKED_VALUE;
         }
-        
-        return phoneNumber.substring(0, 3) + MASK_PATTERN + 
-               phoneNumber.substring(phoneNumber.length() - 4);
+
+        String digits = phoneNumber.replaceAll("\\D", "");
+        if (digits.length() < 8) {
+            return MASKED_VALUE;
+        }
+
+        return digits.substring(0, 3) + MASK_PATTERN +
+               digits.substring(digits.length() - 4);
     }
 
     /**
@@ -48,13 +53,18 @@ public class MaskingUtil {
      * </pre>
      */
     public static String maskAccountNumber(String accountNumber) {
-        if (accountNumber == null || accountNumber.length() < 8) {
+        if (accountNumber == null) {
             return MASKED_VALUE;
         }
-        
-        int length = accountNumber.length();
-        return accountNumber.substring(0, 4) + "-" + MASK_PATTERN + "-" + 
-               accountNumber.substring(length - 4);
+
+        String digits = accountNumber.replaceAll("\\D", "");
+        if (digits.length() < 8) {
+            return MASKED_VALUE;
+        }
+
+        int length = digits.length();
+        return digits.substring(0, 4) + "-" + MASK_PATTERN + "-" +
+               digits.substring(length - 4);
     }
 
     /**
