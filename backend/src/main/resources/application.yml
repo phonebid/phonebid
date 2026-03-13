@@ -122,3 +122,58 @@ aligo:
   retry:
     max-attempts: 3
     backoff-delay: 1s
+
+# Resilience4j 설정
+resilience4j:
+  # Circuit Breaker 설정
+  circuitbreaker:
+    instances:
+      notification:
+        # 실패율 임계값 (50% 이상 실패 시 Circuit Open)
+        failure-rate-threshold: 50
+        # Circuit Open 시 Half-Open으로 전환하기 전 대기 시간
+        wait-duration-in-open-state: 30s
+        # Half-Open 상태에서 허용할 호출 수
+        permitted-number-of-calls-in-half-open-state: 3
+        # Circuit 상태 계산을 위한 슬라이딩 윈도우 크기
+        sliding-window-size: 10
+        # 슬라이딩 윈도우 타입 (COUNT_BASED: 호출 횟수 기반)
+        sliding-window-type: COUNT_BASED
+        # Circuit Open 시 실패로 간주할 최소 호출 수
+        minimum-number-of-calls: 5
+        # 느린 호출로 간주할 시간 (5초 이상)
+        slow-call-duration-threshold: 5s
+        # 느린 호출 비율 임계값
+        slow-call-rate-threshold: 100
+        # 기록할 예외 (모든 Exception)
+        record-exceptions:
+          - java.lang.Exception
+  
+  # Retry 설정
+  retry:
+    instances:
+      notification:
+        # 최대 재시도 횟수 (초기 호출 포함 총 3회)
+        max-attempts: 3
+        # 재시도 대기 시간 (지수 백오프)
+        wait-duration: 1s
+        # 지수 백오프 배율 (1초 -> 2초 -> 4초)
+        exponential-backoff-multiplier: 2
+        # 재시도 가능한 예외
+        retry-exceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.client.ResourceAccessException
+        # 재시도하지 않을 예외
+        ignore-exceptions:
+          - java.lang.IllegalArgumentException
+          - java.lang.IllegalStateException
+  
+  # Time Limiter 설정
+  timelimiter:
+    instances:
+      notification:
+        # 타임아웃 시간 (10초)
+        timeout-duration: 10s
+        # 타임아웃 시 실행 중인 작업 취소 여부
+        cancel-running-future: true
