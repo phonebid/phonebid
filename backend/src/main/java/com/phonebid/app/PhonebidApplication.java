@@ -6,9 +6,10 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import com.phonebid.app.common.config.PortOneV2Properties;
+import com.phonebid.app.notification.config.AligoProperties;
 
 @SpringBootApplication
-@EnableConfigurationProperties(PortOneV2Properties.class)
+@EnableConfigurationProperties({PortOneV2Properties.class, AligoProperties.class})
 @EnableScheduling
 public class PhonebidApplication {
 

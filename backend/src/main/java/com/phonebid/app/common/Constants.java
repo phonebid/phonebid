@@ -54,5 +54,18 @@ public final class Constants {
          */
         public static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
     }
+
+    /**
+     * 알림 그룹화 관련 상수
+     */
+    public static final class NotificationGroup {
+        private NotificationGroup() {
+        }
+
+        /**
+         * 그룹화 시간 윈도우 (분): 이 시간 내 동일 타입 알림을 하나로 묶음
+         */
+        public static final int TIME_WINDOW_MINUTES = 5;
+    }
 }
 

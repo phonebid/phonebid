@@ -82,3 +82,105 @@ rate-limit:
   temp-upload:
     per-minute: 10  # 분당 10회
     per-hour: 30    # 시간당 30회
+
+# SSE (Server-Sent Events) 설정
+sse:
+  # SSE 연결 타임아웃 시간 (기본값: 30분)
+  timeout: 30m
+  # Heartbeat 설정
+  heartbeat:
+    # Heartbeat 활성화 여부 (기본값: true)
+    enabled: true
+    # Heartbeat 전송 간격 (기본값: 30초)
+    interval: 30s
+  # Cleanup 스케줄러 설정
+  cleanup:
+    # Cleanup 활성화 여부 (기본값: true)
+    enabled: true
+    # Cleanup 실행 간격 (기본값: 10분)
+    interval: 10m
+  # 리소스 제한 설정
+  # 최대 연결 수 (0이면 제한 없음, 기본값: 10000)
+  max-connections: 10000
+  # 사용자별 최대 중복 연결 수 (기본값: 3)
+  max-duplicate-connections-per-user: 3
+
+# 카카오 알림톡 설정 (알리고)
+aligo:
+  api:
+    base-url: https://apis.aligo.in
+    user-id: ${ALIGO_USER_ID}
+    api-key: ${ALIGO_API_KEY}
+  sender:
+    key: ${ALIGO_SENDER_KEY}
+    phone: ${ALIGO_SENDER_PHONE:}
+  template:
+    bid-arrived: ${ALIGO_TEMPLATE_BID_ARRIVED:}
+    bid-selected: ${ALIGO_TEMPLATE_BID_SELECTED:}
+    contract-signed: ${ALIGO_TEMPLATE_CONTRACT_SIGNED:}
+    payment-completed: ${ALIGO_TEMPLATE_PAYMENT_COMPLETED:}
+    delivery-started: ${ALIGO_TEMPLATE_DELIVERY_STARTED:}
+    delivery-completed: ${ALIGO_TEMPLATE_DELIVERY_COMPLETED:}
+  timeout:
+    connect: 5s
+    read: 10s
+  retry:
+    max-attempts: 3
+    backoff-delay: 1s
+
+# Resilience4j 설정
+resilience4j:
+  # Circuit Breaker 설정
+  circuitbreaker:
+    instances:
+      notification:
+        # 실패율 임계값 (50% 이상 실패 시 Circuit Open)
+        failure-rate-threshold: 50
+        # Circuit Open 시 Half-Open으로 전환하기 전 대기 시간
+        wait-duration-in-open-state: 30s
+        # Half-Open 상태에서 허용할 호출 수
+        permitted-number-of-calls-in-half-open-state: 3
+        # Circuit 상태 계산을 위한 슬라이딩 윈도우 크기
+        sliding-window-size: 10
+        # 슬라이딩 윈도우 타입 (COUNT_BASED: 호출 횟수 기반)
+        sliding-window-type: COUNT_BASED
+        # Circuit Open 시 실패로 간주할 최소 호출 수
+        minimum-number-of-calls: 5
+        # 느린 호출로 간주할 시간 (5초 이상)
+        slow-call-duration-threshold: 5s
+        # 느린 호출 비율 임계값
+        slow-call-rate-threshold: 100
+        # 기록할 예외 (모든 Exception)
+        record-exceptions:
+          - java.lang.Exception
+  
+  # Retry 설정
+  retry:
+    instances:
+      notification:
+        # 최대 재시도 횟수 (초기 호출 포함 총 3회)
+        max-attempts: 3
+        # 재시도 대기 시간 (지수 백오프)
+        wait-duration: 1s
+        # 지수 백오프 활성화
+        enable-exponential-backoff: true
+        # 지수 백오프 배율 (1초 -> 2초 -> 4초)
+        exponential-backoff-multiplier: 2
+        # 재시도 가능한 예외
+        retry-exceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.client.ResourceAccessException
+        # 재시도하지 않을 예외
+        ignore-exceptions:
+          - java.lang.IllegalArgumentException
+          - java.lang.IllegalStateException
+  
+  # Time Limiter 설정
+  timelimiter:
+    instances:
+      notification:
+        # 타임아웃 시간 (10초)
+        timeout-duration: 10s
+        # 타임아웃 시 실행 중인 작업 취소 여부
+        cancel-running-future: true

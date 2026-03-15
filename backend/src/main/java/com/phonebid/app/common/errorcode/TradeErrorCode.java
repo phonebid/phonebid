@@ -15,6 +15,8 @@ public enum TradeErrorCode implements ErrorCode {
     INVALID_PHONE_FORMAT(HttpStatus.BAD_REQUEST, "올바르지 않은 전화번호 형식입니다."),
     INVALID_POSTAL_CODE_FORMAT(HttpStatus.BAD_REQUEST, "우편번호는 5자리 숫자여야 합니다."),
     INVALID_BID_FOR_QUOTE(HttpStatus.BAD_REQUEST, "선택된 입찰이 해당 견적에 속하지 않습니다."),
+    BID_NOT_ACTIVE(HttpStatus.BAD_REQUEST, "활성 상태가 아닌 입찰은 계약을 생성할 수 없습니다."),
+    CONTRACT_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 해당 견적에 대한 계약이 존재합니다."),
     INVALID_PAYMENT_AMOUNT(HttpStatus.BAD_REQUEST, "결제 금액은 0보다 커야 합니다."),
     PAYMENT_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "결제 금액이 계약 금액과 일치하지 않습니다."),
     INVALID_CONTRACT_STATUS(HttpStatus.BAD_REQUEST, "잘못된 계약 상태입니다."),

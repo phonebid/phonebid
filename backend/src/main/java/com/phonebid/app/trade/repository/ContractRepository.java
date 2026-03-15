@@ -71,5 +71,17 @@ public interface ContractRepository extends JpaRepository<Contract, UUID> {
            "AND c.status IN :statuses " +
            "AND (c.isDelete = false OR c.isDelete IS NULL)")
     Page<Contract> findAllByUsername(@Param("username") String username, @Param("statuses") List<ContractStatus> statuses, Pageable pageable);
+
+    /**
+     * 특정 견적에 대한 계약 존재 여부 확인
+     * 중복 계약 방지를 위해 사용됨
+     * 
+     * @param quoteId 견적 ID
+     * @return 계약 존재 여부
+     */
+    @Query("SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END FROM Contract c " +
+           "WHERE c.quote.id = :quoteId " +
+           "AND (c.isDelete = false OR c.isDelete IS NULL)")
+    boolean existsByQuoteId(@Param("quoteId") UUID quoteId);
 }
 
