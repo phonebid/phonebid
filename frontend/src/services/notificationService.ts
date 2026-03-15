@@ -21,7 +21,7 @@ class NotificationService {
    */
   getSSEUrl(): string {
     const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
-    return `${baseURL}/api/v1/notifications/sse`;
+    return `${baseURL}/api/notifications/stream`;
   }
 
   /**
@@ -68,7 +68,7 @@ class NotificationService {
     const response = await apiClient.get<UnreadCountResponse>(
       "/notifications/unread-count"
     );
-    return response.count;
+    return response.unreadCount;
   }
 
   /**
@@ -76,7 +76,7 @@ class NotificationService {
    * @param notificationId 알림 ID
    */
   async markAsRead(notificationId: string): Promise<MarkAsReadResponse> {
-    return apiClient.patch<MarkAsReadResponse>(
+    return apiClient.put<MarkAsReadResponse>(
       `/notifications/${notificationId}/read`
     );
   }
@@ -85,7 +85,7 @@ class NotificationService {
    * 모든 알림 읽음 처리
    */
   async markAllAsRead(): Promise<MarkAllAsReadResponse> {
-    return apiClient.post<MarkAllAsReadResponse>("/notifications/read-all");
+    return apiClient.put<MarkAllAsReadResponse>("/notifications/read-all");
   }
 
   /**

@@ -47,12 +47,14 @@ export interface Notification {
 export interface NotificationDisplayItem {
   id: string;
   type: NotificationType;
+  channel: NotificationChannel;
   title: string;
   message: string;
   referenceId?: string;
   isRead: boolean;
   createdAt: string;
-  groupCount?: number;
+  updatedAt: string;
+  groupCount?: number; // 프론트엔드 전용 (그룹화 표시용)
 }
 
 /**
@@ -71,7 +73,7 @@ export interface NotificationListResponse {
  * 미읽음 알림 개수 응답
  */
 export interface UnreadCountResponse {
-  count: number;
+  unreadCount: number;
 }
 
 /**
