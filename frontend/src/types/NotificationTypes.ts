@@ -23,21 +23,18 @@ export type NotificationChannel = "WEB" | "KAKAO" | "SMS" | "EMAIL";
 export type NotificationStatus = "PENDING" | "SENT" | "FAILED" | "READ";
 
 /**
- * 알림 엔티티 (백엔드 Notification 도메인 매핑)
+ * 알림 엔티티 (백엔드 NotificationResponseDto 매핑)
  */
 export interface Notification {
   id: string;
-  userId: string;
   type: NotificationType;
   channel: NotificationChannel;
   title: string;
   message: string;
-  status: NotificationStatus;
   referenceId?: string;
   isRead: boolean;
   createdAt: string;
-  readAt?: string;
-  sentAt?: string;
+  updatedAt: string;
 }
 
 /**
