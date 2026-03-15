@@ -1,0 +1,93 @@
+import { Link } from "react-router-dom";
+import { useNotificationStore } from "store/notificationStore";
+import { useNotifications } from "hooks/useNotifications";
+import { NotificationItem } from "components/notification/NotificationItem";
+import { Button } from "components/ui/button";
+import { cn } from "utils/cn";
+
+interface NotificationDropdownProps {
+  onClose?: () => void;
+}
+
+export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
+  const { notifications, unreadCount } = useNotificationStore();
+  const { markAllAsRead } = useNotifications();
+
+  // 최근 알림 5개만 표시
+  const recentNotifications = notifications.slice(0, 5);
+  const hasNotifications = recentNotifications.length > 0;
+
+  const handleMarkAllAsRead = async () => {
+    if (unreadCount === 0) return;
+    try {
+      await markAllAsRead();
+    } catch (error) {
+      console.error("모든 알림 읽음 처리 실패:", error);
+    }
+  };
+
+  return (
+    <div className="w-96 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
+      {/* 헤더 */}
+      <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-gray-900">알림</h3>
+        {unreadCount > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleMarkAllAsRead}
+            className="text-xs h-7 px-2"
+          >
+            모두 읽음
+          </Button>
+        )}
+      </div>
+
+      {/* 알림 목록 */}
+      <div className="max-h-[400px] overflow-y-auto">
+        {hasNotifications ? (
+          <div>
+            {recentNotifications.map((notification) => (
+              <NotificationItem
+                key={notification.id}
+                notification={notification}
+                onClose={onClose}
+                showDelete={false}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="py-12 text-center">
+            <svg
+              className="mx-auto w-12 h-12 text-gray-300"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+              />
+            </svg>
+            <p className="mt-2 text-sm text-gray-500">새로운 알림이 없습니다</p>
+          </div>
+        )}
+      </div>
+
+      {/* 푸터 */}
+      {hasNotifications && (
+        <div className="px-4 py-3 bg-gray-50 border-t border-gray-200">
+          <Link
+            to="/notifications"
+            onClick={onClose}
+            className="block text-center text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+          >
+            모두 보기
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+}
