@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAuthStore } from "store/authStore";
 import { useState } from "react";
+import { NotificationBell } from "components/notification/NotificationBell";
 
 const Header: React.FC = () => {
   const { isAuthenticated, user, logout } = useAuthStore();
@@ -76,6 +77,9 @@ const Header: React.FC = () => {
           <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated && user ? (
               <div className="flex items-center space-x-3">
+                {/* 알림 벨 */}
+                <NotificationBell />
+                
                 <span className="text-sm text-gray-700">
                   안녕하세요, {user.nickname}님
                 </span>
@@ -180,6 +184,13 @@ const Header: React.FC = () => {
             </Link>
             {isAuthenticated && (
               <>
+                <Link
+                  to="/notifications"
+                  className="block px-2 py-2 rounded-md text-gray-700 hover:bg-gray-100"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  알림
+                </Link>
                 <Link
                   to="/chat"
                   className="block px-2 py-2 rounded-md text-gray-700 hover:bg-gray-100"
