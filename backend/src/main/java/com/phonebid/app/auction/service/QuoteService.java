@@ -1,5 +1,6 @@
 package com.phonebid.app.auction.service;
 
+import com.phonebid.app.auction.domain.BidStatus;
 import com.phonebid.app.auction.domain.Quote;
 import com.phonebid.app.auction.domain.QuoteStatus;
 import com.phonebid.app.auction.dto.request.QuoteCreateRequestDto;
@@ -13,10 +14,13 @@ import com.phonebid.app.member.domain.User;
 import com.phonebid.app.phone.domain.PhoneModel;
 import com.phonebid.app.phone.domain.PhoneOption;
 import com.phonebid.app.phone.repository.PhoneModelRepository;
+import com.phonebid.app.notification.event.QuoteCreatedEvent;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -31,36 +35,28 @@ public class QuoteService {
     private final QuoteRepository quoteRepository;
     private final PhoneModelRepository phoneModelRepository;
     private final BidRepository bidRepository;
-    private final BidService bidService;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 견적 생성
      * 사용자가 요청한 조건에 맞는 견적을 생성합니다.
      */
     @Transactional
-    public void createQuote(QuoteCreateRequestDto quoteRequestDto, User user) {
-        PhoneModel phoneModel = phoneModelRepository.findById(quoteRequestDto.getPhoneModelId())
+    public void createQuote(QuoteCreateRequestDto request, User user) {
+        PhoneModel phoneModel = phoneModelRepository.findById(request.getPhoneModelId())
             .orElseThrow(() -> new CustomException(PhoneErrorCode.PHONE_MODEL_NOT_FOUND));
 
-        PhoneOption colorOption = null;
-        if (quoteRequestDto.getColorOptionId() != null) {
-            colorOption = phoneModel.getOptions().stream()
-                .filter(phoneOption -> phoneOption.getId().equals(quoteRequestDto.getColorOptionId()))
-                .findFirst()
-                .orElseThrow(() -> new CustomException(PhoneErrorCode.PHONE_OPTION_NOT_FOUND));
-        }
-        
-        PhoneOption storageOption = null;
-        if (quoteRequestDto.getStorageOptionId() != null) {
-            storageOption = phoneModel.getOptions().stream()
-                .filter(phoneOption -> phoneOption.getId().equals(quoteRequestDto.getStorageOptionId()))
-                .findFirst()
-                .orElseThrow(() -> new CustomException(PhoneErrorCode.PHONE_OPTION_NOT_FOUND));
-        }
+        PhoneOption colorOption = request.getColorOptionId() != null 
+                ? phoneModel.findOptionById(request.getColorOptionId()) 
+                : null;
+        PhoneOption storageOption = request.getStorageOptionId() != null 
+                ? phoneModel.findOptionById(request.getStorageOptionId()) 
+                : null;
 
-        Quote quote = quoteRequestDto.toEntity(user, phoneModel, colorOption, storageOption);
-        // validateQuote(quote);
-        quoteRepository.save(quote);
+        Quote quote = request.toEntity(user, phoneModel, colorOption, storageOption);
+        Quote savedQuote = quoteRepository.save(quote);
+        
+        eventPublisher.publishEvent(new QuoteCreatedEvent(this, savedQuote));
     }
 
     /**
@@ -79,16 +75,7 @@ public class QuoteService {
     public Page<QuoteResponseDto> getMyOpenQuotes(User user, Pageable pageable) {
         Page<Quote> quotePage = quoteRepository.findByUserIdAndStatus(
                 user.getId(), QuoteStatus.OPEN, pageable);
-        
-        List<QuoteResponseDto> content = quotePage.getContent().stream()
-                .map(quote -> {
-                    Long bidCount = bidRepository.countByQuoteId(quote.getId());
-                    Integer lowestPrice = bidService.getMinInstallmentPrincipal(quote.getId());
-                    return QuoteResponseDto.from(quote, bidCount, lowestPrice);
-                })
-                .collect(Collectors.toList());
-        
-        return new PageImpl<>(content, pageable, quotePage.getTotalElements());
+        return convertToPageDto(quotePage);
     }
 
     /**
@@ -99,16 +86,7 @@ public class QuoteService {
         List<QuoteStatus> completedStatuses = List.of(QuoteStatus.CLOSED, QuoteStatus.CONTRACTED);
         Page<Quote> quotePage = quoteRepository.findByUserIdAndStatusIn(
                 user.getId(), completedStatuses, pageable);
-        
-        List<QuoteResponseDto> content = quotePage.getContent().stream()
-                .map(quote -> {
-                    Long bidCount = bidRepository.countByQuoteId(quote.getId());
-                    Integer lowestPrice = bidService.getMinInstallmentPrincipal(quote.getId());
-                    return QuoteResponseDto.from(quote, bidCount, lowestPrice);
-                })
-                .collect(Collectors.toList());
-        
-        return new PageImpl<>(content, pageable, quotePage.getTotalElements());
+        return convertToPageDto(quotePage);
     }
 
     /**
@@ -116,15 +94,8 @@ public class QuoteService {
      * 모든 진행중인 견적을 조회합니다. 관리자 및 판매자 전용입니다.
      */
     public List<QuoteResponseDto> getAllOpenQuotes() {
-        List<Quote> quotes = quoteRepository.findLatestQuotesByStatus(
-                QuoteStatus.OPEN);
-        return quotes.stream()
-                .map(quote -> {
-                    Long bidCount = bidRepository.countByQuoteId(quote.getId());
-                    Integer lowestPrice = bidService.getMinInstallmentPrincipal(quote.getId());
-                    return QuoteResponseDto.from(quote, bidCount, lowestPrice);
-                })
-                .collect(Collectors.toList());
+        List<Quote> quotes = quoteRepository.findLatestQuotesByStatus(QuoteStatus.OPEN);
+        return convertToListDto(quotes);
     }
 
     /**
@@ -134,16 +105,11 @@ public class QuoteService {
         Quote quote = quoteRepository.findById(quoteId)
                 .orElseThrow(() -> new CustomException(AuctionErrorCode.QUOTE_NOT_FOUND));
         
-        // 삭제된 견적인지 확인
-        if (quote.getIsDelete() != null && quote.getIsDelete()) {
-            throw new CustomException(AuctionErrorCode.QUOTE_NOT_FOUND);
-        }
+        quote.validateNotDeleted();
         
-        // 입찰 개수 조회
         long bidCount = bidRepository.countByQuoteId(quoteId);
-        
-        // 최저 할부원금 조회
-        Integer lowestPrice = bidService.getMinInstallmentPrincipal(quoteId);
+        Integer lowestPrice = bidRepository.findMinInstallmentPrincipalByQuoteId(
+                quoteId, BidStatus.ACTIVE);
         
         return QuoteResponseDto.from(quote, bidCount, lowestPrice);
     }
@@ -165,27 +131,59 @@ public class QuoteService {
         Quote quote = quoteRepository.findById(quoteId)
                 .orElseThrow(() -> new CustomException(AuctionErrorCode.QUOTE_NOT_FOUND));
 
-        // 삭제된 견적인지 확인
-        if (quote.getIsDelete() != null && quote.getIsDelete()) {
-            throw new CustomException(AuctionErrorCode.QUOTE_NOT_FOUND);
-        }
-
-        // 견적 소유자 확인
-        if (!quote.getUser().getId().equals(user.getId())) {
-            throw new CustomException(AuctionErrorCode.QUOTE_NOT_OWNED_BY_USER);
-        }
-
-        // 이미 종료되었거나 계약 완료된 견적인지 확인
-        if (quote.getStatus() == QuoteStatus.CLOSED) {
-            throw new CustomException(AuctionErrorCode.QUOTE_ALREADY_CLOSED);
-        }
-        if (quote.getStatus() == QuoteStatus.CONTRACTED) {
-            throw new CustomException(AuctionErrorCode.INVALID_QUOTE_STATUS);
-        }
-
-        // 견적 종료
+        quote.validateNotDeleted();
+        quote.validateOwnership(user.getId());
+        
         quote.close();
-        quoteRepository.save(quote);
+    }
+
+    // ========== Private 헬퍼 메서드 ==========
+
+    /**
+     * Page<Quote>를 Page<QuoteResponseDto>로 변환 (중복 제거)
+     */
+    private Page<QuoteResponseDto> convertToPageDto(Page<Quote> quotePage) {
+        List<QuoteResponseDto> content = convertToListDto(quotePage.getContent());
+        return new PageImpl<>(content, quotePage.getPageable(), quotePage.getTotalElements());
+    }
+
+    /**
+     * Quote 리스트를 DTO 리스트로 변환
+     * 입찰 개수와 최저가를 배치 쿼리로 조회하여 N+1 문제 방지
+     * 
+     * @param quotes 변환할 Quote 리스트
+     * @return QuoteResponseDto 리스트
+    */
+    private List<QuoteResponseDto> convertToListDto(List<Quote> quotes) {
+        if (quotes.isEmpty()) {
+            return List.of();
+        }
+
+        List<UUID> quoteIds = quotes.stream()
+                .map(Quote::getId)
+                .collect(Collectors.toList());
+
+        Map<UUID, Long> bidCountMap = bidRepository.countByQuoteIds(quoteIds).stream()
+                .collect(Collectors.toMap(
+                        BidRepository.BidCountDto::getQuoteId,
+                        BidRepository.BidCountDto::getBidCount
+                ));
+
+        Map<UUID, Integer> lowestPriceMap = bidRepository
+                .findMinInstallmentPrincipalByQuoteIds(quoteIds, BidStatus.ACTIVE)
+                .stream()
+                .collect(Collectors.toMap(
+                        BidRepository.BidMinPriceDto::getQuoteId,
+                        BidRepository.BidMinPriceDto::getMinPrice
+                ));
+
+        return quotes.stream()
+                .map(quote -> QuoteResponseDto.from(
+                        quote,
+                        bidCountMap.getOrDefault(quote.getId(), 0L),
+                        lowestPriceMap.get(quote.getId())
+                ))
+                .collect(Collectors.toList());
     }
 
 }

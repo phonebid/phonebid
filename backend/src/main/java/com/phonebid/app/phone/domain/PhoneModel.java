@@ -1,6 +1,8 @@
 package com.phonebid.app.phone.domain;
 
 import com.phonebid.app.common.domain.BaseEntity;
+import com.phonebid.app.common.errorcode.PhoneErrorCode;
+import com.phonebid.app.common.exception.CustomException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -110,5 +112,22 @@ public class PhoneModel extends BaseEntity {
             summary.append(" - ").append(String.format("%,d원", releasedPrice));
         }
         return summary.toString();
+    }
+
+    /**
+     * ID로 옵션 찾기
+     * 
+     * @param optionId 찾을 옵션 ID
+     * @return 찾은 PhoneOption
+     * @throws CustomException 옵션을 찾을 수 없는 경우, PhoneErrorCode.PHONE_OPTION_NOT_FOUND 예외 발생
+     */
+    public PhoneOption findOptionById(UUID optionId) {
+        if (options == null) {
+            throw new CustomException(PhoneErrorCode.PHONE_OPTION_NOT_FOUND);
+        }
+        return options.stream()
+            .filter(option -> option.getId().equals(optionId))
+            .findFirst()
+            .orElseThrow(() -> new CustomException(PhoneErrorCode.PHONE_OPTION_NOT_FOUND));
     }
 }

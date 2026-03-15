@@ -1,0 +1,98 @@
+package com.phonebid.app.notification.listener;
+
+import com.phonebid.app.notification.domain.Notification;
+import com.phonebid.app.notification.event.NotificationSendEvent;
+import com.phonebid.app.notification.repository.NotificationRepository;
+import com.phonebid.app.notification.retry.RetryableNotificationSender;
+import com.phonebid.app.notification.sender.NotificationSender;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
+
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * 알림 발송 이벤트 리스너
+ * 트랜잭션 커밋 후 비동기로 알림을 발송
+ */
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class NotificationSendListener {
+
+    private final List<NotificationSender> notificationSenders;
+    private final RetryableNotificationSender retryableNotificationSender;
+    private final NotificationRepository notificationRepository;
+
+    /**
+     * 알림 발송 이벤트 처리
+     * 트랜잭션 커밋 후 비동기로 실행되어 DB 커넥션을 빠르게 반환
+     */
+    @Async("notificationExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handleNotificationSend(NotificationSendEvent event) {
+        UUID notificationId = event.getNotificationId();
+        
+        // ID 기반으로 최신 managed 엔티티 조회 (동시성 안전성 보장)
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> {
+                    log.error("알림을 찾을 수 없음: notificationId={}", notificationId);
+                    return new IllegalStateException("Notification not found: " + notificationId);
+                });
+        
+        // 멱등성 보장: 이미 발송된 알림은 재발송하지 않음
+        if (notification.isSent()) {
+            log.debug("알림이 이미 발송됨, 스킵: notificationId={}", notificationId);
+            return;
+        }
+        
+        log.debug("알림 발송 이벤트 수신: notificationId={}, channel={}", 
+                 notificationId, notification.getChannel());
+
+        NotificationSender sender = findSender(notification);
+        if (sender == null) {
+            log.warn("지원하지 않는 채널: channel={}, notificationId={}", 
+                    notification.getChannel(), notificationId);
+            notification.markAsFailed();
+            notificationRepository.save(notification);
+            return;
+        }
+
+        // 외부 API 연동이 필요한 채널은 재시도 메커니즘 적용
+        boolean success;
+        if (notification.getChannel().requiresExternalApi()) {
+            success = retryableNotificationSender.sendWithRetry(sender, notification);
+        } else {
+            success = sender.send(notification);
+        }
+
+        if (success) {
+            notification.markAsSent();
+            notificationRepository.save(notification);
+            log.debug("알림 발송 성공: notificationId={}, channel={}", 
+                     notificationId, notification.getChannel());
+        } else {
+            notification.markAsFailed();
+            notificationRepository.save(notification);
+            log.warn("알림 발송 실패: notificationId={}, channel={}", 
+                    notificationId, notification.getChannel());
+        }
+    }
+
+    /**
+     * 채널별 발송자 찾기
+     */
+    private NotificationSender findSender(Notification notification) {
+        return notificationSenders.stream()
+                .filter(sender -> sender.supports(notification.getChannel()))
+                .findFirst()
+                .orElse(null);
+    }
+}

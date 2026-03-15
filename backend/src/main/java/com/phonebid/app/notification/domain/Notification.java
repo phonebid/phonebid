@@ -10,6 +10,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import org.hibernate.annotations.Comment;
@@ -17,6 +18,8 @@ import org.hibernate.annotations.Comment;
 @Entity
 @Table(name = "notifications", indexes = {
     @Index(name = "idx_notifications_user_id", columnList = "user_id"),
+    @Index(name = "idx_notifications_user_created", columnList = "user_id, created_at"),
+    @Index(name = "idx_notifications_created_at", columnList = "created_at"),
     @Index(name = "idx_notifications_type", columnList = "type"),
     @Index(name = "idx_notifications_channel", columnList = "channel"),
     @Index(name = "idx_notifications_is_read", columnList = "is_read")
@@ -57,6 +60,15 @@ public class Notification extends BaseEntity {
     @Comment("알림 읽음 여부")
     private Boolean isRead;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "send_status", nullable = false)
+    @Comment("발송 상태 (PENDING, SENT, FAILED)")
+    private SendStatus sendStatus;
+
+    @Column(name = "sent_at")
+    @Comment("발송 완료 시각")
+    private LocalDateTime sentAt;
+
     @Column(name = "reference_id")
     @Comment("관련 엔터티 ID (Quote, Bid, Contract 등)")
     private UUID referenceId; // 관련 엔터티 ID (Quote, Bid, Contract 등)
@@ -73,6 +85,7 @@ public class Notification extends BaseEntity {
         this.message = message;
         this.referenceId = referenceId;
         this.isRead = false; // 기본값: 읽지 않음
+        this.sendStatus = SendStatus.PENDING; // 기본값: 발송 대기
     }
 
     // 정적 팩토리 메서드
@@ -99,6 +112,27 @@ public class Notification extends BaseEntity {
 
     public boolean isUnread() {
         return !isRead;
+    }
+
+    public void markAsSent() {
+        this.sendStatus = SendStatus.SENT;
+        this.sentAt = LocalDateTime.now();
+    }
+
+    public void markAsFailed() {
+        this.sendStatus = SendStatus.FAILED;
+    }
+
+    public boolean isSent() {
+        return sendStatus == SendStatus.SENT;
+    }
+
+    public boolean isPending() {
+        return sendStatus == SendStatus.PENDING;
+    }
+
+    public boolean isFailed() {
+        return sendStatus == SendStatus.FAILED;
     }
 
     public boolean hasReference() {

@@ -11,9 +11,11 @@ import com.phonebid.app.common.errorcode.MemberErrorCode;
 import com.phonebid.app.common.exception.CustomException;
 import com.phonebid.app.member.domain.User;
 import com.phonebid.app.member.repository.UserRepository;
+import com.phonebid.app.notification.event.ChatMessageReceivedEvent;
 import jakarta.transaction.Transactional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 /**
@@ -28,6 +30,7 @@ public class ChatMessageService {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public ChatMessageResponse sendMessage(ChatMessageSendRequest request) {
@@ -48,6 +51,13 @@ public class ChatMessageService {
                 .build();
 
         ChatMessage savedMessage = chatMessageRepository.save(chatMessage);
+        
+        // 채팅 메시지 수신 이벤트 발행 (상대방에게 알림)
+        UUID recipientUserId = chatRoom.getConsumer().getId().equals(sender.getId()) 
+                ? chatRoom.getSeller().getUser().getId() 
+                : chatRoom.getConsumer().getId();
+        eventPublisher.publishEvent(new ChatMessageReceivedEvent(this, savedMessage, recipientUserId));
+        
         return ChatMessageResponse.from(savedMessage);
     }
 
