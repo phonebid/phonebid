@@ -27,16 +27,23 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
   };
 
   return (
-    <div className="w-96 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
+    <div className="w-full sm:w-96 max-w-md bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
       {/* 헤더 */}
-      <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-900">알림</h3>
+      <div className="px-4 py-3 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-200 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-gray-900">알림</h3>
+          {unreadCount > 0 && (
+            <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">
+              {unreadCount}
+            </span>
+          )}
+        </div>
         {unreadCount > 0 && (
           <Button
             variant="ghost"
             size="sm"
             onClick={handleMarkAllAsRead}
-            className="text-xs h-7 px-2"
+            className="text-xs h-7 px-2 hover:bg-indigo-100 transition-colors"
           >
             모두 읽음
           </Button>
@@ -44,22 +51,27 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
       </div>
 
       {/* 알림 목록 */}
-      <div className="max-h-[400px] overflow-y-auto">
+      <div className="max-h-[400px] sm:max-h-[500px] overflow-y-auto custom-scrollbar">
         {hasNotifications ? (
-          <div>
-            {recentNotifications.map((notification) => (
-              <NotificationItem
+          <div className="divide-y divide-gray-100">
+            {recentNotifications.map((notification, index) => (
+              <div
                 key={notification.id}
-                notification={notification}
-                onClose={onClose}
-                showDelete={false}
-              />
+                className="animate-scale-in"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <NotificationItem
+                  notification={notification}
+                  onClose={onClose}
+                  showDelete={false}
+                />
+              </div>
             ))}
           </div>
         ) : (
           <div className="py-12 text-center">
             <svg
-              className="mx-auto w-12 h-12 text-gray-300"
+              className="mx-auto w-12 h-12 text-gray-300 animate-pulse"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -78,13 +90,13 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
 
       {/* 푸터 */}
       {hasNotifications && (
-        <div className="px-4 py-3 bg-gray-50 border-t border-gray-200">
+        <div className="px-4 py-3 bg-gradient-to-r from-indigo-50 to-purple-50 border-t border-gray-200">
           <Link
             to="/notifications"
             onClick={onClose}
-            className="block text-center text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+            className="block text-center text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors hover:underline"
           >
-            모두 보기
+            모두 보기 →
           </Link>
         </div>
       )}

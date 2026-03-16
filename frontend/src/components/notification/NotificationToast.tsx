@@ -47,17 +47,19 @@ function ToastItem({ notification, onClose }: ToastItemProps) {
     <div
       onClick={handleClick}
       className={cn(
-        "flex items-start gap-3 p-4 bg-white rounded-lg shadow-lg border border-gray-200 cursor-pointer hover:shadow-xl transition-all duration-300 max-w-sm",
+        "flex items-start gap-3 p-4 bg-white rounded-lg shadow-lg border-l-4 cursor-pointer transition-all duration-300 max-w-sm",
+        `border-${color}-500`,
         isExiting
-          ? "animate-out fade-out slide-out-to-right-full"
-          : "animate-in fade-in slide-in-from-right-full"
+          ? "animate-slide-out-right"
+          : "animate-slide-in-right",
+        "hover:shadow-2xl hover:scale-[1.02] hover:bg-gray-50"
       )}
     >
       {/* 아이콘 */}
       <div
         className={cn(
-          "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-xl",
-          `bg-${color}-100`
+          "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-md",
+          `bg-${color}-100 text-${color}-600`
         )}
       >
         {icon}
@@ -71,6 +73,20 @@ function ToastItem({ notification, onClose }: ToastItemProps) {
         <p className="mt-1 text-sm text-gray-600 line-clamp-2">
           {notification.message}
         </p>
+        
+        {/* 진행 바 */}
+        <div className="mt-2 h-1 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className={cn(
+              "h-full rounded-full transition-all",
+              `bg-${color}-500`
+            )}
+            style={{
+              width: "100%",
+              animation: "shrink 5s linear",
+            }}
+          />
+        </div>
       </div>
 
       {/* 닫기 버튼 */}
@@ -79,7 +95,7 @@ function ToastItem({ notification, onClose }: ToastItemProps) {
           e.stopPropagation();
           handleClose();
         }}
-        className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+        className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-all hover:scale-110"
         aria-label="닫기"
       >
         <svg
@@ -112,8 +128,8 @@ export function NotificationToast() {
   }
 
   return (
-    <div className="fixed top-20 right-4 z-[9999] flex flex-col gap-3 pointer-events-none">
-      <div className="flex flex-col gap-3 pointer-events-auto">
+    <div className="fixed top-20 right-4 z-[9999] flex flex-col gap-3 pointer-events-none max-w-full">
+      <div className="flex flex-col gap-3 pointer-events-auto px-4 sm:px-0">
         {toastQueue.map((notification) => (
           <ToastItem
             key={notification.id}
@@ -125,3 +141,13 @@ export function NotificationToast() {
     </div>
   );
 }
+
+// 진행 바 애니메이션용 CSS (글로벌 스타일에 추가 필요)
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes shrink {
+    from { width: 100%; }
+    to { width: 0%; }
+  }
+`;
+document.head.appendChild(style);

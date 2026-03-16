@@ -10,10 +10,21 @@ interface NotificationBellProps {
 
 export function NotificationBell({ className }: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [shouldRing, setShouldRing] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const { unreadCount } = useNotificationStore();
+  const prevUnreadCountRef = useRef(unreadCount);
+
+  // 새 알림이 도착하면 벨 애니메이션 실행
+  useEffect(() => {
+    if (unreadCount > prevUnreadCountRef.current) {
+      setShouldRing(true);
+      setTimeout(() => setShouldRing(false), 1000);
+    }
+    prevUnreadCountRef.current = unreadCount;
+  }, [unreadCount]);
 
   // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
@@ -61,13 +72,19 @@ export function NotificationBell({ className }: NotificationBellProps) {
       <button
         ref={buttonRef}
         onClick={toggleDropdown}
-        className="relative p-2 text-gray-700 hover:text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-full transition-colors"
+        className={cn(
+          "relative p-2 text-gray-700 hover:text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-full transition-all duration-200",
+          shouldRing && "animate-bell-ring"
+        )}
         aria-label="알림"
         aria-expanded={isOpen}
       >
         {/* 벨 아이콘 */}
         <svg
-          className="w-6 h-6"
+          className={cn(
+            "w-6 h-6 transition-transform",
+            unreadCount > 0 && "text-indigo-600"
+          )}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -85,8 +102,8 @@ export function NotificationBell({ className }: NotificationBellProps) {
           <Badge
             variant="destructive"
             className={cn(
-              "absolute -top-1 -right-1 min-w-[20px] h-5 flex items-center justify-center px-1",
-              "animate-pulse"
+              "absolute -top-1 -right-1 min-w-[20px] h-5 flex items-center justify-center px-1 text-xs font-bold",
+              "animate-badge-pulse shadow-lg"
             )}
           >
             {unreadCount > 99 ? "99+" : unreadCount}
@@ -98,7 +115,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="absolute right-0 mt-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+          className="absolute right-0 mt-2 z-50 animate-fade-in-down"
         >
           <NotificationDropdown onClose={() => setIsOpen(false)} />
         </div>

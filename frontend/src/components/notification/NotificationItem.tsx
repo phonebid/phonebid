@@ -56,15 +56,16 @@ export function NotificationItem({
     <div
       onClick={handleClick}
       className={cn(
-        "flex items-start gap-3 p-4 hover:bg-gray-50 cursor-pointer transition-colors border-b last:border-b-0",
-        !notification.isRead && "bg-indigo-50/50"
+        "group flex items-start gap-3 p-4 cursor-pointer transition-all duration-200 border-b last:border-b-0",
+        "hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50",
+        !notification.isRead && "bg-indigo-50/50 border-l-4 border-l-indigo-500"
       )}
     >
       {/* 아이콘 */}
       <div
         className={cn(
-          "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-xl",
-          `bg-${color}-100`
+          "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-xl transition-transform group-hover:scale-110 shadow-sm",
+          `bg-${color}-100 text-${color}-600`
         )}
       >
         {icon}
@@ -75,14 +76,14 @@ export function NotificationItem({
         <div className="flex items-start justify-between gap-2">
           <h4
             className={cn(
-              "text-sm font-medium text-gray-900",
+              "text-sm font-medium text-gray-900 transition-colors group-hover:text-indigo-700",
               !notification.isRead && "font-semibold"
             )}
           >
             {notification.title}
           </h4>
           {!notification.isRead && (
-            <span className="flex-shrink-0 w-2 h-2 bg-indigo-600 rounded-full"></span>
+            <span className="flex-shrink-0 w-2 h-2 bg-indigo-600 rounded-full animate-badge-pulse"></span>
           )}
         </div>
 
@@ -91,12 +92,27 @@ export function NotificationItem({
         </p>
 
         <div className="mt-2 flex items-center justify-between">
-          <span className="text-xs text-gray-500">{timeAgo}</span>
+          <span className="text-xs text-gray-500 flex items-center gap-1">
+            <svg
+              className="w-3 h-3"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            {timeAgo}
+          </span>
 
           {showDelete && (
             <button
               onClick={handleDelete}
-              className="text-xs text-gray-400 hover:text-red-600 transition-colors"
+              className="text-xs text-gray-400 hover:text-red-600 transition-all hover:scale-110 font-medium"
               aria-label="알림 삭제"
             >
               삭제
