@@ -194,7 +194,8 @@ export function useNotificationSSE(options: UseNotificationSSEOptions = {}) {
     return () => {
       disconnect();
     };
-  }, [enabled, connect, disconnect]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled]);
 
   /**
    * 페이지 가시성 변경 시 재연결
