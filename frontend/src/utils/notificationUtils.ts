@@ -91,7 +91,8 @@ export function getNotificationDisplayName(type: NotificationType): string {
 /**
  * 알림 타입별 라우팅 경로 반환
  * @param type 알림 타입
- * @param referenceId 참조 ID
+ * @param referenceId 참조 ID (quoteId, contractId, bidId 등)
+ * @returns 이동할 경로
  */
 export function getNotificationRoute(
   type: NotificationType,
@@ -103,20 +104,30 @@ export function getNotificationRoute(
 
   switch (type) {
     case "QUOTE_CREATED":
+      return `/mypage/quotes/${referenceId}`;
+    
     case "BID_ARRIVED":
-      return `/quotes/${referenceId}`;
+      return `/mypage/quotes/${referenceId}`;
+    
     case "BID_SELECTED":
-      return `/seller/dashboard/bids/${referenceId}`;
+      return `/seller-center`;
+    
     case "CONTRACT_SIGNED":
-      return `/contracts/${referenceId}`;
+      return `/mypage/purchases/${referenceId}`;
+    
     case "PAYMENT_COMPLETED":
-      return `/purchases/${referenceId}`;
+      return `/mypage/purchases/${referenceId}`;
+    
     case "DELIVERY_STARTED":
     case "DELIVERY_COMPLETED":
-      return `/purchases/${referenceId}`;
+      return `/mypage/purchases/${referenceId}`;
+    
     case "SELLER_APPROVED":
+      return "/seller-center";
+    
     case "SELLER_REJECTED":
-      return "/seller/dashboard";
+      return "/seller-center";
+    
     default:
       return "/notifications";
   }

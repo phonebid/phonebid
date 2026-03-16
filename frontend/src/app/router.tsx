@@ -102,7 +102,17 @@ export const AppRouter: React.FC = () => {
         <Route path="/payment/fail" element={<PaymentFailPage />} />
         <Route path="/chat" element={<ChatListPage />} />
         <Route path="/chat/:chatRoomId" element={<ChatRoomPage />} />
-        <Route path="/notifications" element={<NotificationsPage />} />
+        
+        {/* 알림 페이지 */}
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute requiredRole={["USER", "SELLER", "ADMIN"]}>
+              <NotificationsPage />
+            </ProtectedRoute>
+          }
+        />
+        
         <Route path="/mypage/profile" element={<ProfilePage />} />
         <Route path="/mypage/purchases" element={<PurchaseHistoryPage />} />
         <Route
