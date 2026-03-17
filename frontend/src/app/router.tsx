@@ -107,8 +107,10 @@ export const AppRouter: React.FC = () => {
         <Route
           path="/notifications"
           element={
-            <ProtectedRoute requiredRole={["USER", "SELLER", "ADMIN"]}>
-              <NotificationsPage />
+            <ProtectedRoute>
+              <Layout>
+                <NotificationsPage />
+              </Layout>
             </ProtectedRoute>
           }
         />
