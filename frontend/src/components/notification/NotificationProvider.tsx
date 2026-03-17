@@ -10,7 +10,7 @@ import { NotificationToast } from "components/notification/NotificationToast";
  */
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
-  const { fetchUnreadCount } = useNotifications();
+  const { fetchUnreadCount, fetchNotifications } = useNotifications();
 
   // SSE 연결 (로그인된 사용자만)
   useNotificationSSE({
@@ -29,14 +29,20 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     },
   });
 
-  // 초기 미읽음 개수 로드
+  // 초기 알림 데이터 로드
   useEffect(() => {
     if (isAuthenticated) {
+      // 미읽음 개수 로드
       fetchUnreadCount().catch((error) => {
         console.error("미읽음 개수 로드 실패:", error);
       });
+
+      // 최근 알림 목록 로드 (최대 20개)
+      fetchNotifications(0, 20, "all").catch((error) => {
+        console.error("알림 목록 로드 실패:", error);
+      });
     }
-  }, [isAuthenticated, fetchUnreadCount]);
+  }, [isAuthenticated, fetchUnreadCount, fetchNotifications]);
 
   return (
     <>
