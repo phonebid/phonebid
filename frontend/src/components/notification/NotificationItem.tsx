@@ -76,8 +76,7 @@ export function NotificationItem({
         <div className="flex items-start justify-between gap-2">
           <h4
             className={cn(
-              "text-sm font-medium text-gray-900 transition-colors group-hover:text-indigo-700",
-              !notification.isRead && "font-semibold"
+              "text-sm font-bold text-gray-900 transition-colors group-hover:text-indigo-700"
             )}
           >
             {notification.title}
