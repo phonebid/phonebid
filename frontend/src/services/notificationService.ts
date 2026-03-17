@@ -21,7 +21,7 @@ class NotificationService {
    */
   getSSEUrl(): string {
     const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
-    return `${baseURL}/api/notifications/stream`;
+    return `${baseURL}/api/v1/notifications/stream`;
   }
 
   /**
