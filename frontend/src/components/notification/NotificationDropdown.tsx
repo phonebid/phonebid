@@ -27,9 +27,9 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
   };
 
   return (
-    <div className="w-full sm:w-96 max-w-md bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
+    <div className="w-[calc(100vw-2rem)] sm:w-96 max-w-md bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
       {/* 헤더 */}
-      <div className="px-4 py-3 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-200 flex items-center justify-between">
+      <div className="px-3 py-2.5 sm:px-4 sm:py-3 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-200 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-gray-900">알림</h3>
           {unreadCount > 0 && (
@@ -51,7 +51,7 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
       </div>
 
       {/* 알림 목록 */}
-      <div className="max-h-[400px] sm:max-h-[500px] overflow-y-auto custom-scrollbar">
+      <div className="max-h-[450px] sm:max-h-[500px] overflow-y-auto custom-scrollbar">
         {hasNotifications ? (
           <div className="divide-y divide-gray-100">
             {recentNotifications.map((notification, index) => (
@@ -90,7 +90,7 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
 
       {/* 푸터 */}
       {hasNotifications && (
-        <div className="px-4 py-3 bg-gradient-to-r from-indigo-50 to-purple-50 border-t border-gray-200">
+        <div className="px-3 py-2.5 sm:px-4 sm:py-3 bg-gradient-to-r from-indigo-50 to-purple-50 border-t border-gray-200">
           <Link
             to="/notifications"
             onClick={onClose}

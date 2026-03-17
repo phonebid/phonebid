@@ -58,6 +58,12 @@ export const notificationMetaMap: Record<NotificationType, NotificationMeta> = {
     displayName: "판매자 거부",
     priority: 4,
   },
+  CHAT_MESSAGE_RECEIVED: {
+    icon: "💬",
+    color: "pink",
+    displayName: "채팅 수신",
+    priority: 3,
+  },
 };
 
 /**
@@ -127,6 +133,9 @@ export function getNotificationRoute(
     
     case "SELLER_REJECTED":
       return "/seller-center";
+    
+    case "CHAT_MESSAGE_RECEIVED":
+      return referenceId ? `/chat/${referenceId}` : "/chat";
     
     default:
       return "/notifications";

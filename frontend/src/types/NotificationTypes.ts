@@ -10,7 +10,8 @@ export type NotificationType =
   | "DELIVERY_STARTED"
   | "DELIVERY_COMPLETED"
   | "SELLER_APPROVED"
-  | "SELLER_REJECTED";
+  | "SELLER_REJECTED"
+  | "CHAT_MESSAGE_RECEIVED";
 
 /**
  * 알림 채널 타입
