@@ -152,6 +152,21 @@ const BidDetailPage = () => {
                   {formatPrice(bid.pricePlanPrice)}
                 </span>
               </div>
+              {(bid.pricePlanDataAllowance || bid.pricePlanVoiceSms) && (
+                <div className="text-xs text-gray-500 space-y-0.5 mt-1">
+                  {bid.pricePlanCategory && (
+                    <span className="inline-block px-1.5 py-0.5 bg-gray-100 rounded text-gray-600 mr-1">
+                      {bid.pricePlanCategory === "FIVE_G" ? "5G" : "LTE"}
+                    </span>
+                  )}
+                  {bid.pricePlanDataAllowance && (
+                    <span>데이터 {bid.pricePlanDataAllowance}</span>
+                  )}
+                  {bid.pricePlanThrottleSpeed && bid.pricePlanThrottleSpeed !== "-" && (
+                    <span className="ml-1">(소진 시 {bid.pricePlanThrottleSpeed})</span>
+                  )}
+                </div>
+              )}
               {bid.pricePlanPrice && bid.pricePlanPrice >= 10000 && (
                 <p className="text-xs text-gray-500 mt-2">
                   3개월 후 10,000원 이상 요금제로 변경할 수 있습니다.

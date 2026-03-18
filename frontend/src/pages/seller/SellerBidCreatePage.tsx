@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useBidForm } from "hooks/useBidForm";
 import { QuoteRequestInfo } from "components/seller/QuoteRequestInfo";
 import { getQuoteDetail } from "services/quoteService";
+import { getActivePricePlans } from "services/pricePlanService";
 import { sellerService } from "services/sellerService";
 import { Card, CardContent, CardHeader, CardTitle } from "components/ui/card";
 import { Button } from "components/ui/button";
@@ -10,6 +11,7 @@ import { formatNumber } from "utils/formatters";
 import { logError } from "utils/errorUtils";
 import { toast } from "react-toastify";
 import type { QuoteDetail } from "types/QuoteTypes";
+import type { PricePlan, PricePlanCategory } from "types/SellerTypes";
 
 const SellerBidCreatePage: React.FC = () => {
   const navigate = useNavigate();
@@ -17,6 +19,8 @@ const SellerBidCreatePage: React.FC = () => {
   const [quote, setQuote] = useState<QuoteDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pricePlans, setPricePlans] = useState<PricePlan[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<PricePlanCategory>("FIVE_G");
 
   const bidForm = useBidForm(quote);
 
@@ -42,6 +46,29 @@ const SellerBidCreatePage: React.FC = () => {
 
     loadQuote();
   }, [quoteId, navigate]);
+
+  useEffect(() => {
+    const loadPricePlans = async () => {
+      if (!quote) return;
+      const carrierForPlans = quote.carrier === "ANY" ? undefined : 
+        (quote.carrier === "SKT_ALD" ? "SKT" : 
+         quote.carrier === "KT_ALD" ? "KT" : 
+         quote.carrier === "LGU_ALD" ? "LGU" : 
+         quote.carrier as "SKT" | "KT" | "LGU");
+      
+      try {
+        const plans = await getActivePricePlans({ 
+          carrier: carrierForPlans, 
+          category: selectedCategory 
+        });
+        setPricePlans(plans);
+      } catch (error) {
+        logError("요금제 목록 조회 실패:", error);
+      }
+    };
+
+    loadPricePlans();
+  }, [quote, selectedCategory]);
 
   const handleBack = () => {
     navigate("/seller-center");
@@ -282,50 +309,65 @@ const SellerBidCreatePage: React.FC = () => {
 
                 <div className="space-y-4 pt-4 border-t">
                   <div>
-                    <label className="text-sm font-medium text-foreground">
+                    <label className="text-sm font-medium text-foreground mb-2 block">
                       요금제 선택
                     </label>
-                    <input
-                      type="text"
-                      value={bidForm.formData.pricePlanName}
-                      onChange={(e) =>
-                        bidForm.updateField("pricePlanName", e.target.value)
-                      }
-                      placeholder="예: 5G 프리미어 에센셜"
-                      className="mt-1 w-full border border-input rounded-md h-10 px-3 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                    {bidForm.errors.pricePlanName && (
+                    <div className="flex gap-2 mb-3">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCategory("FIVE_G")}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                          selectedCategory === "FIVE_G"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        }`}
+                      >
+                        5G
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCategory("LTE")}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                          selectedCategory === "LTE"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        }`}
+                      >
+                        LTE
+                      </button>
+                    </div>
+                    <select
+                      value={bidForm.formData.pricePlanId}
+                      onChange={(e) => {
+                        const plan = pricePlans.find(p => p.id === e.target.value);
+                        if (plan) bidForm.selectPricePlan(plan);
+                      }}
+                      className="w-full border border-input rounded-md h-10 px-3 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                      <option value="">요금제를 선택해주세요</option>
+                      {pricePlans.map((plan) => (
+                        <option key={plan.id} value={plan.id}>
+                          {plan.planName} - {formatNumber(plan.monthlyFee)}원 ({plan.dataAllowanceText || "데이터 정보 없음"})
+                        </option>
+                      ))}
+                    </select>
+                    {bidForm.errors.pricePlanId && (
                       <p className="mt-1 text-sm text-red-500">
-                        {bidForm.errors.pricePlanName}
+                        {bidForm.errors.pricePlanId}
                       </p>
                     )}
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-foreground">
-                      요금제 가격
-                    </label>
-                    <input
-                      type="text"
-                      value={
-                        bidForm.formData.pricePlanPrice > 0
-                          ? formatNumber(bidForm.formData.pricePlanPrice)
-                          : ""
-                      }
-                      onChange={(e) => {
-                        const numericValue = e.target.value.replace(/[^0-9]/g, "");
-                        bidForm.updateField(
-                          "pricePlanPrice",
-                          parseInt(numericValue) || 0
-                        );
-                      }}
-                      placeholder="0"
-                      className="mt-1 w-full border border-input rounded-md h-10 px-3 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                    {bidForm.errors.pricePlanPrice && (
-                      <p className="mt-1 text-sm text-red-500">
-                        {bidForm.errors.pricePlanPrice}
-                      </p>
+                    {bidForm.formData.selectedPricePlan && (
+                      <div className="mt-2 p-3 bg-muted rounded-md text-sm">
+                        <div className="font-medium">{bidForm.formData.selectedPricePlan.planName}</div>
+                        <div className="text-muted-foreground text-xs mt-1 space-y-0.5">
+                          <div>월정액: {formatNumber(bidForm.formData.selectedPricePlan.monthlyFee)}원</div>
+                          <div>데이터: {bidForm.formData.selectedPricePlan.dataAllowanceText || "-"}</div>
+                          {bidForm.formData.selectedPricePlan.throttleSpeedText && bidForm.formData.selectedPricePlan.throttleSpeedText !== "-" && (
+                            <div>소진 시: {bidForm.formData.selectedPricePlan.throttleSpeedText}</div>
+                          )}
+                          <div>음성/문자: {bidForm.formData.selectedPricePlan.voiceSmsText || "-"}</div>
+                        </div>
+                      </div>
                     )}
                   </div>
 
