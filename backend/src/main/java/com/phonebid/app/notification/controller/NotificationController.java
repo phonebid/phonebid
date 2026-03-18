@@ -99,6 +99,23 @@ public class NotificationController {
     }
 
     /**
+     * 개별 알림 삭제 (소프트 삭제)
+     * 
+     * @param notificationId 알림 ID
+     * @param userDetails 인증된 사용자 정보
+     * @return 성공 응답
+     */
+    @DeleteMapping("/{notificationId}")
+    public ResponseEntity<ApiResponse<Void>> deleteNotification(@PathVariable UUID notificationId,
+                                                                @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        
+        UUID userId = userDetails.getUser().getId();
+        notificationService.deleteNotification(notificationId, userId);
+        
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "알림 삭제 완료", null));
+    }
+
+    /**
      * 모든 알림 삭제 (일괄 삭제)
      * 
      * @param userDetails 인증된 사용자 정보

@@ -119,6 +119,26 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
     int markAllAsReadByUserId(@Param("userId") UUID userId);
 
     /**
+     * 개별 알림 소프트 삭제
+     * 
+     * @param notificationId 알림 ID
+     * @param userId 사용자 ID (권한 확인용)
+     * @param deletedBy 삭제자
+     * @return 업데이트된 행 수 (0 또는 1)
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Notification n " +
+           "SET n.isDelete = true, " +
+           "n.deletedAt = CURRENT_TIMESTAMP, " +
+           "n.deletedBy = :deletedBy " +
+           "WHERE n.id = :notificationId " +
+           "AND n.user.id = :userId " +
+           "AND (n.isDelete = false OR n.isDelete IS NULL)")
+    int softDeleteByIdAndUserId(@Param("notificationId") UUID notificationId,
+                                @Param("userId") UUID userId,
+                                @Param("deletedBy") String deletedBy);
+
+    /**
      * 사용자별 모든 알림 일괄 소프트 삭제 (벌크 업데이트)
      * 
      * @param userId 사용자 ID
