@@ -57,8 +57,8 @@ public class BidService {
         // 3. 최저가 갱신 여부 확인을 위해 입찰 저장 전에 기존 최저 할부원금 조회
         Integer previousLowestInstallmentPrincipal = bidRepository.findMinInstallmentPrincipalByQuoteId(quote.getId(), BidStatus.ACTIVE);
 
-        // 4. 요금제 생성 및 저장
-        PricePlan pricePlan = createAndSavePricePlan(requestDto);
+        // 4. 요금제 조회 및 검증
+        PricePlan pricePlan = validateAndGetPricePlan(requestDto);
 
         // 5. 입찰 생성
         Bid bid = createAndSaveBid(requestDto, quote, seller, pricePlan);
@@ -105,10 +105,9 @@ public class BidService {
         return quote;
     }
 
-    // 요금제 생성 및 저장
-    private PricePlan createAndSavePricePlan(BidCreateRequestDto requestDto) {
-        PricePlan pricePlan = requestDto.toPricePlanEntity();
-        return pricePlanRepository.save(pricePlan);
+    private PricePlan validateAndGetPricePlan(BidCreateRequestDto requestDto) {
+        return pricePlanRepository.findByIdAndIsActiveTrue(requestDto.getPricePlanId())
+                .orElseThrow(() -> new CustomException(AuctionErrorCode.PRICE_PLAN_NOT_ACTIVE));
     }
 
     // 입찰 생성 및 저장
@@ -156,24 +155,11 @@ public class BidService {
             throw new CustomException(AuctionErrorCode.BID_MODIFICATION_NOT_ALLOWED);
         }
 
-        // 5. 요금제 업데이트 (요금제 정보가 제공된 경우)
-        if (requestDto.getPricePlanName() != null || requestDto.getPricePlanPrice() != null) {
-            PricePlan existingPricePlan = bid.getPricePlan();
-            
-            if (existingPricePlan != null) {
-                // 기존 PricePlan이 있는 경우 필드 업데이트
-                existingPricePlan.update(requestDto.getPricePlanName(), requestDto.getPricePlanPrice());
-                pricePlanRepository.save(existingPricePlan);
-            } else {
-                // 기존 PricePlan이 없는 경우 새로 생성
-                PricePlan newPricePlan = PricePlan.builder()
-                        .carrier(bid.getCarrier())
-                        .planName(requestDto.getPricePlanName())
-                        .planPrice(requestDto.getPricePlanPrice())
-                        .build();
-                pricePlanRepository.save(newPricePlan);
-                bid.updatePricePlan(newPricePlan);
-            }
+        // 5. 요금제 업데이트 (요금제 ID가 제공된 경우)
+        if (requestDto.getPricePlanId() != null) {
+            PricePlan newPricePlan = pricePlanRepository.findByIdAndIsActiveTrue(requestDto.getPricePlanId())
+                    .orElseThrow(() -> new CustomException(AuctionErrorCode.PRICE_PLAN_NOT_ACTIVE));
+            bid.updatePricePlan(newPricePlan);
         }
 
         // 6. 부가서비스 업데이트 (부가서비스 목록이 제공된 경우)
