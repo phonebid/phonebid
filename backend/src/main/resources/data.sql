@@ -222,3 +222,189 @@ INSERT INTO phone_options (id, model_id, option_type, option_value, display_labe
 INSERT INTO phone_options (id, model_id, option_type, option_value, display_label, created_at, updated_at, is_delete) VALUES ('b443b32b-bcd5-4f1f-9fe4-5fe59e5e280c', 'c614c39f-eabc-489f-a4db-8f3051621904', 'STORAGE', '512GB', '512GB', '2026-02-23 22:48:49', '2026-02-23 22:48:49', FALSE) ON CONFLICT (id) DO NOTHING;
 INSERT INTO phone_options (id, model_id, option_type, option_value, display_label, created_at, updated_at, is_delete) VALUES ('717a1f98-929c-42a2-b457-1993c5848a97', 'c614c39f-eabc-489f-a4db-8f3051621904', 'STORAGE', '1TB', '1TB', '2026-02-23 22:48:49', '2026-02-23 22:48:49', FALSE) ON CONFLICT (id) DO NOTHING;
 
+-- ========================================================================
+-- Dummy data for local development (user/admin/seller + quote/bid)
+-- ========================================================================
+
+-- Users
+INSERT INTO users (id, username, password, email, name, nickname, phone, role, provider, provider_id, profile_image_url, carrier, is_identity_verified, verified_at, created_at, updated_at, is_delete)
+VALUES ('f0f0a111-1111-4111-8111-111111111111', 'seed_user_20260308', '$2a$10$7eqJtq98hPqEX7fNZaFWoO.HVQ5fD4QnQeNf5f7dI4A4A4A4A4A4O', 'seed.user.20260308@phonebid.local', '홍소비', '소비자샘플', '01012345678', 'CONSUMER', NULL, NULL, NULL, 'KT', TRUE, '2026-03-08 10:00:00', '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO users (id, username, password, email, name, nickname, phone, role, provider, provider_id, profile_image_url, carrier, is_identity_verified, verified_at, created_at, updated_at, is_delete)
+VALUES ('f0f0a222-2222-4222-8222-222222222222', 'seed_admin_20260308', '$2a$10$7eqJtq98hPqEX7fNZaFWoO.HVQ5fD4QnQeNf5f7dI4A4A4A4A4A4O', 'seed.admin.20260308@phonebid.local', '김관리', '관리자샘플', '01023456789', 'ADMIN', NULL, NULL, NULL, 'SKT', TRUE, '2026-03-08 10:00:00', '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO users (id, username, password, email, name, nickname, phone, role, provider, provider_id, profile_image_url, carrier, is_identity_verified, verified_at, created_at, updated_at, is_delete)
+VALUES ('f0f0a333-3333-4333-8333-333333333333', 'seed_seller_a_20260308', '$2a$10$7eqJtq98hPqEX7fNZaFWoO.HVQ5fD4QnQeNf5f7dI4A4A4A4A4A4O', 'seed.seller.a.20260308@phonebid.local', '박판매', '판매자A', '01034567890', 'SELLER', NULL, NULL, NULL, 'SKT', TRUE, '2026-03-08 10:00:00', '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO users (id, username, password, email, name, nickname, phone, role, provider, provider_id, profile_image_url, carrier, is_identity_verified, verified_at, created_at, updated_at, is_delete)
+VALUES ('f0f0a444-4444-4444-8444-444444444444', 'seed_seller_b_20260308', '$2a$10$7eqJtq98hPqEX7fNZaFWoO.HVQ5fD4QnQeNf5f7dI4A4A4A4A4A4O', 'seed.seller.b.20260308@phonebid.local', '이판매', '판매자B', '01045678901', 'SELLER', NULL, NULL, NULL, 'LGU', TRUE, '2026-03-08 10:00:00', '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
+ON CONFLICT (id) DO NOTHING;
+
+-- Sellers
+INSERT INTO sellers (seller_id, user_id, business_number, store_name, approval_status, postal_code, address, detail_address, is_agent, representative_name, business_postal_code, business_address, business_detail_address, consent_number, customer_service_phone, created_at, updated_at, is_delete)
+VALUES ('a1b2c311-1111-4111-8111-111111111111', 'f0f0a333-3333-4333-8333-333333333333', '123-45-67890', '폰비드 강남점', 'APPROVED', '06234', '서울 강남구 테헤란로 1', '101호', TRUE, '박판매', '06234', '서울 강남구 테헤란로 1', '101호', 'CN-2026-SELLER-A', '0212345678', '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
+ON CONFLICT (seller_id) DO NOTHING;
+
+INSERT INTO sellers (seller_id, user_id, business_number, store_name, approval_status, postal_code, address, detail_address, is_agent, representative_name, business_postal_code, business_address, business_detail_address, consent_number, customer_service_phone, created_at, updated_at, is_delete)
+VALUES ('a1b2c322-2222-4222-8222-222222222222', 'f0f0a444-4444-4444-8444-444444444444', '234-56-78901', '폰비드 마포점', 'APPROVED', '04123', '서울 마포구 월드컵북로 2', '202호', FALSE, '이판매', '04123', '서울 마포구 월드컵북로 2', '202호', 'CN-2026-SELLER-B', '0298765432', '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
+ON CONFLICT (seller_id) DO NOTHING;
+
+-- Quotes (consumer requests)
+INSERT INTO quotes (id, user_id, phone_model_id, storage, color, carrier, status, expired_at, purchase_method, current_carrier, activation_method, created_at, updated_at, is_delete)
+VALUES ('b1c2d311-1111-4111-8111-111111111111', 'f0f0a111-1111-4111-8111-111111111111', '91bfa9bc-97f8-4093-acd9-749356415499', '667ac51a-e969-4c82-b0c3-13dc3d4d0de6', 'e61714f3-6200-4631-ab9c-bb429f5b9cc9', 'SKT', 'OPEN', '2030-12-31 23:59:59', 'NUMBER_TRANSFER', 'KT', 'SELECTIVE_SUBSIDY', '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO quotes (id, user_id, phone_model_id, storage, color, carrier, status, expired_at, purchase_method, current_carrier, activation_method, created_at, updated_at, is_delete)
+VALUES ('b1c2d322-2222-4222-8222-222222222222', 'f0f0a111-1111-4111-8111-111111111111', 'cb4b0a30-3107-4435-b5da-6b07246bc7d4', '33344cdd-eab8-4368-b5b8-b3b801b93fda', '79957f79-1fcd-4e14-a551-83d4308f9c90', 'ANY', 'OPEN', '2030-12-31 23:59:59', 'ANY', NULL, 'ANY', '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
+ON CONFLICT (id) DO NOTHING;
+
+-- ========================================================================
+-- Price Plans Master Data (신규 스키마 기반)
+-- ========================================================================
+
+-- SKT 5G 요금제
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('a1000001-0001-5001-8000-000000000001', 'SKT', 'FIVE_G', '5GX 플래티넘', 125000, '무제한', '-', '집/이동전화 무제한', TRUE, 1, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('a1000002-0001-5001-8000-000000000002', 'SKT', 'FIVE_G', '0 청년 109', 109000, '무제한', '-', '집/이동전화 무제한', TRUE, 2, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('a1000003-0001-5001-8000-000000000003', 'SKT', 'FIVE_G', '5GX 프리미엄', 109000, '무제한', '-', '집/이동전화 무제한', TRUE, 3, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('a1000004-0001-5001-8000-000000000004', 'SKT', 'FIVE_G', '0 청년 99', 99000, '무제한', '-', '집/이동전화 무제한', TRUE, 4, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('a1000005-0001-5001-8000-000000000005', 'SKT', 'FIVE_G', '5GX 프라임플러스', 99000, '무제한', '-', '집/이동전화 무제한', TRUE, 5, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('a1000006-0001-5001-8000-000000000006', 'SKT', 'FIVE_G', '0 청년 89', 89000, '무제한', '-', '집/이동전화 무제한', TRUE, 6, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('a1000007-0001-5001-8000-000000000007', 'SKT', 'FIVE_G', '5GX 프라임', 89000, '무제한', '-', '집/이동전화 무제한', TRUE, 7, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('a1000008-0001-5001-8000-000000000008', 'SKT', 'FIVE_G', '0 청년 79', 79000, '300GB', '5Mbps', '집/이동전화 무제한', TRUE, 8, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('a1000009-0001-5001-8000-000000000009', 'SKT', 'FIVE_G', '5GX 레귤러플러스', 79000, '250GB', '5Mbps', '집/이동전화 무제한', TRUE, 9, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('a1000010-0001-5001-8000-000000000010', 'SKT', 'FIVE_G', '다이렉트5G 76', 76000, '무제한', '-', '집/이동전화 무제한', TRUE, 10, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('a1000011-0001-5001-8000-000000000011', 'SKT', 'FIVE_G', '0 청년 다이렉트 69', 69000, '무제한', '-', '집/이동전화 무제한', TRUE, 11, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('a1000012-0001-5001-8000-000000000012', 'SKT', 'FIVE_G', '다이렉트5G 69', 69000, '무제한', '-', '집/이동전화 무제한', TRUE, 12, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('a1000013-0001-5001-8000-000000000013', 'SKT', 'FIVE_G', '5G 행복누리 레귤러', 69000, '110GB', '5Mbps', '집/이동전화 무제한', TRUE, 13, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('a1000014-0001-5001-8000-000000000014', 'SKT', 'FIVE_G', '0 청년 69', 69000, '160GB', '5Mbps', '집/이동전화 무제한', TRUE, 14, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('a1000015-0001-5001-8000-000000000015', 'SKT', 'FIVE_G', '5GX 레귤러', 69000, '110GB', '5Mbps', '집/이동전화 무제한', TRUE, 15, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('a1000016-0001-5001-8000-000000000016', 'SKT', 'FIVE_G', '슬림', 55000, '15GB', '1Mbps', '집/이동전화 무제한', TRUE, 16, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+
+-- KT 5G 요금제
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('b1000001-0002-5001-8000-000000000001', 'KT', 'FIVE_G', '5G 초이스 프리미엄', 130000, '무제한', '-', '집/이동전화 무제한', TRUE, 1, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('b1000002-0002-5001-8000-000000000002', 'KT', 'FIVE_G', '5G 초이스 스페셜', 110000, '무제한', '-', '집/이동전화 무제한', TRUE, 2, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('b1000003-0002-5001-8000-000000000003', 'KT', 'FIVE_G', '5G 초이스 베이직', 90000, '무제한', '-', '집/이동전화 무제한', TRUE, 3, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('b1000004-0002-5001-8000-000000000004', 'KT', 'FIVE_G', '5G 스페셜', 100000, '무제한', '-', '집/이동전화 무제한', TRUE, 4, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('b1000005-0002-5001-8000-000000000005', 'KT', 'FIVE_G', '5G 스페셜 Y', 100000, '무제한', '-', '집/이동전화 무제한', TRUE, 5, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('b1000006-0002-5001-8000-000000000006', 'KT', 'FIVE_G', '5G 베이직', 80000, '무제한', '-', '집/이동전화 무제한', TRUE, 6, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('b1000007-0002-5001-8000-000000000007', 'KT', 'FIVE_G', '5G 베이직 Y', 80000, '무제한', '-', '집/이동전화 무제한', TRUE, 7, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('b1000008-0002-5001-8000-000000000008', 'KT', 'FIVE_G', '5G 심플 110GB', 69000, '110GB', '5Mbps', '집/이동전화 무제한', TRUE, 8, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('b1000009-0002-5001-8000-000000000009', 'KT', 'FIVE_G', '5G 심플 90GB', 67000, '90GB', '1Mbps', '집/이동전화 무제한', TRUE, 9, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('b1000010-0002-5001-8000-000000000010', 'KT', 'FIVE_G', '5G 심플 70GB', 65000, '70GB', '1Mbps', '집/이동전화 무제한', TRUE, 10, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('b1000011-0002-5001-8000-000000000011', 'KT', 'FIVE_G', '5G 심플 50GB', 63000, '50GB', '1Mbps', '집/이동전화 무제한', TRUE, 11, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('b1000012-0002-5001-8000-000000000012', 'KT', 'FIVE_G', '5G 심플 30GB', 61000, '30GB', '1Mbps', '집/이동전화 무제한', TRUE, 12, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('b1000013-0002-5001-8000-000000000013', 'KT', 'FIVE_G', '5G 슬림 21GB', 58000, '21GB', '1Mbps', '집/이동전화 무제한', TRUE, 13, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('b1000014-0002-5001-8000-000000000014', 'KT', 'FIVE_G', '5G 슬림 14GB', 55000, '14GB', '1Mbps', '집/이동전화 무제한', TRUE, 14, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('b1000015-0002-5001-8000-000000000015', 'KT', 'FIVE_G', '5G 슬림 Y', 55000, '14GB', '1Mbps', '집/이동전화 무제한', TRUE, 15, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('b1000016-0002-5001-8000-000000000016', 'KT', 'FIVE_G', '5G 슬림 10GB', 50000, '10GB', '400Kbps', '집/이동전화 무제한', TRUE, 16, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('b1000017-0002-5001-8000-000000000017', 'KT', 'FIVE_G', '5G 슬림 4GB', 45000, '4GB', '400Kbps', '집/이동전화 무제한', TRUE, 17, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('b1000018-0002-5001-8000-000000000018', 'KT', 'FIVE_G', '5G 슬림 라이트', 37000, '10GB', '1Mbps', '집/이동전화 무제한', TRUE, 18, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+
+-- LGU+ 5G 요금제
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('c1000001-0003-5001-8000-000000000001', 'LGU', 'FIVE_G', '5G 시그니처', 130000, '무제한', '-', '집/이동전화 무제한', TRUE, 1, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('c1000002-0003-5001-8000-000000000002', 'LGU', 'FIVE_G', '5G 프리미어 슈퍼', 115000, '무제한', '-', '집/이동전화 무제한', TRUE, 2, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('c1000003-0003-5001-8000-000000000003', 'LGU', 'FIVE_G', '5G 프리미어 플러스', 105000, '무제한', '-', '집/이동전화 무제한', TRUE, 3, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('c1000004-0003-5001-8000-000000000004', 'LGU', 'FIVE_G', '5G 프리미어 레귤러', 95000, '무제한', '-', '집/이동전화 무제한', TRUE, 4, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('c1000005-0003-5001-8000-000000000005', 'LGU', 'FIVE_G', '5G 프리미어 에센셜', 85000, '무제한', '-', '집/이동전화 무제한', TRUE, 5, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('c1000006-0003-5001-8000-000000000006', 'LGU', 'FIVE_G', '5G 스탠다드', 75000, '150GB', '5Mbps', '집/이동전화 무제한', TRUE, 6, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('c1000007-0003-5001-8000-000000000007', 'LGU', 'FIVE_G', '5G 스탠다드 에센셜', 70000, '125GB', '5Mbps', '집/이동전화 무제한', TRUE, 7, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('c1000008-0003-5001-8000-000000000008', 'LGU', 'FIVE_G', '5G 데이터 레귤러', 63000, '50GB', '1Mbps', '집/이동전화 무제한', TRUE, 8, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('c1000009-0003-5001-8000-000000000009', 'LGU', 'FIVE_G', '5G 라이트+', 55000, '14GB', '1Mbps', '집/이동전화 무제한', TRUE, 9, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+
+-- LGU+ LTE 요금제
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('d1000001-0004-5001-8000-000000000001', 'LGU', 'LTE', 'LTE 프리미어 플러스', 105000, '무제한', '-', '집/이동전화 무제한', TRUE, 1, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('d1000002-0004-5001-8000-000000000002', 'LGU', 'LTE', '추가요금 걱정없는 69', 69000, '매일 5GB', '5Mbps', '집/이동전화 무제한', TRUE, 2, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('d1000003-0004-5001-8000-000000000003', 'LGU', 'LTE', '추가요금 걱정없는 59', 59000, '6.6GB', '1Mbps', '집/이동전화 무제한', TRUE, 3, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('d1000004-0004-5001-8000-000000000004', 'LGU', 'LTE', '추가요금 걱정없는 49', 49000, '3GB', '1Mbps', '집/이동전화 무제한', TRUE, 4, NOW(), NOW(), FALSE) ON CONFLICT (id) DO NOTHING;
+
+-- ========================================================================
+-- Legacy Price Plans (기존 테스트용 - 신규 스키마 컬럼 기본값 적용)
+-- ========================================================================
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('c1d2e311-1111-4111-8111-111111111111', 'SKT', 'FIVE_G', '5GX 프라임 110GB', 89000, '110GB', '5Mbps', '집/이동전화 무제한', TRUE, 100, '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('c1d2e322-2222-4222-8222-222222222222', 'SKT', 'FIVE_G', '5GX 스탠다드', 69000, '110GB', '5Mbps', '집/이동전화 무제한', TRUE, 101, '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO price_plans (id, carrier, category, plan_name, monthly_fee, data_allowance_text, throttle_speed_text, voice_sms_text, is_active, display_order, created_at, updated_at, is_delete)
+VALUES ('c1d2e333-3333-4333-8333-333333333333', 'LGU', 'FIVE_G', '5G 프리미어 에센셜', 85000, '무제한', '-', '집/이동전화 무제한', TRUE, 102, '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
+ON CONFLICT (id) DO NOTHING;
+
+-- Bids from sellers
+INSERT INTO bids (id, quote_id, seller_id, price_plan_id, price, delivery_days, rating_snapshot, purchase_method, carrier, current_carrier, activation_method, additional_subsidy, installment_principal, contract_months, status, created_at, updated_at, is_delete)
+VALUES ('d1e2f311-1111-4111-8111-111111111111', 'b1c2d311-1111-4111-8111-111111111111', 'a1b2c311-1111-4111-8111-111111111111', 'c1d2e311-1111-4111-8111-111111111111', 980000, 1, 4.8, 'NUMBER_TRANSFER', 'SKT', 'KT', 'SELECTIVE_SUBSIDY', 120000, 350000, 24, 'ACTIVE', '2026-03-08 10:10:00', '2026-03-08 10:10:00', FALSE)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO bids (id, quote_id, seller_id, price_plan_id, price, delivery_days, rating_snapshot, purchase_method, carrier, current_carrier, activation_method, additional_subsidy, installment_principal, contract_months, status, created_at, updated_at, is_delete)
+VALUES ('d1e2f322-2222-4222-8222-222222222222', 'b1c2d311-1111-4111-8111-111111111111', 'a1b2c322-2222-4222-8222-222222222222', 'c1d2e322-2222-4222-8222-222222222222', 965000, 2, 4.6, 'NUMBER_TRANSFER', 'SKT', 'KT', 'COMMON_SUBSIDY', 100000, 330000, 24, 'ACTIVE', '2026-03-08 10:12:00', '2026-03-08 10:12:00', FALSE)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO bids (id, quote_id, seller_id, price_plan_id, price, delivery_days, rating_snapshot, purchase_method, carrier, current_carrier, activation_method, additional_subsidy, installment_principal, contract_months, status, created_at, updated_at, is_delete)
+VALUES ('d1e2f333-3333-4333-8333-333333333333', 'b1c2d322-2222-4222-8222-222222222222', 'a1b2c322-2222-4222-8222-222222222222', 'c1d2e333-3333-4333-8333-333333333333', 1050000, 3, 4.7, 'NEW_SUBSCRIPTION', 'LGU', NULL, 'COMMON_SUBSIDY', 80000, 420000, 24, 'ACTIVE', '2026-03-08 10:20:00', '2026-03-08 10:20:00', FALSE)
+ON CONFLICT (id) DO NOTHING;
+
+-- Additional services attached to bids
+INSERT INTO bid_additional_services (id, bid_id, service_name, service_price, description, mandatory, cancellable_after_months, created_at, updated_at, is_delete)
+VALUES ('e1f2a311-1111-4111-8111-111111111111', 'd1e2f311-1111-4111-8111-111111111111', '통화안심보험', 4900, '파손/분실 보장 보험', TRUE, 3, '2026-03-08 10:10:00', '2026-03-08 10:10:00', FALSE)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO bid_additional_services (id, bid_id, service_name, service_price, description, mandatory, cancellable_after_months, created_at, updated_at, is_delete)
+VALUES ('e1f2a322-2222-4222-8222-222222222222', 'd1e2f322-2222-4222-8222-222222222222', '데이터쉐어링', 5500, '태블릿/워치 데이터 공유', FALSE, 1, '2026-03-08 10:12:00', '2026-03-08 10:12:00', FALSE)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO bid_additional_services (id, bid_id, service_name, service_price, description, mandatory, cancellable_after_months, created_at, updated_at, is_delete)
+VALUES ('e1f2a333-3333-4333-8333-333333333333', 'd1e2f333-3333-4333-8333-333333333333', '유심보호서비스', 0, '유심 교체/보호 부가서비스', FALSE, NULL, '2026-03-08 10:20:00', '2026-03-08 10:20:00', FALSE)
+ON CONFLICT (id) DO NOTHING;
+
