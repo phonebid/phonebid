@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNotificationStore } from "store/notificationStore";
 import { useNotifications } from "hooks/useNotifications";
 import { NotificationItem } from "components/notification/NotificationItem";
+import { ConfirmModal } from "components/ui/ConfirmModal";
 import { Button } from "components/ui/button";
 import type { NotificationFilter } from "types/NotificationTypes";
 import { cn } from "utils/cn";
@@ -18,6 +19,7 @@ export function NotificationsPage() {
   const [filter, setFilter] = useState<NotificationFilter>("all");
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
 
   // 초기 로드
   useEffect(() => {
@@ -53,17 +55,22 @@ export function NotificationsPage() {
     }
   };
 
-  const handleDeleteAll = async () => {
+  const handleDeleteAllClick = () => {
     if (notifications.length === 0) return;
-    
-    const confirmed = window.confirm("모든 알림을 삭제하시겠습니까?");
-    if (!confirmed) return;
+    setShowDeleteAllModal(true);
+  };
 
+  const handleDeleteAllConfirm = async () => {
     try {
       await deleteAllNotifications();
+      setShowDeleteAllModal(false);
     } catch (error) {
       console.error("모든 알림 삭제 실패:", error);
     }
+  };
+
+  const handleDeleteAllCancel = () => {
+    setShowDeleteAllModal(false);
   };
 
   const filteredNotifications = notifications.filter((n) => {
@@ -184,7 +191,7 @@ export function NotificationsPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleDeleteAll}
+                  onClick={handleDeleteAllClick}
                   className="text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300 transition-all"
                 >
                   <svg
@@ -296,6 +303,18 @@ export function NotificationsPage() {
           )}
         </div>
       </div>
+
+      {/* 모두 삭제 확인 모달 */}
+      <ConfirmModal
+        isOpen={showDeleteAllModal}
+        onClose={handleDeleteAllCancel}
+        onConfirm={handleDeleteAllConfirm}
+        title="모든 알림 삭제"
+        message={`총 ${notifications.length}개의 알림을 모두 삭제하시겠습니까?\n삭제된 알림은 복구할 수 없습니다.`}
+        confirmText="모두 삭제"
+        cancelText="취소"
+        variant="danger"
+      />
     </div>
   );
 }
