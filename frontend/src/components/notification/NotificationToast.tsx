@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useNotificationStore } from "store/notificationStore";
 import {
@@ -24,6 +24,13 @@ function ToastItem({ notification, onClose }: ToastItemProps) {
     getNotificationColor(notification.type)
   );
 
+  const handleClose = useCallback(() => {
+    setIsExiting(true);
+    setTimeout(() => {
+      onClose(notification.id);
+    }, 300);
+  }, [onClose, notification.id]);
+
   useEffect(() => {
     // 5초 후 자동 사라짐
     const timer = setTimeout(() => {
@@ -31,14 +38,7 @@ function ToastItem({ notification, onClose }: ToastItemProps) {
     }, 5000);
 
     return () => clearTimeout(timer);
-  }, [notification.id]);
-
-  const handleClose = () => {
-    setIsExiting(true);
-    setTimeout(() => {
-      onClose(notification.id);
-    }, 300); // 애니메이션 시간
-  };
+  }, [notification.id, handleClose]);
 
   const handleClick = () => {
     const route = getNotificationRoute(notification.type, notification.referenceId);

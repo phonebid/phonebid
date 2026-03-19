@@ -29,7 +29,7 @@ export function useNotificationSSE(options: UseNotificationSSEOptions = {}) {
   } = options;
 
   const eventSourceRef = useRef<EventSource | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const maxReconnectAttempts = 10;
   const isSseDebugEnabled =
