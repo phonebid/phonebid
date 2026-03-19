@@ -291,6 +291,9 @@ export function getNotificationRoute(
  */
 export function getTimeAgo(dateString: string): string {
   const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) {
+    return "알 수 없음";
+  }
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffSeconds = Math.floor(diffMs / 1000);

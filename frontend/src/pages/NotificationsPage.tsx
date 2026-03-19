@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNotificationStore } from "store/notificationStore";
 import { useNotifications } from "hooks/useNotifications";
 import { NotificationItem } from "components/notification/NotificationItem";
@@ -23,26 +23,29 @@ export function NotificationsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
 
+  const loadNotifications = useCallback(
+    async (pageNum: number, filterType: NotificationFilter) => {
+      try {
+        // numbered pagination에서는 임의의 페이지로 이동할 때 store를 비운 뒤 로드해야 함
+        // (useNotifications는 page > 0일 때 appendNotifications을 사용하므로)
+        if (pageNum !== 0) {
+          setNotifications([]);
+        }
+
+        const response = await fetchNotifications(pageNum, 10, filterType);
+        setTotalPages(response.totalPages || 1);
+        setPage(pageNum);
+      } catch (error) {
+        console.error("알림 목록 로드 실패:", error);
+      }
+    },
+    [fetchNotifications, setNotifications]
+  );
+
   // 초기 로드
   useEffect(() => {
     loadNotifications(0, filter);
-  }, [filter]);
-
-  const loadNotifications = async (pageNum: number, filterType: NotificationFilter) => {
-    try {
-      // numbered pagination에서는 임의의 페이지로 이동할 때 store를 비운 뒤 로드해야 함
-      // (useNotifications는 page > 0일 때 appendNotifications을 사용하므로)
-      if (pageNum !== 0) {
-        setNotifications([]);
-      }
-
-      const response = await fetchNotifications(pageNum, 10, filterType);
-      setTotalPages(response.totalPages || 1);
-      setPage(pageNum);
-    } catch (error) {
-      console.error("알림 목록 로드 실패:", error);
-    }
-  };
+  }, [filter, loadNotifications]);
 
   const handleFilterChange = (newFilter: NotificationFilter) => {
     setFilter(newFilter);
