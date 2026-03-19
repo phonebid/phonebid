@@ -118,6 +118,12 @@ export const notificationMetaMap: Record<NotificationType, NotificationMeta> = {
     displayName: "견적 등록",
     priority: 2,
   },
+  QUOTE_EXPIRING_SOON: {
+    icon: "⏳",
+    color: "orange",
+    displayName: "견적 마감 임박",
+    priority: 3,
+  },
   BID_ARRIVED: {
     icon: "💰",
     color: "green",
@@ -129,6 +135,12 @@ export const notificationMetaMap: Record<NotificationType, NotificationMeta> = {
     color: "emerald",
     displayName: "입찰 선택",
     priority: 4,
+  },
+  LOWEST_PRICE_UPDATED: {
+    icon: "📉",
+    color: "green",
+    displayName: "최저가 갱신",
+    priority: 3,
   },
   CONTRACT_SIGNED: {
     icon: "📄",
@@ -154,6 +166,12 @@ export const notificationMetaMap: Record<NotificationType, NotificationMeta> = {
     displayName: "배송 완료",
     priority: 3,
   },
+  SELLER_APPROVAL_REQUESTED: {
+    icon: "📩",
+    color: "blue",
+    displayName: "판매자 승인 요청",
+    priority: 2,
+  },
   SELLER_APPROVED: {
     icon: "👍",
     color: "green",
@@ -165,6 +183,24 @@ export const notificationMetaMap: Record<NotificationType, NotificationMeta> = {
     color: "red",
     displayName: "판매자 거부",
     priority: 4,
+  },
+  REPORT_RECEIVED: {
+    icon: "🚩",
+    color: "red",
+    displayName: "신고 접수",
+    priority: 4,
+  },
+  SYSTEM_ANOMALY: {
+    icon: "⚠️",
+    color: "red",
+    displayName: "시스템 이상",
+    priority: 5,
+  },
+  STATISTICS_SUMMARY: {
+    icon: "📊",
+    color: "indigo",
+    displayName: "통계 요약",
+    priority: 2,
   },
   CHAT_MESSAGE_RECEIVED: {
     icon: "💬",
