@@ -9,7 +9,7 @@ import type { NotificationFilter } from "types/NotificationTypes";
 import { cn } from "utils/cn";
 
 export function NotificationsPage() {
-  const { notifications, unreadCount } = useNotificationStore();
+  const { notifications, unreadCount, setNotifications } = useNotificationStore();
   const {
     fetchNotifications,
     markAllAsRead,
@@ -20,7 +20,7 @@ export function NotificationsPage() {
 
   const [filter, setFilter] = useState<NotificationFilter>("all");
   const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
 
   // 초기 로드
@@ -30,17 +30,18 @@ export function NotificationsPage() {
 
   const loadNotifications = async (pageNum: number, filterType: NotificationFilter) => {
     try {
-      const response = await fetchNotifications(pageNum, 20, filterType);
-      setHasMore(response.hasNext);
+      // numbered pagination에서는 임의의 페이지로 이동할 때 store를 비운 뒤 로드해야 함
+      // (useNotifications는 page > 0일 때 appendNotifications을 사용하므로)
+      if (pageNum !== 0) {
+        setNotifications([]);
+      }
+
+      const response = await fetchNotifications(pageNum, 10, filterType);
+      setTotalPages(response.totalPages || 1);
       setPage(pageNum);
     } catch (error) {
       console.error("알림 목록 로드 실패:", error);
     }
-  };
-
-  const loadMore = () => {
-    if (!hasMore || isLoading) return;
-    loadNotifications(page + 1, filter);
   };
 
   const handleFilterChange = (newFilter: NotificationFilter) => {
@@ -81,6 +82,17 @@ export function NotificationsPage() {
     return true;
   });
 
+  const visiblePageIndices = (() => {
+    const total = Math.max(1, totalPages);
+    const windowSize = 3;
+
+    let start = Math.max(0, page - 1);
+    let end = Math.min(total - 1, start + windowSize - 1);
+    start = Math.max(0, end - windowSize + 1);
+
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  })();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-indigo-50/30 to-purple-50/30 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -104,14 +116,13 @@ export function NotificationsPage() {
             </div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">알림</h1>
-              <p className="mt-1 text-sm text-gray-500">
-                총 {notifications.length}개의 알림
-                {unreadCount > 0 && (
-                  <span className="ml-1 px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">
+              {unreadCount > 0 && (
+                <p className="mt-1 text-sm text-gray-500">
+                  <span className="ml-0 px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">
                     미읽음 {unreadCount}
                   </span>
-                )}
-              </p>
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -247,42 +258,33 @@ export function NotificationsPage() {
                 ))}
               </div>
 
-              {/* 더보기 버튼 */}
-              {hasMore && (
+              {/* 숫자 페이징 */}
+              {totalPages > 1 && (
                 <div className="p-4 text-center border-t bg-gray-50">
-                  <Button
-                    variant="outline"
-                    onClick={loadMore}
-                    disabled={isLoading}
-                    className="hover:bg-indigo-50 hover:border-indigo-300 transition-all"
-                  >
-                    {isLoading ? (
-                      <>
-                        <svg
-                          className="animate-spin -ml-1 mr-2 h-4 w-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
+                  <div className="flex items-center justify-center gap-2">
+                    {visiblePageIndices.map((pageIndex) => {
+                      const label = pageIndex + 1;
+                      const isActive = pageIndex === page;
+
+                      return (
+                        <Button
+                          key={pageIndex}
+                          variant={isActive ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => loadNotifications(pageIndex, filter)}
+                          disabled={isLoading || isActive}
+                          className={
+                            isActive
+                              ? "shadow"
+                              : "hover:bg-indigo-50 hover:border-indigo-300 transition-all"
+                          }
+                          aria-current={isActive ? "page" : undefined}
                         >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          />
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          />
-                        </svg>
-                        로딩 중...
-                      </>
-                    ) : (
-                      "더보기"
-                    )}
-                  </Button>
+                          {label}
+                        </Button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </>
