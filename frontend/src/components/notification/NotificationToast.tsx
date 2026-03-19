@@ -4,6 +4,7 @@ import { useNotificationStore } from "store/notificationStore";
 import {
   getNotificationIcon,
   getNotificationColor,
+  getNotificationColorClasses,
   getNotificationRoute,
 } from "utils/notificationUtils";
 import type { NotificationDisplayItem } from "types/NotificationTypes";
@@ -19,7 +20,9 @@ function ToastItem({ notification, onClose }: ToastItemProps) {
   const [isExiting, setIsExiting] = useState(false);
 
   const icon = getNotificationIcon(notification.type);
-  const color = getNotificationColor(notification.type);
+  const colorClasses = getNotificationColorClasses(
+    getNotificationColor(notification.type)
+  );
 
   useEffect(() => {
     // 5초 후 자동 사라짐
@@ -48,7 +51,7 @@ function ToastItem({ notification, onClose }: ToastItemProps) {
       onClick={handleClick}
       className={cn(
         "flex items-start gap-3 p-4 bg-white rounded-lg shadow-lg border-l-4 cursor-pointer transition-all duration-300 max-w-sm",
-        `border-${color}-500`,
+        colorClasses.border,
         isExiting
           ? "animate-slide-out-right"
           : "animate-slide-in-right",
@@ -59,7 +62,8 @@ function ToastItem({ notification, onClose }: ToastItemProps) {
       <div
         className={cn(
           "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-md",
-          `bg-${color}-100 text-${color}-600`
+          colorClasses.iconBg,
+          colorClasses.iconText
         )}
       >
         {icon}
@@ -79,7 +83,7 @@ function ToastItem({ notification, onClose }: ToastItemProps) {
           <div
             className={cn(
               "h-full rounded-full transition-all",
-              `bg-${color}-500`
+              colorClasses.accent
             )}
             style={{
               width: "100%",

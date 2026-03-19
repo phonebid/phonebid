@@ -5,6 +5,7 @@ import type { NotificationDisplayItem } from "types/NotificationTypes";
 import {
   getNotificationIcon,
   getNotificationColor,
+  getNotificationColorClasses,
   getTimeAgo,
   getNotificationRoute,
 } from "utils/notificationUtils";
@@ -28,7 +29,9 @@ export function NotificationItem({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const icon = getNotificationIcon(notification.type);
-  const color = getNotificationColor(notification.type);
+  const colorClasses = getNotificationColorClasses(
+    getNotificationColor(notification.type)
+  );
   const timeAgo = getTimeAgo(notification.createdAt);
 
   const handleClick = async () => {
@@ -79,7 +82,8 @@ export function NotificationItem({
         <div
           className={cn(
             "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-xl transition-transform group-hover:scale-110 shadow-sm",
-            `bg-${color}-100 text-${color}-600`
+            colorClasses.iconBg,
+            colorClasses.iconText
           )}
         >
           {icon}

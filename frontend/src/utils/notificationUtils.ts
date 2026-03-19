@@ -1,5 +1,113 @@
 import type { NotificationType, NotificationMeta } from "types/NotificationTypes";
 
+/** 알림 아이콘/테두리 등에 쓰이는 Tailwind 색상 키 (정적 클래스용) */
+export const NOTIFICATION_COLOR_KEYS = [
+  "blue",
+  "green",
+  "emerald",
+  "purple",
+  "indigo",
+  "orange",
+  "teal",
+  "red",
+  "pink",
+  "gray",
+  "white",
+] as const;
+
+export type NotificationColorKey = (typeof NOTIFICATION_COLOR_KEYS)[number];
+
+/** 색상별 Tailwind 클래스 (JIT 인식용 정적 문자열) */
+export interface NotificationColorClasses {
+  iconBg: string;
+  iconText: string;
+  border: string;
+  accent: string;
+}
+
+export const COLORS_MAP: Record<NotificationColorKey, NotificationColorClasses> = {
+  blue: {
+    iconBg: "bg-blue-100",
+    iconText: "text-blue-600",
+    border: "border-blue-500",
+    accent: "bg-blue-500",
+  },
+  green: {
+    iconBg: "bg-green-100",
+    iconText: "text-green-600",
+    border: "border-green-500",
+    accent: "bg-green-500",
+  },
+  emerald: {
+    iconBg: "bg-emerald-100",
+    iconText: "text-emerald-600",
+    border: "border-emerald-500",
+    accent: "bg-emerald-500",
+  },
+  purple: {
+    iconBg: "bg-purple-100",
+    iconText: "text-purple-600",
+    border: "border-purple-500",
+    accent: "bg-purple-500",
+  },
+  indigo: {
+    iconBg: "bg-indigo-100",
+    iconText: "text-indigo-600",
+    border: "border-indigo-500",
+    accent: "bg-indigo-500",
+  },
+  orange: {
+    iconBg: "bg-orange-100",
+    iconText: "text-orange-600",
+    border: "border-orange-500",
+    accent: "bg-orange-500",
+  },
+  teal: {
+    iconBg: "bg-teal-100",
+    iconText: "text-teal-600",
+    border: "border-teal-500",
+    accent: "bg-teal-500",
+  },
+  red: {
+    iconBg: "bg-red-100",
+    iconText: "text-red-600",
+    border: "border-red-500",
+    accent: "bg-red-500",
+  },
+  pink: {
+    iconBg: "bg-pink-100",
+    iconText: "text-pink-600",
+    border: "border-pink-500",
+    accent: "bg-pink-500",
+  },
+  gray: {
+    iconBg: "bg-gray-100",
+    iconText: "text-gray-600",
+    border: "border-gray-500",
+    accent: "bg-gray-500",
+  },
+  white: {
+    iconBg: "bg-white",
+    iconText: "text-gray-700",
+    border: "border-gray-400",
+    accent: "bg-gray-500",
+  },
+};
+
+/**
+ * 색상 문자열로 Tailwind 클래스 객체 반환 (알 수 없는 색상은 gray로 폴백)
+ */
+export function getNotificationColorClasses(
+  color: string
+): NotificationColorClasses {
+  const key = NOTIFICATION_COLOR_KEYS.includes(
+    color as NotificationColorKey
+  )
+    ? (color as NotificationColorKey)
+    : "gray";
+  return COLORS_MAP[key];
+}
+
 /**
  * 알림 타입별 메타데이터 매핑
  */
@@ -24,7 +132,7 @@ export const notificationMetaMap: Record<NotificationType, NotificationMeta> = {
   },
   CONTRACT_SIGNED: {
     icon: "📄",
-    color: "purple",
+    color: "gray",
     displayName: "계약 체결",
     priority: 5,
   },
@@ -60,7 +168,7 @@ export const notificationMetaMap: Record<NotificationType, NotificationMeta> = {
   },
   CHAT_MESSAGE_RECEIVED: {
     icon: "💬",
-    color: "pink",
+    color: "gray",
     displayName: "채팅 수신",
     priority: 3,
   },
