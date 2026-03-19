@@ -3,6 +3,7 @@ import { useNotificationStore } from "store/notificationStore";
 import { useNotifications } from "hooks/useNotifications";
 import { NotificationItem } from "components/notification/NotificationItem";
 import { ConfirmModal } from "components/ui/ConfirmModal";
+import { NotificationStatusBanner } from "components/notification/NotificationStatusBanner";
 import { Button } from "components/ui/button";
 import type { NotificationFilter } from "types/NotificationTypes";
 import { cn } from "utils/cn";
@@ -14,6 +15,7 @@ export function NotificationsPage() {
     markAllAsRead,
     deleteAllNotifications,
     isLoading,
+    error,
   } = useNotifications();
 
   const [filter, setFilter] = useState<NotificationFilter>("all");
@@ -112,6 +114,18 @@ export function NotificationsPage() {
               </p>
             </div>
           </div>
+        </div>
+
+        <div className="mb-4">
+          <NotificationStatusBanner />
+          {error && (
+            <div className="mt-3 w-full rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
+              <div className="font-semibold">알림을 불러오지 못했습니다</div>
+              <div className="mt-1 text-xs opacity-90">
+                잠시 후 다시 시도해 주세요.
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 필터 및 액션 */}

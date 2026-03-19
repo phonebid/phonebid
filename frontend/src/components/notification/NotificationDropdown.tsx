@@ -2,8 +2,8 @@ import { Link } from "react-router-dom";
 import { useNotificationStore } from "store/notificationStore";
 import { useNotifications } from "hooks/useNotifications";
 import { NotificationItem } from "components/notification/NotificationItem";
+import { NotificationStatusBanner } from "components/notification/NotificationStatusBanner";
 import { Button } from "components/ui/button";
-import { cn } from "utils/cn";
 
 interface NotificationDropdownProps {
   onClose?: () => void;
@@ -48,6 +48,10 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
             모두 읽음
           </Button>
         )}
+      </div>
+
+      <div className="px-3 pt-3 sm:px-4">
+        <NotificationStatusBanner />
       </div>
 
       {/* 알림 목록 */}
