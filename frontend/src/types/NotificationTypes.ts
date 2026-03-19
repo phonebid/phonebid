@@ -22,7 +22,7 @@ export type NotificationType =
 /**
  * 알림 채널 타입
  */
-export type NotificationChannel = "WEB" | "KAKAO" | "SMS" | "EMAIL";
+export type NotificationChannel = "SSE" | "KAKAO" | "EMAIL" | "PUSH";
 
 /**
  * 알림 상태
