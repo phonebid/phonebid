@@ -44,9 +44,41 @@ class NotificationService {
       params.append("isRead", filter === "read" ? "true" : "false");
     }
 
-    return apiClient.get<NotificationListResponse>(
+    // Spring Data Page 직렬화 결과는 보통 `hasNext`를 그대로 내려주지 않기 때문에,
+    // 프론트에서 기대하는 `NotificationListResponse.hasNext`를 파생 계산해서 반환합니다.
+    type SpringPageLike<T> = {
+      content: T[];
+      totalElements: number;
+      totalPages: number;
+      number: number; // current page
+      size: number;
+      last?: boolean; // 페이지 마지막 여부
+      hasNext?: boolean; // 보통 존재하지 않지만 혹시 모를 케이스
+    };
+
+    const rawPage = await apiClient.get<SpringPageLike<Notification>>(
       `/notifications?${params.toString()}`
     );
+
+    const currentPage = rawPage?.number ?? page;
+    const totalPages = rawPage?.totalPages ?? 0;
+    const pageSize = rawPage?.size ?? size;
+
+    const hasNext =
+      typeof rawPage?.hasNext === "boolean"
+        ? rawPage.hasNext
+        : typeof rawPage?.last === "boolean"
+          ? !rawPage.last
+          : currentPage + 1 < totalPages;
+
+    return {
+      content: rawPage?.content ?? [],
+      totalElements: rawPage?.totalElements ?? 0,
+      totalPages,
+      currentPage,
+      size: pageSize,
+      hasNext,
+    };
   }
 
   /**

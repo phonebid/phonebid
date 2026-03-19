@@ -24,6 +24,7 @@ interface NotificationStore {
   updateNotification: (id: string, updates: Partial<NotificationDisplayItem>) => void;
   removeNotification: (id: string) => void;
   setNotifications: (notifications: NotificationDisplayItem[]) => void;
+  appendNotifications: (notifications: NotificationDisplayItem[]) => void;
   clearNotifications: () => void;
   
   // 미읽음 개수
@@ -109,6 +110,23 @@ export const useNotificationStore = create<NotificationStore>()(
           { notifications },
           false,
           "notification/setNotifications"
+        );
+      },
+
+      // 알림 목록 누적 (페이지네이션의 다음 페이지 처리 시)
+      appendNotifications: (notifications) => {
+        set(
+          (state) => {
+            const existingIds = new Set(state.notifications.map((n) => n.id));
+            const uniqueToAppend = notifications.filter(
+              (n) => !existingIds.has(n.id)
+            );
+            return {
+              notifications: [...state.notifications, ...uniqueToAppend],
+            };
+          },
+          false,
+          "notification/appendNotifications"
         );
       },
 

@@ -14,6 +14,7 @@ export function useNotifications() {
 
   const {
     setNotifications,
+    appendNotifications,
     setUnreadCount,
     markAsRead: markAsReadInStore,
     markAllAsRead: markAllAsReadInStore,
@@ -53,8 +54,7 @@ export function useNotifications() {
         if (page === 0) {
           setNotifications(displayItems);
         } else {
-          // 페이지네이션 처리는 컴포넌트에서 처리
-          return { ...response, content: displayItems };
+          appendNotifications(displayItems);
         }
 
         return { ...response, content: displayItems };
@@ -67,7 +67,7 @@ export function useNotifications() {
         setIsLoading(false);
       }
     },
-    [setNotifications]
+    [setNotifications, appendNotifications]
   );
 
   /**
