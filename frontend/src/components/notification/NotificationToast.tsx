@@ -145,13 +145,3 @@ export function NotificationToast() {
     </div>
   );
 }
-
-// 진행 바 애니메이션용 CSS (글로벌 스타일에 추가 필요)
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes shrink {
-    from { width: 100%; }
-    to { width: 0%; }
-  }
-`;
-document.head.appendChild(style);
