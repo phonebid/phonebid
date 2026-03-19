@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import type { NotificationDisplayItem } from "types/NotificationTypes";
 import {
   getNotificationIcon,
@@ -31,16 +32,16 @@ export function NotificationItem({
   const timeAgo = getTimeAgo(notification.createdAt);
 
   const handleClick = async () => {
-    // 읽지 않은 알림이면 읽음 처리
     if (!notification.isRead) {
       try {
         await markAsRead(notification.id);
       } catch (error) {
-        console.error("알림 읽음 처리 실패:", error);
+        const message = error instanceof Error ? error.message : "알림 읽음 처리에 실패했습니다.";
+        toast.error(message);
+        return;
       }
     }
 
-    // 관련 페이지로 이동
     const route = getNotificationRoute(notification.type, notification.referenceId);
     navigate(route);
     onClose?.();

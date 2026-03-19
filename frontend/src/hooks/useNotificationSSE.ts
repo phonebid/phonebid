@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import { useNotificationStore } from "store/notificationStore";
 import { notificationService } from "services/notificationService";
+import { logError } from "utils/errorUtils";
 import type {
   NotificationDisplayItem,
   SSENotificationEvent,
@@ -31,6 +32,17 @@ export function useNotificationSSE(options: UseNotificationSSEOptions = {}) {
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const maxReconnectAttempts = 10;
+  const isSseDebugEnabled =
+    import.meta.env.DEV || import.meta.env.VITE_DEBUG_SSE === "true";
+
+  const debugLog = useCallback(
+    (...args: unknown[]) => {
+      if (isSseDebugEnabled) {
+        console.log(...args);
+      }
+    },
+    [isSseDebugEnabled]
+  );
 
   const {
     setConnectionStatus,
@@ -89,7 +101,7 @@ export function useNotificationSSE(options: UseNotificationSSEOptions = {}) {
 
       // 연결 확립 이벤트
       eventSource.addEventListener("connected", () => {
-        console.log("[SSE] 연결 확립됨");
+        debugLog("[SSE] 연결 확립됨");
         setConnectionStatus("connected");
         reconnectAttemptsRef.current = 0; // 재연결 카운터 리셋
         onConnect?.();
@@ -101,7 +113,7 @@ export function useNotificationSSE(options: UseNotificationSSEOptions = {}) {
           const data: SSENotificationEvent = JSON.parse(event.data);
           const notification = data.notification;
 
-          console.log("[SSE] 알림 수신:", notification);
+          debugLog("[SSE] 알림 수신:", notification);
 
           // 스토어에 알림 추가
           addNotification(notification);
@@ -117,13 +129,13 @@ export function useNotificationSSE(options: UseNotificationSSEOptions = {}) {
           // 콜백 실행
           onNotification?.(notification);
         } catch (error) {
-          console.error("[SSE] 알림 파싱 실패:", error);
+          logError("[SSE] 알림 파싱 실패:", error);
         }
       });
 
       // Heartbeat 이벤트 (연결 유지 확인)
       eventSource.addEventListener("heartbeat", () => {
-        console.log("[SSE] Heartbeat 수신");
+        debugLog("[SSE] Heartbeat 수신");
       });
 
       // 에러 처리
@@ -164,6 +176,7 @@ export function useNotificationSSE(options: UseNotificationSSEOptions = {}) {
     addNotification,
     setUnreadCount,
     addToast,
+    debugLog,
     onNotification,
     onConnect,
     onError,
