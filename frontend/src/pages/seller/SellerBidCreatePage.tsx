@@ -329,12 +329,16 @@ const SellerBidCreatePage: React.FC = () => {
 
                 <div className="space-y-4 pt-4 border-t">
                   <div>
-                    <label className="text-sm font-medium text-foreground mb-2 block">
+                    <label
+                      htmlFor="seller-bid-price-plan-select"
+                      className="text-sm font-medium text-foreground mb-2 block"
+                    >
                       요금제 선택
                     </label>
                     <div className="flex gap-2 mb-3">
                       <button
                         type="button"
+                        aria-pressed={selectedCategory === "FIVE_G"}
                         onClick={() => setSelectedCategory("FIVE_G")}
                         className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                           selectedCategory === "FIVE_G"
@@ -346,6 +350,7 @@ const SellerBidCreatePage: React.FC = () => {
                       </button>
                       <button
                         type="button"
+                        aria-pressed={selectedCategory === "LTE"}
                         onClick={() => setSelectedCategory("LTE")}
                         className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                           selectedCategory === "LTE"
@@ -357,6 +362,7 @@ const SellerBidCreatePage: React.FC = () => {
                       </button>
                     </div>
                     <select
+                      id="seller-bid-price-plan-select"
                       value={bidForm.formData.pricePlanId}
                       onChange={(e) => {
                         const plan = pricePlans.find(p => p.id === e.target.value);
