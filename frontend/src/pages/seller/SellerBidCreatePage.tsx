@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useBidForm } from "hooks/useBidForm";
 import { QuoteRequestInfo } from "components/seller/QuoteRequestInfo";
@@ -23,6 +23,10 @@ const SellerBidCreatePage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<PricePlanCategory>("FIVE_G");
 
   const bidForm = useBidForm(quote);
+  const bidFormRef = useRef(bidForm);
+  bidFormRef.current = bidForm;
+
+  const pricePlansRequestIdRef = useRef(0);
 
   useEffect(() => {
     if (!quoteId) {
@@ -50,6 +54,9 @@ const SellerBidCreatePage: React.FC = () => {
   useEffect(() => {
     const loadPricePlans = async () => {
       if (!quote) return;
+
+      const requestId = ++pricePlansRequestIdRef.current;
+
       const carrierForPlans = quote.carrier === "ANY" ? undefined : 
         (quote.carrier === "SKT_ALD" ? "SKT" : 
          quote.carrier === "KT_ALD" ? "KT" : 
@@ -61,8 +68,21 @@ const SellerBidCreatePage: React.FC = () => {
           carrier: carrierForPlans, 
           category: selectedCategory 
         });
+        if (requestId !== pricePlansRequestIdRef.current) {
+          return;
+        }
         setPricePlans(plans);
+
+        const { pricePlanId, selectedPricePlan } = bidFormRef.current.formData;
+        const selectedId = pricePlanId || selectedPricePlan?.id || "";
+        if (selectedId && !plans.some((p) => p.id === selectedId)) {
+          bidFormRef.current.updateField("pricePlanId", "");
+          bidFormRef.current.updateField("selectedPricePlan", null);
+        }
       } catch (error) {
+        if (requestId !== pricePlansRequestIdRef.current) {
+          return;
+        }
         logError("요금제 목록 조회 실패:", error);
       }
     };
