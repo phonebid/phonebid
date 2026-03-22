@@ -31,7 +31,14 @@ public enum AuctionErrorCode implements ErrorCode {
     QUOTE_NOT_OWNED_BY_USER(HttpStatus.FORBIDDEN, "해당 유저가 올린 견적이 아닙니다."),
     BID_NOT_EXISTS_FOR_SELLER(HttpStatus.NOT_FOUND, "해당 견적에 입찰한 이력이 없습니다."),
     BID_ACCESS_DENIED(HttpStatus.FORBIDDEN, "해당 입찰에 대한 접근 권한이 없습니다."),
-    INVALID_ADDITIONAL_SERVICE(HttpStatus.BAD_REQUEST, "부가서비스가 올바른 입찰에 연결되지 않았습니다.");
+    INVALID_ADDITIONAL_SERVICE(HttpStatus.BAD_REQUEST, "부가서비스가 올바른 입찰에 연결되지 않았습니다."),
+    IDENTITY_VERIFICATION_REQUIRED(HttpStatus.FORBIDDEN, "본인인증이 필요합니다."),
+    MVNO_DEVICE_CHANGE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "알뜰폰 사용자는 기기변경이 불가합니다. 번호이동을 이용해주세요."),
+    INVALID_DEVICE_CHANGE_CARRIER(HttpStatus.BAD_REQUEST, "기기변경 시 현재 통신사와 동일한 통신사만 선택 가능합니다."),
+    INVALID_NUMBER_TRANSFER_CARRIER(HttpStatus.BAD_REQUEST, "번호이동 시 현재 통신사를 제외한 주요 통신사만 선택 가능합니다."),
+    PRICE_PLAN_NOT_FOUND(HttpStatus.NOT_FOUND, "요금제를 찾을 수 없습니다."),
+    PRICE_PLAN_ALREADY_EXISTS(HttpStatus.CONFLICT, "동일한 이름의 활성 요금제가 이미 존재합니다."),
+    PRICE_PLAN_NOT_ACTIVE(HttpStatus.BAD_REQUEST, "비활성화된 요금제는 선택할 수 없습니다.");
 
     private final HttpStatus status;
     private final String message;

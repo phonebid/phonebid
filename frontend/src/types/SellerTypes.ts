@@ -86,9 +86,23 @@ export interface BidCreateRequest {
   additionalSubsidy?: number;
   installmentPrincipal: number;
   contractMonths?: number;
-  pricePlanName: string;
-  pricePlanPrice: number;
+  pricePlanId: string;
   additionalServices?: AdditionalServiceRequest[];
+}
+
+export type PricePlanCategory = "FIVE_G" | "LTE";
+
+export interface PricePlan {
+  id: string;
+  carrier: "SKT" | "KT" | "LGU";
+  category: PricePlanCategory;
+  planName: string;
+  monthlyFee: number;
+  dataAllowanceText: string | null;
+  throttleSpeedText: string | null;
+  voiceSmsText: string | null;
+  isActive: boolean;
+  displayOrder: number | null;
 }
 
 export interface SellerProfileResponseDto {

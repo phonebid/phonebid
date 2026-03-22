@@ -47,12 +47,8 @@ public class BidCreateRequestDto {
 
     private Integer contractMonths;
 
-    @NotNull(message = "요금제 이름은 필수입니다.")
-    private String pricePlanName;
-
-    @NotNull(message = "요금제 가격은 필수입니다.")
-    @Min(value = 0, message = "요금제 가격은 0 이상이어야 합니다.")
-    private Integer pricePlanPrice;
+    @NotNull(message = "요금제 ID는 필수입니다.")
+    private UUID pricePlanId;
 
     @Valid
     private List<AdditionalServiceRequestDto> additionalServices = new ArrayList<>();
@@ -62,7 +58,7 @@ public class BidCreateRequestDto {
                                 PurchaseMethod purchaseMethod, Carrier carrier, Carrier currentCarrier,
                                 ActivationMethod activationMethod, Integer additionalSubsidy,
                                 Integer installmentPrincipal, Integer contractMonths,
-                                String pricePlanName, Integer pricePlanPrice,
+                                UUID pricePlanId,
                                 List<AdditionalServiceRequestDto> additionalServices) {
         this.quoteId = quoteId;
         this.price = price;
@@ -74,17 +70,8 @@ public class BidCreateRequestDto {
         this.additionalSubsidy = additionalSubsidy;
         this.installmentPrincipal = installmentPrincipal;
         this.contractMonths = contractMonths;
-        this.pricePlanName = pricePlanName;
-        this.pricePlanPrice = pricePlanPrice;
+        this.pricePlanId = pricePlanId;
         this.additionalServices = additionalServices != null ? additionalServices : new ArrayList<>();
-    }
-
-    public PricePlan toPricePlanEntity() {
-        return PricePlan.builder()
-                .carrier(carrier)
-                .planName(pricePlanName)
-                .planPrice(pricePlanPrice)
-                .build();
     }
 
     public Bid toBidEntity(Quote quote, Seller seller, PricePlan pricePlan, Double ratingSnapshot) {

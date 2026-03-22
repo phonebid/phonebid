@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import type { QuoteDetail } from "types/QuoteTypes";
-import type { BidCreateRequest, AdditionalServiceRequest } from "types/SellerTypes";
+import type { BidCreateRequest, AdditionalServiceRequest, PricePlan } from "types/SellerTypes";
 import {
   calculateInstallmentPrincipal,
   calculateMonthlyInstallment,
@@ -20,8 +20,8 @@ export interface BidFormData {
   currentCarrier?: "SKT" | "KT" | "LGU" | "SKT_ALD" | "KT_ALD" | "LGU_ALD" | "ANY";
   activationMethod: "COMMON_SUBSIDY" | "SELECTIVE_SUBSIDY" | "ANY";
   installmentMonths: number;
-  pricePlanName: string;
-  pricePlanPrice: number;
+  pricePlanId: string;
+  selectedPricePlan: PricePlan | null;
   pricePlanMaintenanceMonths: number;
   lineMaintenanceMonths: number;
   additionalServices: AdditionalServiceRequest[];
@@ -33,8 +33,7 @@ export interface BidFormErrors {
   devicePrice?: string;
   publicSubsidy?: string;
   additionalSubsidy?: string;
-  pricePlanName?: string;
-  pricePlanPrice?: string;
+  pricePlanId?: string;
   deliveryDays?: string;
 }
 
@@ -48,8 +47,8 @@ export const useBidForm = (quote: QuoteDetail | null) => {
     currentCarrier: quote?.currentCarrier,
     activationMethod: quote?.activationMethod || "COMMON_SUBSIDY",
     installmentMonths: DEFAULT_INSTALLMENT_MONTHS,
-    pricePlanName: "",
-    pricePlanPrice: 0,
+    pricePlanId: "",
+    selectedPricePlan: null,
     pricePlanMaintenanceMonths: BID_FORM_DEFAULTS.PRICE_PLAN_MAINTENANCE_MONTHS,
     lineMaintenanceMonths: BID_FORM_DEFAULTS.LINE_MAINTENANCE_MONTHS,
     additionalServices: [],
@@ -90,9 +89,11 @@ export const useBidForm = (quote: QuoteDetail | null) => {
       0
     );
 
+    const pricePlanPrice = formData.selectedPricePlan?.monthlyFee ?? 0;
+
     const totalMonthlyPayment = calculateTotalMonthlyPayment(
       monthlyInstallment,
-      formData.pricePlanPrice,
+      pricePlanPrice,
       additionalServicesPrice
     );
 
@@ -101,6 +102,7 @@ export const useBidForm = (quote: QuoteDetail | null) => {
       monthlyInstallment,
       totalMonthlyPayment,
       additionalServicesPrice,
+      pricePlanPrice,
     };
   }, [formData]);
 
@@ -129,12 +131,8 @@ export const useBidForm = (quote: QuoteDetail | null) => {
       newErrors.additionalSubsidy = "추가지원금은 0 이상이어야 합니다.";
     }
 
-    if (!formData.pricePlanName.trim()) {
-      newErrors.pricePlanName = "요금제를 선택해주세요.";
-    }
-
-    if (formData.pricePlanPrice <= 0) {
-      newErrors.pricePlanPrice = "요금제 가격을 입력해주세요.";
+    if (!formData.pricePlanId || !formData.selectedPricePlan) {
+      newErrors.pricePlanId = "요금제를 선택해주세요.";
     }
 
     if (formData.deliveryDays < 1) {
@@ -146,7 +144,7 @@ export const useBidForm = (quote: QuoteDetail | null) => {
   };
 
   const toBidCreateRequest = (): BidCreateRequest | null => {
-    if (!quote) return null;
+    if (!quote || !formData.pricePlanId) return null;
     return {
       quoteId: quote.id,
       price: formData.publicSubsidy + formData.additionalSubsidy,
@@ -158,10 +156,20 @@ export const useBidForm = (quote: QuoteDetail | null) => {
       additionalSubsidy: formData.additionalSubsidy > 0 ? formData.additionalSubsidy : undefined,
       installmentPrincipal: calculations.installmentPrincipal,
       contractMonths: formData.installmentMonths,
-      pricePlanName: formData.pricePlanName,
-      pricePlanPrice: formData.pricePlanPrice,
+      pricePlanId: formData.pricePlanId,
       additionalServices: formData.additionalServices.length > 0 ? formData.additionalServices : undefined,
     };
+  };
+
+  const selectPricePlan = (pricePlan: PricePlan) => {
+    setFormData((prev) => ({
+      ...prev,
+      pricePlanId: pricePlan.id,
+      selectedPricePlan: pricePlan,
+    }));
+    if (errors.pricePlanId) {
+      setErrors((prev) => ({ ...prev, pricePlanId: undefined }));
+    }
   };
 
   return {
@@ -171,6 +179,7 @@ export const useBidForm = (quote: QuoteDetail | null) => {
     updateField,
     validate,
     toBidCreateRequest,
+    selectPricePlan,
   };
 };
 
