@@ -162,6 +162,29 @@ public class NotificationService {
     }
 
     /**
+     * 개별 알림 삭제 (소프트 삭제)
+     * 
+     * @param notificationId 알림 ID
+     * @param userId 사용자 ID
+     * @throws CustomException 알림을 찾을 수 없거나 이미 삭제된 경우
+     */
+    @Transactional
+    public void deleteNotification(UUID notificationId, UUID userId) {
+        int deleted = notificationRepository.softDeleteByIdAndUserId(
+                notificationId,
+                userId,
+                userId.toString()
+        );
+        
+        if (deleted == 0) {
+            log.warn("알림 삭제 실패 (알림 없음 또는 이미 삭제됨): notificationId={}, userId={}", notificationId, userId);
+            throw new CustomException(NotificationErrorCode.NOTIFICATION_NOT_FOUND);
+        }
+        
+        log.debug("알림 삭제 완료: notificationId={}, userId={}", notificationId, userId);
+    }
+
+    /**
      * 모든 알림 삭제 (일괄 소프트 삭제)
      * 벌크 업데이트를 통해 단일 쿼리로 처리
      * 

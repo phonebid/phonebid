@@ -5,6 +5,7 @@ import AppRouter from "app/router";
 
 import { useAuthStore } from "store/authStore";
 import SWRProvider from "app/providers/SWRProvider";
+import { NotificationProvider } from "components/notification/NotificationProvider";
 
 function App() {
   // 앱 시작 시 인증 상태 복원 (마운트 시 한 번만 실행)
@@ -23,19 +24,21 @@ function App() {
 
   return (
     <SWRProvider>
-      <AppRouter />
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-      />
+      <NotificationProvider>
+        <AppRouter />
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+        />
+      </NotificationProvider>
     </SWRProvider>
   );
 }

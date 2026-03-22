@@ -71,7 +71,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     
     // user.role이 없으면 즉시 리다이렉트
     if (!user?.role) {
-      const roleRedirectTo = allowedRoles.includes("SELLER") ? "/seller/login" : redirectTo;
+      // 판매자 전용 라우트인 경우만 판매자 로그인으로
+      const isSellerOnlyRoute = allowedRoles.length === 1 && allowedRoles[0] === "SELLER";
+      const roleRedirectTo = isSellerOnlyRoute ? "/seller/login" : redirectTo;
       return <Navigate to={roleRedirectTo} state={{ from: location }} replace />;
     }
     
@@ -79,8 +81,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     const hasRequiredRole = allowedRoles.includes(user.role);
     
     if (!hasRequiredRole) {
-      // 역할이 맞지 않으면 판매자 로그인 페이지 또는 기본 리다이렉트 경로로 이동
-      const roleRedirectTo = allowedRoles.includes("SELLER") ? "/seller/login" : redirectTo;
+      // 현재 사용자가 판매자이거나 판매자 전용 라우트인 경우만 판매자 로그인으로
+      const isSellerOnlyRoute = allowedRoles.length === 1 && allowedRoles[0] === "SELLER";
+      const roleRedirectTo = (user.role === "SELLER" || isSellerOnlyRoute) ? "/seller/login" : redirectTo;
       return <Navigate to={roleRedirectTo} state={{ from: location }} replace />;
     }
   }

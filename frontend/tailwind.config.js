@@ -82,6 +82,31 @@ export default {
           from: { transform: "translateX(0)" },
           to: { transform: "translateX(-75%)" },
         },
+        // 알림 관련 애니메이션
+        "slide-in-right": {
+          "0%": { transform: "translateX(100%)", opacity: "0" },
+          "100%": { transform: "translateX(0)", opacity: "1" },
+        },
+        "slide-out-right": {
+          "0%": { transform: "translateX(0)", opacity: "1" },
+          "100%": { transform: "translateX(100%)", opacity: "0" },
+        },
+        "fade-in-down": {
+          "0%": { transform: "translateY(-10px)", opacity: "0" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
+        "fade-out-up": {
+          "0%": { transform: "translateY(0)", opacity: "1" },
+          "100%": { transform: "translateY(-10px)", opacity: "0" },
+        },
+        "scale-in": {
+          "0%": { transform: "scale(0.95)", opacity: "0" },
+          "100%": { transform: "scale(1)", opacity: "1" },
+        },
+        "badge-pulse": {
+          "0%, 100%": { transform: "scale(1)", opacity: "1" },
+          "50%": { transform: "scale(1.1)", opacity: "0.8" },
+        },
       },
       animation: {
         marquee: "marquee 20s linear infinite",
@@ -90,6 +115,13 @@ export default {
         "aurora-slide": "aurora-slide 60s linear infinite",
         "spin-slow": "spin 12s linear infinite",
         "spin-slow-reverse": "spin 8s linear infinite reverse",
+        // 알림 관련 애니메이션
+        "slide-in-right": "slide-in-right 0.3s ease-out",
+        "slide-out-right": "slide-out-right 0.3s ease-in",
+        "fade-in-down": "fade-in-down 0.2s ease-out",
+        "fade-out-up": "fade-out-up 0.2s ease-in",
+        "scale-in": "scale-in 0.2s ease-out",
+        "badge-pulse": "badge-pulse 2s ease-in-out infinite",
       },
       boxShadow: {
         glow: "0 0 20px rgba(139, 92, 246, 0.5)",

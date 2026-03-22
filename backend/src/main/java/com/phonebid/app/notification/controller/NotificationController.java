@@ -24,7 +24,7 @@ import java.util.UUID;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/notifications")
+@RequestMapping("/api/v1/notifications")
 @RequiredArgsConstructor
 public class NotificationController {
 
@@ -96,6 +96,23 @@ public class NotificationController {
         
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, 
                 String.format("%d개의 알림을 읽음 처리했습니다", count), count));
+    }
+
+    /**
+     * 개별 알림 삭제 (소프트 삭제)
+     * 
+     * @param notificationId 알림 ID
+     * @param userDetails 인증된 사용자 정보
+     * @return 성공 응답
+     */
+    @DeleteMapping("/{notificationId}")
+    public ResponseEntity<ApiResponse<Void>> deleteNotification(@PathVariable UUID notificationId,
+                                                                @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        
+        UUID userId = userDetails.getUser().getId();
+        notificationService.deleteNotification(notificationId, userId);
+        
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK, "알림 삭제 완료", null));
     }
 
     /**

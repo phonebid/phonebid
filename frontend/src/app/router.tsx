@@ -40,6 +40,7 @@ import DeliveryAddressPage from "pages/DeliveryAddressPage";
 import DeliveryAddressListPage from "pages/DeliveryAddressListPage";
 import PurchaseCompletePage from "pages/PurchaseCompletePage";
 import LandingPage from "pages/LandingPage";
+import { NotificationsPage } from "pages/NotificationsPage";
 
 const RootPage: React.FC = () => {
   const { isAuthenticated, isInitializing } = useAuthStore();
@@ -101,6 +102,19 @@ export const AppRouter: React.FC = () => {
         <Route path="/payment/fail" element={<PaymentFailPage />} />
         <Route path="/chat" element={<ChatListPage />} />
         <Route path="/chat/:chatRoomId" element={<ChatRoomPage />} />
+        
+        {/* 알림 페이지 */}
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <NotificationsPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        
         <Route path="/mypage/profile" element={<ProfilePage />} />
         <Route path="/mypage/purchases" element={<PurchaseHistoryPage />} />
         <Route
