@@ -165,6 +165,19 @@ const BidDetailPage = () => {
                   {bid.pricePlanThrottleSpeed && bid.pricePlanThrottleSpeed !== "-" && (
                     <span className="ml-1">(소진 시 {bid.pricePlanThrottleSpeed})</span>
                   )}
+                  {bid.pricePlanVoiceSms && (
+                    <span
+                      className={
+                        bid.pricePlanDataAllowance ||
+                        (bid.pricePlanThrottleSpeed &&
+                          bid.pricePlanThrottleSpeed !== "-")
+                          ? "ml-1"
+                          : ""
+                      }
+                    >
+                      음성/문자 {bid.pricePlanVoiceSms}
+                    </span>
+                  )}
                 </div>
               )}
               {bid.pricePlanPrice && bid.pricePlanPrice >= 10000 && (
