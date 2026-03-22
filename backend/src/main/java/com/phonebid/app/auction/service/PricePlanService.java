@@ -67,7 +67,7 @@ public class PricePlanService {
 
     @Transactional
     public PricePlanResponseDto createPricePlan(PricePlanCreateRequestDto requestDto) {
-        if (pricePlanRepository.existsByCarrierAndPlanNameAndIsActiveTrue(
+        if (pricePlanRepository.existsByCarrierAndPlanName(
                 requestDto.getCarrier(), requestDto.getPlanName())) {
             throw new CustomException(AuctionErrorCode.PRICE_PLAN_ALREADY_EXISTS);
         }

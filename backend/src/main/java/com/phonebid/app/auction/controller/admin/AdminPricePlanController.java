@@ -6,6 +6,7 @@ import com.phonebid.app.auction.dto.response.PricePlanResponseDto;
 import com.phonebid.app.auction.service.PricePlanService;
 import com.phonebid.app.common.dto.ApiResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -66,7 +67,7 @@ public class AdminPricePlanController {
     @PutMapping("/{id}/display-order")
     public ResponseEntity<ApiResponse<Void>> updateDisplayOrder(
             @PathVariable UUID id,
-            @RequestParam Integer displayOrder) {
+            @RequestParam @Min(value = 0, message = "노출 순서는 0 이상이어야 합니다.") Integer displayOrder) {
 
         pricePlanService.updateDisplayOrder(id, displayOrder);
 

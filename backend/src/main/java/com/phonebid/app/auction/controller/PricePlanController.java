@@ -38,6 +38,7 @@ public class PricePlanController {
 
         PricePlanResponseDto response = pricePlanService.getPricePlanById(id);
 
+
         return ResponseEntity.ok()
                 .body(ApiResponse.success(HttpStatus.OK, "요금제 상세 조회가 완료되었습니다.", response));
     }

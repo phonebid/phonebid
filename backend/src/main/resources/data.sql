@@ -243,6 +243,10 @@ INSERT INTO users (id, username, password, email, name, nickname, phone, role, p
 VALUES ('f0f0a444-4444-4444-8444-444444444444', 'seed_seller_b_20260308', '$2a$10$7eqJtq98hPqEX7fNZaFWoO.HVQ5fD4QnQeNf5f7dI4A4A4A4A4A4O', 'seed.seller.b.20260308@phonebid.local', '이판매', '판매자B', '01045678901', 'SELLER', NULL, NULL, NULL, 'LGU', TRUE, '2026-03-08 10:00:00', '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
 ON CONFLICT (id) DO NOTHING;
 
+INSERT INTO users (id, username, password, email, name, nickname, phone, role, provider, provider_id, profile_image_url, carrier, is_identity_verified, verified_at, created_at, updated_at, is_delete)
+VALUES ('f0f0a555-5555-4555-8555-555555555555', 'seller1', '$2b$10$.Jm8hl1MzLyeKg0R7LbscOBgvRxR7t310WSR0NQSTX40den2J5L.S', 'seller1@phonebid.local', '테스트판매자', '판매자1', '01055555555', 'SELLER', NULL, NULL, NULL, 'SKT', TRUE, '2026-03-08 10:00:00', '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
+ON CONFLICT (id) DO UPDATE SET password = '$2b$10$.Jm8hl1MzLyeKg0R7LbscOBgvRxR7t310WSR0NQSTX40den2J5L.S';
+
 -- Sellers
 INSERT INTO sellers (seller_id, user_id, business_number, store_name, approval_status, postal_code, address, detail_address, is_agent, representative_name, business_postal_code, business_address, business_detail_address, consent_number, customer_service_phone, created_at, updated_at, is_delete)
 VALUES ('a1b2c311-1111-4111-8111-111111111111', 'f0f0a333-3333-4333-8333-333333333333', '123-45-67890', '폰비드 강남점', 'APPROVED', '06234', '서울 강남구 테헤란로 1', '101호', TRUE, '박판매', '06234', '서울 강남구 테헤란로 1', '101호', 'CN-2026-SELLER-A', '0212345678', '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
@@ -250,6 +254,10 @@ ON CONFLICT (seller_id) DO NOTHING;
 
 INSERT INTO sellers (seller_id, user_id, business_number, store_name, approval_status, postal_code, address, detail_address, is_agent, representative_name, business_postal_code, business_address, business_detail_address, consent_number, customer_service_phone, created_at, updated_at, is_delete)
 VALUES ('a1b2c322-2222-4222-8222-222222222222', 'f0f0a444-4444-4444-8444-444444444444', '234-56-78901', '폰비드 마포점', 'APPROVED', '04123', '서울 마포구 월드컵북로 2', '202호', FALSE, '이판매', '04123', '서울 마포구 월드컵북로 2', '202호', 'CN-2026-SELLER-B', '0298765432', '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
+ON CONFLICT (seller_id) DO NOTHING;
+
+INSERT INTO sellers (seller_id, user_id, business_number, store_name, approval_status, postal_code, address, detail_address, is_agent, representative_name, business_postal_code, business_address, business_detail_address, consent_number, customer_service_phone, created_at, updated_at, is_delete)
+VALUES ('a1b2c333-3333-4333-8333-333333333333', 'f0f0a555-5555-4555-8555-555555555555', '345-67-89012', '테스트 판매점', 'APPROVED', '12345', '서울 종로구 종로 1', '301호', TRUE, '테스트판매자', '12345', '서울 종로구 종로 1', '301호', 'CN-2026-SELLER-TEST', '0211112222', '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
 ON CONFLICT (seller_id) DO NOTHING;
 
 -- Quotes (consumer requests)

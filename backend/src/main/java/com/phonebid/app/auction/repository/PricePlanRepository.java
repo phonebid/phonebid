@@ -37,6 +37,6 @@ public interface PricePlanRepository extends JpaRepository<PricePlan, UUID> {
     @Query("SELECT pp FROM PricePlan pp WHERE pp.carrier = :carrier AND pp.monthlyFee <= :maxPrice AND pp.isActive = true AND (pp.isDelete = false OR pp.isDelete IS NULL) ORDER BY pp.displayOrder, pp.monthlyFee DESC")
     List<PricePlan> findByCarrierAndMaxPriceAndIsActiveTrue(@Param("carrier") Carrier carrier, @Param("maxPrice") Integer maxPrice);
 
-    boolean existsByCarrierAndPlanNameAndIsActiveTrue(Carrier carrier, String planName);
+    boolean existsByCarrierAndPlanName(Carrier carrier, String planName);
 }
 
