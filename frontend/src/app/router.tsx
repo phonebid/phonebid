@@ -10,6 +10,7 @@ import AuthCallbackPage from "pages/AuthCallbackPage";
 import SellerLoginPage from "pages/seller/SellerLoginPage";
 import SellerSignupPage from "pages/seller/SellerSignupPage";
 import SellerDashboardPage from "pages/seller/SellerDashboardPage";
+import SellerNotificationsPage from "pages/seller/SellerNotificationsPage";
 import { BidCreateRedirect } from "pages/seller/BidCreateRedirect";
 import ConfettiTestPage from "pages/ConfettiPage";
 import AuctionListPage from "pages/AuctionListPage";
@@ -91,6 +92,19 @@ export const AppRouter: React.FC = () => {
               redirectTo="/seller/login"
             >
               <BidCreateRedirect />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/seller-center/notifications"
+          element={
+            <ProtectedRoute
+              requiredRole={["SELLER", "ADMIN"]}
+              redirectTo="/seller/login"
+            >
+              <Layout>
+                <SellerNotificationsPage />
+              </Layout>
             </ProtectedRoute>
           }
         />

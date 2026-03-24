@@ -3,12 +3,19 @@ import { useNotificationStore } from "store/notificationStore";
 import { Badge } from "components/ui/badge";
 import { NotificationDropdown } from "components/notification/NotificationDropdown";
 import { cn } from "utils/cn";
+import type { NotificationType } from "types/NotificationTypes";
 
 interface NotificationBellProps {
   className?: string;
+  typesFilter?: NotificationType[];
+  viewAllPath?: string;
 }
 
-export function NotificationBell({ className }: NotificationBellProps) {
+export function NotificationBell({
+  className,
+  typesFilter,
+  viewAllPath,
+}: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [shouldRing, setShouldRing] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -117,7 +124,11 @@ export function NotificationBell({ className }: NotificationBellProps) {
           ref={dropdownRef}
           className="absolute right-0 mt-2 z-50 animate-fade-in-down"
         >
-          <NotificationDropdown onClose={() => setIsOpen(false)} />
+          <NotificationDropdown
+            onClose={() => setIsOpen(false)}
+            typesFilter={typesFilter}
+            viewAllPath={viewAllPath}
+          />
         </div>
       )}
     </div>

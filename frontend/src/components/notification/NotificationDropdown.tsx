@@ -4,17 +4,31 @@ import { useNotifications } from "hooks/useNotifications";
 import { NotificationItem } from "components/notification/NotificationItem";
 import { NotificationStatusBanner } from "components/notification/NotificationStatusBanner";
 import { Button } from "components/ui/button";
+import type { NotificationType } from "types/NotificationTypes";
 
 interface NotificationDropdownProps {
   onClose?: () => void;
+  typesFilter?: NotificationType[];
+  viewAllPath?: string;
 }
 
-export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
+export function NotificationDropdown({
+  onClose,
+  typesFilter,
+  viewAllPath = "/notifications",
+}: NotificationDropdownProps) {
   const { notifications, unreadCount } = useNotificationStore();
   const { markAllAsRead } = useNotifications();
 
+  const filteredNotifications =
+    typesFilter && typesFilter.length > 0
+      ? notifications.filter((notification) =>
+          typesFilter.includes(notification.type)
+        )
+      : notifications;
+
   // 최근 알림 5개만 표시
-  const recentNotifications = notifications.slice(0, 5);
+  const recentNotifications = filteredNotifications.slice(0, 5);
   const hasNotifications = recentNotifications.length > 0;
 
   const handleMarkAllAsRead = async () => {
@@ -96,7 +110,7 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
       {hasNotifications && (
         <div className="px-3 py-2.5 sm:px-4 sm:py-3 bg-gradient-to-r from-indigo-50 to-purple-50 border-t border-gray-200">
           <Link
-            to="/notifications"
+            to={viewAllPath}
             onClick={onClose}
             className="block text-center text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors hover:underline"
           >

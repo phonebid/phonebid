@@ -3,6 +3,18 @@ import { useAuthStore } from "store/authStore";
 import { useState, useEffect } from "react";
 import { sellerService } from "services/sellerService";
 import type { SellerProfileResponseDto } from "types/SellerTypes";
+import { NotificationBell } from "components/notification/NotificationBell";
+
+const SELLER_NOTIFICATION_TYPES = [
+  "QUOTE_CREATED",
+  "BID_SELECTED",
+  "LOWEST_PRICE_UPDATED",
+  "CONTRACT_SIGNED",
+  "PAYMENT_COMPLETED",
+  "SELLER_APPROVED",
+  "SELLER_REJECTED",
+  "CHAT_MESSAGE_RECEIVED",
+] as const;
 
 export const SellerHeader: React.FC = () => {
   const { isAuthenticated, user } = useAuthStore();
@@ -75,24 +87,10 @@ export const SellerHeader: React.FC = () => {
           <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated && user ? (
               <div className="flex items-center space-x-3">
-                <div className="relative">
-                  <svg
-                    className="w-6 h-6 text-gray-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                    />
-                  </svg>
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                    <span className="text-xs text-white font-bold">3</span>
-                  </span>
-                </div>
+                <NotificationBell
+                  typesFilter={[...SELLER_NOTIFICATION_TYPES]}
+                  viewAllPath="/seller-center/notifications"
+                />
                 <div className="flex items-center space-x-2">
                   <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
                     <span className="text-xs text-gray-600">
