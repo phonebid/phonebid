@@ -12,6 +12,7 @@ import {
 import { useNotifications } from "hooks/useNotifications";
 import { ConfirmModal } from "components/ui/ConfirmModal";
 import { cn } from "utils/cn";
+import { useAuthStore } from "store/authStore";
 
 interface NotificationItemProps {
   notification: NotificationDisplayItem;
@@ -26,6 +27,7 @@ export function NotificationItem({
 }: NotificationItemProps) {
   const navigate = useNavigate();
   const { markAsRead, deleteNotification } = useNotifications();
+  const userRole = useAuthStore((state) => state.user?.role);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const icon = getNotificationIcon(notification.type);
@@ -45,7 +47,11 @@ export function NotificationItem({
       }
     }
 
-    const route = getNotificationRoute(notification.type, notification.referenceId);
+    const route = getNotificationRoute(
+      notification.type,
+      notification.referenceId,
+      userRole
+    );
     navigate(route);
     onClose?.();
   };
