@@ -254,7 +254,7 @@ export function getNotificationRoute(
 
   switch (type) {
     case "QUOTE_CREATED":
-      return `/mypage/quotes/${referenceId}`;
+      return `/seller-center/quotes/${referenceId}/bid`;
     
     case "BID_ARRIVED":
       return `/mypage/quotes/${referenceId}`;
