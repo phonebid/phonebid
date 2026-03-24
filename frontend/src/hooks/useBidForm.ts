@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import type { QuoteDetail } from "types/QuoteTypes";
 import type { BidCreateRequest, AdditionalServiceRequest } from "types/SellerTypes";
 import {
@@ -15,6 +15,8 @@ export interface BidFormData {
   devicePrice: number;
   publicSubsidy: number;
   additionalSubsidy: number;
+  /** 페이백: 체크 시 추가지원금을 -공시지원금으로 동기화 */
+  isPayback: boolean;
   purchaseMethod: "NUMBER_TRANSFER" | "DEVICE_CHANGE" | "NEW_SUBSCRIPTION" | "LOWEST_PRICE" | "ANY";
   carrier: "SKT" | "KT" | "LGU" | "SKT_ALD" | "KT_ALD" | "LGU_ALD" | "ANY";
   currentCarrier?: "SKT" | "KT" | "LGU" | "SKT_ALD" | "KT_ALD" | "LGU_ALD" | "ANY";
@@ -41,8 +43,9 @@ export interface BidFormErrors {
 export const useBidForm = (quote: QuoteDetail | null) => {
   const [formData, setFormData] = useState<BidFormData>({
     devicePrice: BID_FORM_DEFAULTS.DEVICE_PRICE,
-    publicSubsidy: BID_FORM_DEFAULTS.PUBLIC_SUBSIDY,
-    additionalSubsidy: BID_FORM_DEFAULTS.ADDITIONAL_SUBSIDY,
+    publicSubsidy: 0,
+    additionalSubsidy: 0,
+    isPayback: false,
     purchaseMethod: quote?.purchaseMethod || "DEVICE_CHANGE",
     carrier: quote?.carrier || "SKT",
     currentCarrier: quote?.currentCarrier,
@@ -58,18 +61,39 @@ export const useBidForm = (quote: QuoteDetail | null) => {
   });
 
   const [errors, setErrors] = useState<BidFormErrors>({});
+  const quoteIdLoadedRef = useRef<string | null>(null);
 
-  // quote 변경 시 formData 동기화
   useEffect(() => {
-    if (quote) {
-      setFormData((prev) => ({
-        ...prev,
-        purchaseMethod: quote.purchaseMethod || prev.purchaseMethod,
-        carrier: quote.carrier || prev.carrier,
-        currentCarrier: quote.currentCarrier ?? prev.currentCarrier,
-        activationMethod: quote.activationMethod || prev.activationMethod,
-      }));
+    if (!quote) {
+      quoteIdLoadedRef.current = null;
+      return;
     }
+    if (quoteIdLoadedRef.current === quote.id) {
+      return;
+    }
+    quoteIdLoadedRef.current = quote.id;
+    setFormData({
+      devicePrice: BID_FORM_DEFAULTS.DEVICE_PRICE,
+      publicSubsidy: 0,
+      additionalSubsidy: 0,
+      isPayback: false,
+      purchaseMethod: quote.purchaseMethod || "DEVICE_CHANGE",
+      carrier: quote.carrier || "SKT",
+      currentCarrier: quote.currentCarrier,
+      activationMethod:
+        quote.activationMethod === "ANY"
+          ? "COMMON_SUBSIDY"
+          : quote.activationMethod || "COMMON_SUBSIDY",
+      installmentMonths: DEFAULT_INSTALLMENT_MONTHS,
+      pricePlanName: "",
+      pricePlanPrice: 0,
+      pricePlanMaintenanceMonths: BID_FORM_DEFAULTS.PRICE_PLAN_MAINTENANCE_MONTHS,
+      lineMaintenanceMonths: BID_FORM_DEFAULTS.LINE_MAINTENANCE_MONTHS,
+      additionalServices: [],
+      additionalServicesMaintenanceMonths: 0,
+      deliveryDays: BID_FORM_DEFAULTS.DELIVERY_DAYS,
+    });
+    setErrors({});
   }, [quote]);
 
   const calculations = useMemo(() => {
@@ -108,7 +132,24 @@ export const useBidForm = (quote: QuoteDetail | null) => {
     field: K,
     value: BidFormData[K]
   ) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      if (field === "publicSubsidy" && typeof value === "number") {
+        const nextPublic = value;
+        return {
+          ...prev,
+          publicSubsidy: nextPublic,
+          additionalSubsidy: prev.isPayback ? -nextPublic : prev.additionalSubsidy,
+        };
+      }
+      if (field === "isPayback" && typeof value === "boolean") {
+        return {
+          ...prev,
+          isPayback: value,
+          additionalSubsidy: value ? -prev.publicSubsidy : 0,
+        };
+      }
+      return { ...prev, [field]: value };
+    });
     if (errors[field as keyof BidFormErrors]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
@@ -123,10 +164,6 @@ export const useBidForm = (quote: QuoteDetail | null) => {
 
     if (formData.publicSubsidy < 0) {
       newErrors.publicSubsidy = "공시지원금은 0 이상이어야 합니다.";
-    }
-
-    if (formData.additionalSubsidy < 0) {
-      newErrors.additionalSubsidy = "추가지원금은 0 이상이어야 합니다.";
     }
 
     if (!formData.pricePlanName.trim()) {
@@ -155,7 +192,10 @@ export const useBidForm = (quote: QuoteDetail | null) => {
       carrier: formData.carrier,
       currentCarrier: formData.currentCarrier,
       activationMethod: formData.activationMethod,
-      additionalSubsidy: formData.additionalSubsidy > 0 ? formData.additionalSubsidy : undefined,
+      additionalSubsidy:
+        formData.additionalSubsidy !== 0
+          ? formData.additionalSubsidy
+          : undefined,
       installmentPrincipal: calculations.installmentPrincipal,
       contractMonths: formData.installmentMonths,
       pricePlanName: formData.pricePlanName,
