@@ -32,6 +32,9 @@ const PRICE_PLAN_PRICE_OPTIONS: { value: number; label: string }[] = [
 
 /** 할인 방식·판매 가격·필수 요금제·필수 유지 조건 등 동일 섹션 라벨 */
 const SECTION_LABEL = "text-sm font-bold text-black";
+/** SECTION_LABEL 블록 래퍼: 연한 회색 배경 + 테두리 */
+const SECTION_BOX =
+  "rounded-lg border border-border bg-muted/50 p-4 shadow-sm";
 /** 필수 요금제 하위 필드(요금제, 월 요금대) */
 const SUB_FIELD_LABEL =
   "mb-1 block text-xs font-normal text-zinc-600";
@@ -144,7 +147,7 @@ export function BidCreateFormContent({ quote, bidForm }: BidCreateFormContentPro
           </h3>
         </div>
 
-        <section className="space-y-2">
+        <section className={cn("space-y-2", SECTION_BOX)}>
           <p className={SECTION_LABEL}>할인 방식 선택</p>
           <div className="space-y-2">
             <RadioActivationCard
@@ -164,7 +167,7 @@ export function BidCreateFormContent({ quote, bidForm }: BidCreateFormContentPro
           </div>
         </section>
 
-        <section className="space-y-2">
+        <section className={cn("space-y-2", SECTION_BOX)}>
           <p className={SECTION_LABEL}>판매 가격</p>
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex-1 min-w-[200px]">
@@ -217,7 +220,7 @@ export function BidCreateFormContent({ quote, bidForm }: BidCreateFormContentPro
           {formatNumber(calculations.installmentPrincipal)}원
         </div>
 
-        <section className="space-y-2">
+        <section className={cn("space-y-2", SECTION_BOX)}>
           <p className={SECTION_LABEL}>필수 요금제 설정</p>
           <div>
             <label className={SUB_FIELD_LABEL}>요금제</label>
@@ -279,7 +282,7 @@ export function BidCreateFormContent({ quote, bidForm }: BidCreateFormContentPro
           )}
         </section>
 
-        <section className="space-y-2">
+        <section className={cn("space-y-2", SECTION_BOX)}>
           <p className={SECTION_LABEL}>필수 유지 조건</p>
           <label className={SUB_FIELD_LABEL}>회선 유지기간</label>
           <select
@@ -297,7 +300,7 @@ export function BidCreateFormContent({ quote, bidForm }: BidCreateFormContentPro
           </select>
         </section>
 
-        <section className="space-y-2">
+        <section className={cn("space-y-2", SECTION_BOX)}>
           <p className={SECTION_LABEL}>부가서비스</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
             <div>
