@@ -40,7 +40,11 @@ export const SellerHeader: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* 로고 */}
-          <div className="flex items-center gap-3">
+          <Link
+            to="/seller-center"
+            className="flex items-center gap-3 hover:opacity-90 transition-opacity"
+            aria-label="판매자센터 홈으로 이동"
+          >
             <div className="w-10 h-10 bg-primary-600 rounded flex items-center justify-center">
               <svg
                 className="w-6 h-6 text-white"
@@ -59,7 +63,7 @@ export const SellerHeader: React.FC = () => {
             <span className="text-lg font-semibold text-gray-900">
               폰비드 판매자센터
             </span>
-          </div>
+          </Link>
 
           {/* 네비게이션 */}
           <nav className="hidden md:flex items-center space-x-6">
