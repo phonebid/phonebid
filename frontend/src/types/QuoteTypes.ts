@@ -50,6 +50,10 @@ export interface QuoteDetail extends QuoteSummary {
   currentCarrier?: Carrier;
   bidCount: number;
   lowestPrice: number | null;
+  /** 구매자 메모 (API 미제공 시 선택) */
+  buyerMemo?: string | null;
+  /** 희망 지역 (API 미제공 시 선택) */
+  preferredRegion?: string | null;
 }
 
 export interface QuoteListItem {
