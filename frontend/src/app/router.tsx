@@ -102,9 +102,7 @@ export const AppRouter: React.FC = () => {
               requiredRole={["SELLER", "ADMIN"]}
               redirectTo="/seller/login"
             >
-              <Layout>
-                <SellerNotificationsPage />
-              </Layout>
+              <SellerNotificationsPage />
             </ProtectedRoute>
           }
         />
