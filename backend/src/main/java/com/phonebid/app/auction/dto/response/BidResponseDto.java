@@ -16,37 +16,35 @@ public class BidResponseDto {
     private UUID id;
     private UUID quoteId;
     
-    // 판매자 정보
     private UUID sellerId;
     private String sellerStoreName;
     private Double sellerRating;
     
-    // 가격 정보
     private Integer price;
     private Integer installmentPrincipal;
     private Integer additionalSubsidy;
     private Integer totalMaintenanceCost;
     
-    // 요금제 정보
+    private UUID pricePlanId;
     private String pricePlanName;
     private Integer pricePlanPrice;
+    private PricePlanCategory pricePlanCategory;
+    private String pricePlanDataAllowance;
+    private String pricePlanThrottleSpeed;
+    private String pricePlanVoiceSms;
     
-    // 부가서비스 정보
     private List<AdditionalServiceResponseDto> additionalServices;
     private Integer additionalServicesCount;
     private Integer additionalServicesTotalPrice;
     
-    // 개통 정보
     private PurchaseMethod purchaseMethod;
     private Carrier carrier;
     private Carrier currentCarrier;
     private ActivationMethod activationMethod;
     private Integer contractMonths;
     
-    // 배송 정보
     private Integer deliveryDays;
     
-    // 상태 정보
     private BidStatus status;
     private LocalDateTime createdAt;
 
@@ -60,6 +58,7 @@ public class BidResponseDto {
                 .sum();
         
         Integer totalMaintenanceCost = calculateTotalMaintenanceCost(bid, additionalServicesTotalPrice);
+        PricePlan pricePlan = bid.getPricePlan();
         
         return BidResponseDto.builder()
                 .id(bid.getId())
@@ -71,8 +70,13 @@ public class BidResponseDto {
                 .installmentPrincipal(bid.getInstallmentPrincipal())
                 .additionalSubsidy(bid.getAdditionalSubsidy())
                 .totalMaintenanceCost(totalMaintenanceCost)
-                .pricePlanName(bid.getPricePlan() != null ? bid.getPricePlan().getPlanName() : null)
-                .pricePlanPrice(bid.getPricePlan() != null ? bid.getPricePlan().getPlanPrice() : null)
+                .pricePlanId(pricePlan != null ? pricePlan.getId() : null)
+                .pricePlanName(pricePlan != null ? pricePlan.getPlanName() : null)
+                .pricePlanPrice(pricePlan != null ? pricePlan.getMonthlyFee() : null)
+                .pricePlanCategory(pricePlan != null ? pricePlan.getCategory() : null)
+                .pricePlanDataAllowance(pricePlan != null ? pricePlan.getDataAllowanceText() : null)
+                .pricePlanThrottleSpeed(pricePlan != null ? pricePlan.getThrottleSpeedText() : null)
+                .pricePlanVoiceSms(pricePlan != null ? pricePlan.getVoiceSmsText() : null)
                 .additionalServices(additionalServiceDtos)
                 .additionalServicesCount(additionalServiceDtos.size())
                 .additionalServicesTotalPrice(additionalServicesTotalPrice)
@@ -89,7 +93,7 @@ public class BidResponseDto {
 
     private static Integer calculateTotalMaintenanceCost(Bid bid, Integer additionalServicesTotalPrice) {
         Integer months = bid.getContractMonths() != null ? bid.getContractMonths() : 24;
-        Integer planPrice = bid.getPricePlan() != null ? bid.getPricePlan().getPlanPrice() : 0;
+        Integer planPrice = bid.getPricePlan() != null ? bid.getPricePlan().getMonthlyFee() : 0;
         
         return (planPrice + additionalServicesTotalPrice) * months;
     }

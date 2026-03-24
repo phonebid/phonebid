@@ -76,6 +76,8 @@ export interface QuoteListItem {
   lowestPrice: number | null;
 }
 
+export type PricePlanCategory = "FIVE_G" | "LTE";
+
 export interface BidListItem {
   id: string;
   sellerId: string;
@@ -83,8 +85,10 @@ export interface BidListItem {
   sellerRating: number | null;
   installmentPrincipal: number;
   totalMaintenanceCost: number;
+  pricePlanId: string | null;
   pricePlanName: string | null;
   pricePlanPrice: number | null;
+  pricePlanCategory: PricePlanCategory | null;
   status: "ACTIVE" | "SELECTED" | "REJECTED" | "WITHDRAWN";
   createdAt: string;
 }
@@ -109,8 +113,13 @@ export interface BidDetail {
   installmentPrincipal: number;
   additionalSubsidy: number | null;
   totalMaintenanceCost: number;
+  pricePlanId: string | null;
   pricePlanName: string | null;
   pricePlanPrice: number | null;
+  pricePlanCategory: PricePlanCategory | null;
+  pricePlanDataAllowance: string | null;
+  pricePlanThrottleSpeed: string | null;
+  pricePlanVoiceSms: string | null;
   additionalServices: AdditionalService[];
   additionalServicesCount: number;
   additionalServicesTotalPrice: number;

@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @NoArgsConstructor
@@ -28,10 +29,7 @@ public class BidUpdateRequestDto {
     @Min(value = 1, message = "약정개월은 1개월 이상이어야 합니다.")
     private Integer contractMonths;
 
-    private String pricePlanName;
-
-    @Min(value = 0, message = "요금제 가격은 0 이상이어야 합니다.")
-    private Integer pricePlanPrice;
+    private UUID pricePlanId;
 
     @Valid
     private List<AdditionalServiceRequestDto> additionalServices;
@@ -39,15 +37,14 @@ public class BidUpdateRequestDto {
     @Builder
     public BidUpdateRequestDto(Integer price, Integer deliveryDays, Integer additionalSubsidy,
                                 Integer installmentPrincipal, Integer contractMonths,
-                                String pricePlanName, Integer pricePlanPrice,
+                                UUID pricePlanId,
                                 List<AdditionalServiceRequestDto> additionalServices) {
         this.price = price;
         this.deliveryDays = deliveryDays;
         this.additionalSubsidy = additionalSubsidy;
         this.installmentPrincipal = installmentPrincipal;
         this.contractMonths = contractMonths;
-        this.pricePlanName = pricePlanName;
-        this.pricePlanPrice = pricePlanPrice;
+        this.pricePlanId = pricePlanId;
         this.additionalServices = additionalServices != null ? additionalServices : new ArrayList<>();
     }
 }

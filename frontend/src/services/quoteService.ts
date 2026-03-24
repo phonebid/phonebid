@@ -36,8 +36,10 @@ interface BidListResponseDto {
   sellerRating: number | null;
   installmentPrincipal: number;
   totalMaintenanceCost: number;
+  pricePlanId: string | null;
   pricePlanName: string | null;
   pricePlanPrice: number | null;
+  pricePlanCategory: "FIVE_G" | "LTE" | null;
   status: "ACTIVE" | "SELECTED" | "REJECTED" | "WITHDRAWN";
   createdAt: string;
 }
@@ -155,8 +157,10 @@ export const getBidsByQuoteId = async (
     sellerRating: item.sellerRating,
     installmentPrincipal: item.installmentPrincipal,
     totalMaintenanceCost: item.totalMaintenanceCost,
+    pricePlanId: item.pricePlanId,
     pricePlanName: item.pricePlanName,
     pricePlanPrice: item.pricePlanPrice,
+    pricePlanCategory: item.pricePlanCategory,
     status: item.status,
     createdAt: item.createdAt,
   }));
@@ -176,8 +180,13 @@ interface BidResponseDto {
   installmentPrincipal: number;
   additionalSubsidy: number | null;
   totalMaintenanceCost: number;
+  pricePlanId: string | null;
   pricePlanName: string | null;
   pricePlanPrice: number | null;
+  pricePlanCategory: "FIVE_G" | "LTE" | null;
+  pricePlanDataAllowance: string | null;
+  pricePlanThrottleSpeed: string | null;
+  pricePlanVoiceSms: string | null;
   additionalServices: Array<{
     id: string;
     serviceName: string;
@@ -212,8 +221,13 @@ export const getBidDetail = async (bidId: string): Promise<BidDetail> => {
     installmentPrincipal: response.installmentPrincipal,
     additionalSubsidy: response.additionalSubsidy,
     totalMaintenanceCost: response.totalMaintenanceCost,
+    pricePlanId: response.pricePlanId,
     pricePlanName: response.pricePlanName,
     pricePlanPrice: response.pricePlanPrice,
+    pricePlanCategory: response.pricePlanCategory,
+    pricePlanDataAllowance: response.pricePlanDataAllowance,
+    pricePlanThrottleSpeed: response.pricePlanThrottleSpeed,
+    pricePlanVoiceSms: response.pricePlanVoiceSms,
     additionalServices: response.additionalServices.map((service) => ({
       id: service.id,
       serviceName: service.serviceName,
