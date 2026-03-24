@@ -1,9 +1,12 @@
+import { useEffect, useRef, useState } from "react";
 import { QuoteRequestInfo } from "components/seller/QuoteRequestInfo";
 import { Card, CardContent } from "components/ui/card";
 import { formatNumber } from "utils/formatters";
+import { getActivePricePlans } from "services/pricePlanService";
+import { logError } from "utils/errorUtils";
 import type { QuoteDetail } from "types/QuoteTypes";
 import type { useBidForm } from "hooks/useBidForm";
-import type { AdditionalServiceRequest } from "types/SellerTypes";
+import type { AdditionalServiceRequest, PricePlan, PricePlanCategory } from "types/SellerTypes";
 import { cn } from "@/utils/cn";
 
 type UseBidFormReturn = ReturnType<typeof useBidForm>;
@@ -12,23 +15,6 @@ interface BidCreateFormContentProps {
   quote: QuoteDetail;
   bidForm: UseBidFormReturn;
 }
-
-const PRICE_PLAN_OPTIONS: { value: string; label: string }[] = [
-  { value: "", label: "요금제 선택" },
-  { value: "5GX 프라임", label: "5GX 프라임" },
-  { value: "5G 프리미어 에센셜", label: "5G 프리미어 에센셜" },
-  { value: "5G 슬림", label: "5G 슬림" },
-  { value: "LTE 베이직", label: "LTE 베이직" },
-];
-
-const PRICE_PLAN_PRICE_OPTIONS: { value: number; label: string }[] = [
-  { value: 0, label: "월 요금대 선택" },
-  { value: 45000, label: "4만원대" },
-  { value: 55000, label: "5만원대" },
-  { value: 65000, label: "6만원대" },
-  { value: 75000, label: "7만원대" },
-  { value: 85000, label: "8만원대 이상" },
-];
 
 /** 할인 방식·판매 가격·필수 요금제·필수 유지 조건 등 동일 섹션 라벨 */
 const SECTION_LABEL = "text-sm font-bold text-black";
@@ -112,12 +98,56 @@ function RadioActivationCard({
 }
 
 export function BidCreateFormContent({ quote, bidForm }: BidCreateFormContentProps) {
-  const { formData, errors, calculations, updateField } = bidForm;
+  const { formData, errors, calculations, updateField, selectPricePlan } = bidForm;
 
-  const presetPlanValues = PRICE_PLAN_OPTIONS.map((o) => o.value).filter(
-    Boolean
-  );
-  const isPresetPlanName = presetPlanValues.includes(formData.pricePlanName);
+  const [pricePlans, setPricePlans] = useState<PricePlan[]>([]);
+  const [selectedCategory, setSelectedCategory] =
+    useState<PricePlanCategory>("FIVE_G");
+  const pricePlansRequestIdRef = useRef(0);
+  const bidFormRef = useRef(bidForm);
+  bidFormRef.current = bidForm;
+
+  useEffect(() => {
+    const loadPricePlans = async () => {
+      const requestId = ++pricePlansRequestIdRef.current;
+
+      const carrierForPlans =
+        quote.carrier === "ANY"
+          ? undefined
+          : quote.carrier === "SKT_ALD"
+            ? "SKT"
+            : quote.carrier === "KT_ALD"
+              ? "KT"
+              : quote.carrier === "LGU_ALD"
+                ? "LGU"
+                : (quote.carrier as "SKT" | "KT" | "LGU");
+
+      try {
+        const plans = await getActivePricePlans({
+          carrier: carrierForPlans,
+          category: selectedCategory,
+        });
+        if (requestId !== pricePlansRequestIdRef.current) {
+          return;
+        }
+        setPricePlans(plans);
+
+        const { pricePlanId, selectedPricePlan } = bidFormRef.current.formData;
+        const selectedId = pricePlanId || selectedPricePlan?.id || "";
+        if (selectedId && !plans.some((p) => p.id === selectedId)) {
+          bidFormRef.current.updateField("pricePlanId", "");
+          bidFormRef.current.updateField("selectedPricePlan", null);
+        }
+      } catch (error) {
+        if (requestId !== pricePlansRequestIdRef.current) {
+          return;
+        }
+        logError("요금제 목록 조회 실패:", error);
+      }
+    };
+
+    loadPricePlans();
+  }, [quote, selectedCategory]);
 
   const handleAddonPrimaryChange = (value: string) => {
     const opt = ADDON_SERVICE_OPTIONS.find((o) => o.value === value);
@@ -223,63 +253,91 @@ export function BidCreateFormContent({ quote, bidForm }: BidCreateFormContentPro
         <section className={cn("space-y-2", SECTION_BOX)}>
           <p className={SECTION_LABEL}>필수 요금제 설정</p>
           <div>
-            <label className={SUB_FIELD_LABEL}>요금제</label>
-          <select
-            value={isPresetPlanName ? formData.pricePlanName : "__custom__"}
-            onChange={(e) => {
-              const v = e.target.value;
-              if (v === "__custom__") {
-                updateField("pricePlanName", "");
-                return;
-              }
-              updateField("pricePlanName", v);
-            }}
-            className="w-full rounded-lg border border-input bg-background h-11 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/30"
-          >
-            {PRICE_PLAN_OPTIONS.map((o) => (
-              <option key={o.value || "empty"} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-            <option value="__custom__">직접 입력</option>
-          </select>
-          </div>
-          {(!isPresetPlanName || formData.pricePlanName === "") && (
-            <input
-              type="text"
-              value={formData.pricePlanName}
-              onChange={(e) =>
-                updateField("pricePlanName", e.target.value)
-              }
-              placeholder="요금제명을 입력하세요"
+            <label className={SUB_FIELD_LABEL} htmlFor="bid-create-modal-price-plan-select">
+              요금제
+            </label>
+            <div className="flex gap-2 mb-2">
+              <button
+                type="button"
+                aria-pressed={selectedCategory === "FIVE_G"}
+                onClick={() => setSelectedCategory("FIVE_G")}
+                className={cn(
+                  "px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+                  selectedCategory === "FIVE_G"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                )}
+              >
+                5G
+              </button>
+              <button
+                type="button"
+                aria-pressed={selectedCategory === "LTE"}
+                onClick={() => setSelectedCategory("LTE")}
+                className={cn(
+                  "px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+                  selectedCategory === "LTE"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                )}
+              >
+                LTE
+              </button>
+            </div>
+            <select
+              id="bid-create-modal-price-plan-select"
+              value={formData.pricePlanId}
+              onChange={(e) => {
+                const id = e.target.value;
+                const plan = pricePlans.find((p) => p.id === id);
+                if (plan) {
+                  selectPricePlan(plan);
+                } else {
+                  updateField("pricePlanId", "");
+                  updateField("selectedPricePlan", null);
+                }
+              }}
               className="w-full rounded-lg border border-input bg-background h-11 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/30"
-            />
-          )}
-          <div>
-            <label className={SUB_FIELD_LABEL}>월 요금대</label>
-          <select
-            value={formData.pricePlanPrice}
-            onChange={(e) =>
-              updateField(
-                "pricePlanPrice",
-                parseInt(e.target.value) || 0
-              )
-            }
-            className="w-full rounded-lg border border-input bg-background h-11 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/30"
-          >
-            {PRICE_PLAN_PRICE_OPTIONS.map((o) => (
-              <option key={o.label} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+            >
+              <option value="">요금제를 선택해주세요</option>
+              {pricePlans.map((plan) => (
+                <option key={plan.id} value={plan.id}>
+                  {plan.planName} - {formatNumber(plan.monthlyFee)}원 (
+                  {plan.dataAllowanceText || "데이터 정보 없음"})
+                </option>
+              ))}
+            </select>
+            {errors.pricePlanId && (
+              <p className="mt-1 text-sm text-red-500">{errors.pricePlanId}</p>
+            )}
+            {formData.selectedPricePlan && (
+              <div className="mt-2 rounded-md border border-border bg-muted/40 p-3 text-xs">
+                <div className="font-medium text-foreground">
+                  {formData.selectedPricePlan.planName}
+                </div>
+                <div className="text-muted-foreground mt-1 space-y-0.5">
+                  <div>
+                    월정액:{" "}
+                    {formatNumber(formData.selectedPricePlan.monthlyFee)}원
+                  </div>
+                  <div>
+                    데이터:{" "}
+                    {formData.selectedPricePlan.dataAllowanceText || "-"}
+                  </div>
+                  {formData.selectedPricePlan.throttleSpeedText &&
+                    formData.selectedPricePlan.throttleSpeedText !== "-" && (
+                      <div>
+                        소진 시: {formData.selectedPricePlan.throttleSpeedText}
+                      </div>
+                    )}
+                  <div>
+                    음성/문자:{" "}
+                    {formData.selectedPricePlan.voiceSmsText || "-"}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-          {errors.pricePlanName && (
-            <p className="text-sm text-red-500">{errors.pricePlanName}</p>
-          )}
-          {errors.pricePlanPrice && (
-            <p className="text-sm text-red-500">{errors.pricePlanPrice}</p>
-          )}
         </section>
 
         <section className={cn("space-y-2", SECTION_BOX)}>
