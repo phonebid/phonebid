@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { mutate } from "swr";
+import { Handshake } from "lucide-react";
 import { SellerHeader } from "components/seller/SellerHeader";
 import { StatCard } from "components/seller/StatCard";
 import { QuoteFilterBar } from "components/seller/QuoteFilterBar";
@@ -95,21 +96,7 @@ const SellerDashboardPage: React.FC = () => {
             value={34}
             description="진행 중인 거래"
             iconBgColor="bg-orange-500"
-            icon={
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16.5V19m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"
-                />
-              </svg>
-            }
+            icon={<Handshake className="w-6 h-6" />}
           />
           <StatCard
             title="거래완료"
