@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useLocation, useParams, useNavigate } from "react-router-dom";
 import useSWR, { useSWRConfig } from "swr";
 import { getChatRoom, getChatMessagesPaginated, markMessagesAsRead } from "services/chatService";
 import type { PaginatedChatMessages } from "types/ChatTypes";
@@ -19,6 +19,7 @@ import { TypingIndicator } from "components/chat/TypingIndicator";
 const ChatRoomPage: React.FC = () => {
   const { chatRoomId } = useParams<{ chatRoomId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuthStore();
   const { mutate } = useSWRConfig();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -610,8 +611,13 @@ const ChatRoomPage: React.FC = () => {
   const handleBack = useCallback(() => {
     // 채팅방 목록 캐시를 강제로 revalidate
     mutate("/chat/rooms?page=0&size=20");
+    const fromPath = (location.state as { from?: string } | null)?.from;
+    if (fromPath) {
+      navigate(fromPath);
+      return;
+    }
     navigate("/chat");
-  }, [mutate, navigate]);
+  }, [location.state, mutate, navigate]);
 
   // 메시지가 같은 날짜인지 확인
   const isSameDate = (date1: string, date2: string): boolean => {

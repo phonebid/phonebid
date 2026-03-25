@@ -168,6 +168,26 @@ export const SellerHeader: React.FC = () => {
           <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated && user ? (
               <div className="flex items-center space-x-3">
+                <Link
+                  to="/chat"
+                  state={{ from: "/seller-center" }}
+                  className="relative p-2 text-gray-700 hover:text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-full transition-all duration-200"
+                  aria-label="채팅"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.5}
+                      d="M7 4h10a5 5 0 015 5v4a5 5 0 01-5 5h-1v4l-4-4H7a5 5 0 01-5-5V9a5 5 0 015-5z"
+                    />
+                  </svg>
+                </Link>
                 <NotificationBell
                   typesFilter={[...SELLER_NOTIFICATION_TYPES]}
                   viewAllPath="/seller-center/notifications"
@@ -247,8 +267,30 @@ export const SellerHeader: React.FC = () => {
             )}
           </div>
 
-          {/* 모바일 메뉴 버튼 */}
-          <div className="md:hidden">
+          {/* 모바일 액션 + 메뉴 버튼 */}
+          <div className="md:hidden flex items-center gap-1.5">
+            {isAuthenticated && user && (
+              <Link
+                to="/chat"
+                state={{ from: "/seller-center" }}
+                className="relative p-2 text-gray-700 hover:text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-full transition-all duration-200"
+                aria-label="채팅"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2.5}
+                    d="M7 4h10a5 5 0 015 5v4a5 5 0 01-5 5h-1v4l-4-4H7a5 5 0 01-5-5V9a5 5 0 015-5z"
+                  />
+                </svg>
+              </Link>
+            )}
             <button
               type="button"
               onClick={toggleMobileMenu}
