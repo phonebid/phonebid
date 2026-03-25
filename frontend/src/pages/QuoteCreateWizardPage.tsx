@@ -127,6 +127,19 @@ const QuoteCreateWizardPage: React.FC = () => {
       return true;
     }
     if (step === 5) {
+      const purchaseMethod = draft.purchaseMethod;
+      const requiresCurrentCarrier =
+        purchaseMethod === "DEVICE_CHANGE" || purchaseMethod === "NUMBER_TRANSFER";
+
+      if (requiresCurrentCarrier && !draft.currentCarrier) {
+        return false;
+      }
+
+      // 기기변경의 경우 현재 통신사와 동일하게 carrier를 고정해야 함
+      if (purchaseMethod === "DEVICE_CHANGE") {
+        return Boolean(draft.currentCarrier) && draft.carrier === draft.currentCarrier;
+      }
+
       return true;
     }
     return true;
@@ -136,13 +149,19 @@ const QuoteCreateWizardPage: React.FC = () => {
     draft.color,
     draft.storage,
     draft.carrier,
+    draft.currentCarrier,
     step,
     hasColorOptions,
     hasStorageOptions,
   ]);
 
   const handleSelectPlan = (value: PurchaseMethod) => {
-    updateDraft({ purchaseMethod: value });
+    // 구매방법 변경 시, 현재 통신사/통신사 선택을 초기화하여 불일치 상태를 방지합니다.
+    updateDraft({
+      purchaseMethod: value,
+      currentCarrier: undefined,
+      carrier: undefined,
+    });
   };
 
   const handleSelectPhone = (model: PhoneModelResponse) => {
@@ -167,6 +186,15 @@ const QuoteCreateWizardPage: React.FC = () => {
 
   const handleSelectCarrier = (carrier: Carrier) => {
     updateDraft({ carrier });
+  };
+
+  const handleSelectCurrentCarrier = (carrier: Carrier) => {
+    const purchaseMethod = draft.purchaseMethod;
+    if (purchaseMethod === "DEVICE_CHANGE") {
+      updateDraft({ currentCarrier: carrier, carrier });
+      return;
+    }
+    updateDraft({ currentCarrier: carrier });
   };
 
   const goPrev = () => {
@@ -455,6 +483,11 @@ const QuoteCreateWizardPage: React.FC = () => {
 
     if (step === 5) {
       const carrierTitle = selectedModelLabel ?? "통신사 선택";
+      const purchaseMethod = draft.purchaseMethod;
+      const requiresCurrentCarrier =
+        purchaseMethod === "DEVICE_CHANGE" || purchaseMethod === "NUMBER_TRANSFER";
+      const isDeviceChange = purchaseMethod === "DEVICE_CHANGE";
+
       return (
         <section className="space-y-5">
           <div className="space-y-3">
@@ -465,24 +498,78 @@ const QuoteCreateWizardPage: React.FC = () => {
               {draft.color?.displayLabel ?? "색상 미선택"},{" "}
               {draft.storage?.displayLabel ?? "용량 미선택"}
             </p>
-            <p className="text-base font-semibold">통신사</p>
+            {requiresCurrentCarrier ? (
+              <>
+                <p className="text-base font-semibold">현재 통신사</p>
+                <p className="text-sm text-muted-foreground">
+                  {isDeviceChange
+                    ? "기기변경은 현재 통신사 유지가 필수입니다."
+                    : "번호이동 조건 확인을 위해 현재 통신사가 필요합니다."}
+                </p>
+              </>
+            ) : null}
           </div>
+
+          {requiresCurrentCarrier ? (
+            <div className="space-y-3">
+              {carrierOptions.map((option) => (
+                <SelectionCard
+                  key={`current-${option.id}`}
+                  title={option.title}
+                  selected={draft.currentCarrier === option.id}
+                  onClick={() => handleSelectCurrentCarrier(option.id)}
+                  className="py-4"
+                />
+              ))}
+            </div>
+          ) : null}
+
+          <div className="space-y-3 pt-2">
+            <p className="text-base font-semibold">통신사</p>
+            {isDeviceChange ? (
+              <p className="text-sm text-muted-foreground">
+                기기변경은 현재 통신사와 동일하게 자동 설정됩니다.
+              </p>
+            ) : null}
+          </div>
+
           <div className="space-y-3">
             {carrierOptions.map((option) => (
               <SelectionCard
                 key={option.id}
                 title={option.title}
                 selected={draft.carrier === option.id}
-                onClick={() => handleSelectCarrier(option.id)}
-                className="py-4"
+                onClick={() => {
+                  if (isDeviceChange) {
+                    if (!draft.currentCarrier) {
+                      toast.error("현재 통신사를 먼저 선택해주세요.");
+                      return;
+                    }
+                    // 기기변경은 현재 통신사와 동일하게 고정
+                    handleSelectCarrier(draft.currentCarrier);
+                    return;
+                  }
+                  handleSelectCarrier(option.id);
+                }}
+                className={
+                  isDeviceChange && draft.currentCarrier && option.id !== draft.currentCarrier
+                    ? "py-4 opacity-50 pointer-events-none"
+                    : "py-4"
+                }
               />
             ))}
             <SelectionCard
               key="no-preference-carrier"
               title="상관 없음"
               selected={draft.carrier === undefined}
-              onClick={() => updateDraft({ carrier: undefined })}
-              className="py-4"
+              onClick={() => {
+                if (isDeviceChange) {
+                  toast.error("기기변경은 통신사 유지가 필수입니다.");
+                  return;
+                }
+                updateDraft({ carrier: undefined });
+              }}
+              className={isDeviceChange ? "py-4 opacity-50 pointer-events-none" : "py-4"}
             />
           </div>
         </section>
@@ -505,6 +592,13 @@ const QuoteCreateWizardPage: React.FC = () => {
             label="구매 계획"
             value={getPurchasePlanLabel(draft.purchaseMethod)}
           />
+          {(draft.purchaseMethod === "DEVICE_CHANGE" ||
+            draft.purchaseMethod === "NUMBER_TRANSFER") && (
+            <SummaryCard
+              label="현재 통신사"
+              value={draft.currentCarrier ?? "미선택"}
+            />
+          )}
           <SummaryCard
             label="선택한 기종"
             value={selectedModelLabel ?? "상관 없음"}
