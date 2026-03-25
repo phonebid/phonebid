@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { sellerService } from "services/sellerService";
 import type { SellerProfileResponseDto } from "types/SellerTypes";
 import { NotificationBell } from "components/notification/NotificationBell";
+import { mypageService } from "services/mypageService";
 
 const SELLER_NOTIFICATION_TYPES = [
   "QUOTE_CREATED",
@@ -21,6 +22,7 @@ export const SellerHeader: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [sellerProfile, setSellerProfile] = useState<SellerProfileResponseDto | null>(null);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const profileButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -44,8 +46,36 @@ export const SellerHeader: React.FC = () => {
         .catch((error) => {
           console.error("판매자 프로필 조회 실패:", error);
         });
+
+      mypageService
+        .getProfile()
+        .then((profile) => {
+          setProfileImageUrl(profile.profileImageUrl || null);
+        })
+        .catch((error) => {
+          console.error("유저 프로필 조회 실패:", error);
+        });
     }
   }, [isAuthenticated, user]);
+
+  useEffect(() => {
+    function handleProfileImageUpdated() {
+      if (!isAuthenticated) return;
+      mypageService
+        .getProfile()
+        .then((profile) => {
+          setProfileImageUrl(profile.profileImageUrl || null);
+        })
+        .catch((error) => {
+          console.error("유저 프로필 조회 실패:", error);
+        });
+    }
+
+    window.addEventListener("profile-image-updated", handleProfileImageUpdated);
+    return () => {
+      window.removeEventListener("profile-image-updated", handleProfileImageUpdated);
+    };
+  }, [isAuthenticated]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -151,10 +181,18 @@ export const SellerHeader: React.FC = () => {
                     aria-label="프로필 메뉴"
                     aria-expanded={isProfileMenuOpen}
                   >
-                    <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                      <span className="text-xs text-gray-600">
-                        {sellerProfile?.storeName?.[0] || user?.nickname?.[0] || "?"}
-                      </span>
+                    <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden">
+                      {profileImageUrl ? (
+                        <img
+                          src={profileImageUrl}
+                          alt="프로필 이미지"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-xs text-gray-600">
+                          {sellerProfile?.storeName?.[0] || user?.nickname?.[0] || "?"}
+                        </span>
+                      )}
                     </div>
                     <span className="text-sm text-gray-900 font-medium">
                       {sellerProfile?.storeName || user?.nickname || "판매자"}

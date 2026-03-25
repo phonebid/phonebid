@@ -197,10 +197,11 @@ export const mypageService = {
       const formData = new FormData();
       formData.append("file", file);
       
-      return await apiClient.post<{ profileImageUrl: string }>(
+      const response = await apiClient.post<{ imageUrl: string }>(
         `${ENDPOINTS.PROFILE}/image`,
         formData
       );
+      return { profileImageUrl: response.imageUrl };
     } catch (error: unknown) {
       logError("프로필 이미지 업로드 실패:", error);
       toast.error("프로필 이미지 업로드에 실패했습니다.");
