@@ -123,8 +123,35 @@ public class NotificationEventListener {
         
         // 구매자와 판매자 모두에게 알림 발송
         List<NotificationChannel> channels = List.of(NotificationChannel.SSE, NotificationChannel.KAKAO);
-        sendNotificationToUser(event.getUserId(), event, channels);
-        sendNotificationToUser(event.getSellerUserId(), event, channels);
+
+        Integer newPrice = event.getBid() != null ? event.getBid().getInstallmentPrincipal() : null;
+        Integer previousLowestPrice = event.getPreviousLowestPrice();
+
+        String title;
+        String message;
+        if (previousLowestPrice == null) {
+            title = "최저가가 등록되었습니다";
+            message = String.format("첫 입찰이 등록되었습니다. 현재 최저가: %,d원", newPrice);
+        } else {
+            title = "최저가가 갱신되었습니다";
+            message = String.format("더 낮은 가격(%,d원)의 입찰이 등록되었습니다.", newPrice);
+        }
+
+        if (event.getUserId() != null) {
+            User user = userRepository.findById(event.getUserId()).orElse(null);
+            if (user != null) {
+                notificationService.createAndSendNotification(
+                        user, event.getNotificationType(), channels, title, message, event.getReferenceId());
+            }
+        }
+
+        if (event.getSellerUserId() != null) {
+            User sellerUser = userRepository.findById(event.getSellerUserId()).orElse(null);
+            if (sellerUser != null) {
+                notificationService.createAndSendNotification(
+                        sellerUser, event.getNotificationType(), channels, title, message, event.getReferenceId());
+            }
+        }
     }
 
     @Async("notificationExecutor")
