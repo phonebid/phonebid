@@ -92,7 +92,6 @@ export function useNotifications() {
       try {
         await notificationService.markAsRead(notificationId);
         markAsReadInStore(notificationId);
-        toast.success("알림을 읽음 처리했습니다.");
       } catch (err) {
         const error = err as Error;
         setError(error);
@@ -113,7 +112,6 @@ export function useNotifications() {
     try {
       const response = await notificationService.markAllAsRead();
       markAllAsReadInStore();
-      toast.success(`${response.count}개의 알림을 읽음 처리했습니다.`);
       return response;
     } catch (err) {
       const error = err as Error;
