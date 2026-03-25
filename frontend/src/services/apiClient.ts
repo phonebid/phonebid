@@ -47,6 +47,7 @@ class ApiClient {
       async (error) => {
         const errorMessage =
           error.response?.data?.message || "알 수 없는 오류가 발생했습니다.";
+        const errorDetails = error.response?.data?.data;
         const errorCode = error.response?.status || 500;
         const requestUrl = error.config?.url || "";
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
@@ -126,8 +127,10 @@ class ApiClient {
           );
         }
 
-        toast.error(errorMessage);
-        return Promise.reject(new ApiErrorClass(errorCode, errorMessage));
+        if (errorCode !== 400 || !errorDetails || typeof errorDetails !== "object") {
+          toast.error(errorMessage);
+        }
+        return Promise.reject(new ApiErrorClass(errorCode, errorMessage, errorDetails));
       }
     );
   }
