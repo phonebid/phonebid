@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuthStore } from "store/authStore";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { sellerService } from "services/sellerService";
 import type { SellerProfileResponseDto } from "types/SellerTypes";
 import { NotificationBell } from "components/notification/NotificationBell";
@@ -17,11 +17,23 @@ const SELLER_NOTIFICATION_TYPES = [
 ] as const;
 
 export const SellerHeader: React.FC = () => {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, logout } = useAuthStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [sellerProfile, setSellerProfile] = useState<SellerProfileResponseDto | null>(null);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+  const profileButtonRef = useRef<HTMLButtonElement>(null);
 
   const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
+  const toggleProfileMenu = () => setIsProfileMenuOpen((prev) => !prev);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("로그아웃 실패:", error);
+    }
+  };
 
   useEffect(() => {
     if (isAuthenticated && user?.role === "SELLER") {
@@ -34,6 +46,41 @@ export const SellerHeader: React.FC = () => {
         });
     }
   }, [isAuthenticated, user]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        profileMenuRef.current &&
+        profileButtonRef.current &&
+        !profileMenuRef.current.contains(event.target as Node) &&
+        !profileButtonRef.current.contains(event.target as Node)
+      ) {
+        setIsProfileMenuOpen(false);
+      }
+    }
+
+    if (isProfileMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [isProfileMenuOpen]);
+
+  useEffect(() => {
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsProfileMenuOpen(false);
+      }
+    }
+
+    if (isProfileMenuOpen) {
+      document.addEventListener("keydown", handleEscape);
+      return () => {
+        document.removeEventListener("keydown", handleEscape);
+      };
+    }
+  }, [isProfileMenuOpen]);
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b">
@@ -95,28 +142,59 @@ export const SellerHeader: React.FC = () => {
                   typesFilter={[...SELLER_NOTIFICATION_TYPES]}
                   viewAllPath="/seller-center/notifications"
                 />
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                    <span className="text-xs text-gray-600">
-                      {sellerProfile?.storeName?.[0] || user?.nickname?.[0] || "?"}
-                    </span>
-                  </div>
-                  <span className="text-sm text-gray-900 font-medium">
-                    {sellerProfile?.storeName || user?.nickname || "판매자"}
-                  </span>
-                  <svg
-                    className="w-4 h-4 text-gray-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                <div className="relative">
+                  <button
+                    ref={profileButtonRef}
+                    type="button"
+                    onClick={toggleProfileMenu}
+                    className="flex items-center space-x-2 rounded-md px-2 py-1 hover:bg-gray-100 transition-colors"
+                    aria-label="프로필 메뉴"
+                    aria-expanded={isProfileMenuOpen}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
+                    <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                      <span className="text-xs text-gray-600">
+                        {sellerProfile?.storeName?.[0] || user?.nickname?.[0] || "?"}
+                      </span>
+                    </div>
+                    <span className="text-sm text-gray-900 font-medium">
+                      {sellerProfile?.storeName || user?.nickname || "판매자"}
+                    </span>
+                    <svg
+                      className="w-4 h-4 text-gray-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
+
+                  {isProfileMenuOpen && (
+                    <div
+                      ref={profileMenuRef}
+                      className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-md shadow-lg z-50 overflow-hidden"
+                    >
+                      <Link
+                        to="/seller-center/profile"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        onClick={() => setIsProfileMenuOpen(false)}
+                      >
+                        내 프로필
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                      >
+                        로그아웃
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
@@ -198,6 +276,27 @@ export const SellerHeader: React.FC = () => {
             >
               고객센터
             </Link>
+            {isAuthenticated && user && (
+              <>
+                <Link
+                  to="/seller-center/profile"
+                  className="block px-2 py-2 rounded-md text-gray-700 hover:bg-gray-100"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  내 프로필
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void handleLogout();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full text-left px-2 py-2 rounded-md text-red-600 hover:bg-red-50"
+                >
+                  로그아웃
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
