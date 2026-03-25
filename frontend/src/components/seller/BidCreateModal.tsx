@@ -5,6 +5,7 @@ import { getQuoteDetail } from "services/quoteService";
 import { sellerService } from "services/sellerService";
 import { logError } from "utils/errorUtils";
 import { toast } from "react-toastify";
+import { ApiErrorClass } from "types/ApiTypes";
 import type { QuoteDetail } from "types/QuoteTypes";
 
 function ArrowLeftIcon() {
@@ -156,6 +157,12 @@ export function BidCreateModal({
       onSuccess?.();
     } catch (error) {
       logError("견적 전송 실패:", error);
+      if (error instanceof ApiErrorClass && error.code === 400) {
+        const details = error.details;
+        if (details && typeof details === "object") {
+          bidForm.applyServerErrors(details as Record<string, unknown>);
+        }
+      }
     } finally {
       setIsSubmitting(false);
     }

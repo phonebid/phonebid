@@ -35,6 +35,7 @@ export interface BidFormErrors {
   devicePrice?: string;
   publicSubsidy?: string;
   additionalSubsidy?: string;
+  installmentPrincipal?: string;
   pricePlanId?: string;
   deliveryDays?: string;
 }
@@ -184,6 +185,27 @@ export const useBidForm = (quote: QuoteDetail | null) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const applyServerErrors = (serverErrors: Record<string, unknown>) => {
+    setErrors((prev) => {
+      const next: BidFormErrors = { ...prev };
+
+      for (const [key, value] of Object.entries(serverErrors)) {
+        if (typeof value !== "string" || value.trim().length === 0) continue;
+
+        if (key === "installmentPrincipal") {
+          next.installmentPrincipal = value;
+          continue;
+        }
+
+        if (key in next) {
+          (next as Record<string, string | undefined>)[key] = value;
+        }
+      }
+
+      return next;
+    });
+  };
+
   const toBidCreateRequest = (): BidCreateRequest | null => {
     if (!quote || !formData.pricePlanId) return null;
     return {
@@ -224,6 +246,7 @@ export const useBidForm = (quote: QuoteDetail | null) => {
     validate,
     toBidCreateRequest,
     selectPricePlan,
+    applyServerErrors,
   };
 };
 

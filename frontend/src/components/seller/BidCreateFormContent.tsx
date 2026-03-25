@@ -249,6 +249,9 @@ export function BidCreateFormContent({ quote, bidForm }: BidCreateFormContentPro
           출고가 기준 {formatNumber(formData.devicePrice)}원 · 할부원금{" "}
           {formatNumber(calculations.installmentPrincipal)}원
         </div>
+        {errors.installmentPrincipal && (
+          <p className="text-sm text-red-500">{errors.installmentPrincipal}</p>
+        )}
 
         <section className={cn("space-y-2", SECTION_BOX)}>
           <p className={SECTION_LABEL}>필수 요금제 설정</p>
