@@ -186,24 +186,33 @@ export const useBidForm = (quote: QuoteDetail | null) => {
   };
 
   const applyServerErrors = (serverErrors: Record<string, unknown>) => {
-    setErrors((prev) => {
-      const next: BidFormErrors = { ...prev };
+    const allowedKeys: (keyof BidFormErrors)[] = [
+      "devicePrice",
+      "publicSubsidy",
+      "additionalSubsidy",
+      "installmentPrincipal",
+      "pricePlanId",
+      "deliveryDays",
+    ];
 
-      for (const [key, value] of Object.entries(serverErrors)) {
-        if (typeof value !== "string" || value.trim().length === 0) continue;
+    const next: BidFormErrors = {};
 
-        if (key === "installmentPrincipal") {
-          next.installmentPrincipal = value;
-          continue;
-        }
+    for (const key of allowedKeys) {
+      const raw =
+        key === "installmentPrincipal"
+          ? serverErrors["installmentPrincipal"]
+          : serverErrors[key as string];
 
-        if (key in next) {
-          (next as Record<string, string | undefined>)[key] = value;
-        }
+      if (typeof raw !== "string") {
+        next[key] = undefined;
+        continue;
       }
 
-      return next;
-    });
+      const trimmed = raw.trim();
+      next[key] = trimmed.length > 0 ? trimmed : undefined;
+    }
+
+    setErrors(next);
   };
 
   const toBidCreateRequest = (): BidCreateRequest | null => {
