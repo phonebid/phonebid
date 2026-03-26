@@ -262,6 +262,11 @@ export function getNotificationRoute(
     
     case "BID_SELECTED":
       return `/seller-center`;
+
+    case "LOWEST_PRICE_UPDATED":
+      return role === "SELLER"
+        ? "/seller-center/notifications"
+        : `/mypage/quotes/${referenceId}`;
     
     case "CONTRACT_SIGNED":
       return role === "SELLER"
