@@ -173,7 +173,12 @@ export function BidCreateModal({
         if (details && typeof details === "object") {
           bidForm.applyServerErrors(details as Record<string, unknown>);
         }
+        return;
       }
+
+      const reason =
+        error instanceof Error && error.message ? ` (${error.message})` : "";
+      toast.error(`견적 전송에 실패했습니다${reason}`);
     } finally {
       setIsSubmitting(false);
     }
