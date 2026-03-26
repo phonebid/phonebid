@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { QuoteRequestInfo } from "components/seller/QuoteRequestInfo";
 import { Card, CardContent } from "components/ui/card";
 import { formatNumber } from "utils/formatters";
@@ -25,13 +25,31 @@ const SECTION_BOX =
 const SUB_FIELD_LABEL =
   "mb-1 block text-xs font-normal text-zinc-600";
 
-const ADDON_SERVICE_OPTIONS: { value: string; price: number; label: string }[] =
-  [
-    { value: "", price: 0, label: "선택 안 함" },
+type AddonOption = { value: string; price: number; label: string };
+type AddonCarrier = "SKT" | "KT" | "LGU";
+
+const ADDON_NONE_OPTION: AddonOption = { value: "", price: 0, label: "선택 안 함" };
+
+// 통신사별 부가서비스 옵션 매핑 (데이터는 추후 확장/교체 가능)
+// - 기본적으로 각 통신사 배열의 첫 요소는 "선택 안 함"
+const ADDON_OPTIONS_BY_CARRIER: Record<AddonCarrier, AddonOption[]> = {
+  SKT: [
+    ADDON_NONE_OPTION,
     { value: "T멤버십 VIP", price: 5000, label: "T멤버십 VIP (월 5,000원)" },
     { value: "디바이스 케어", price: 11000, label: "디바이스 케어 (월 11,000원)" },
     { value: "T우주 Pass", price: 13000, label: "T우주 Pass (월 13,000원)" },
-  ];
+  ],
+  KT: [ADDON_NONE_OPTION],
+  LGU: [ADDON_NONE_OPTION],
+};
+
+function normalizeAddonCarrier(carrier: QuoteDetail["carrier"]): AddonCarrier | null {
+  if (carrier === "SKT" || carrier === "KT" || carrier === "LGU") return carrier;
+  if (carrier === "SKT_ALD") return "SKT";
+  if (carrier === "KT_ALD") return "KT";
+  if (carrier === "LGU_ALD") return "LGU";
+  return null; // ANY 등은 부가서비스 옵션 미노출
+}
 
 function PencilIcon() {
   return (
@@ -149,8 +167,16 @@ export function BidCreateFormContent({ quote, bidForm }: BidCreateFormContentPro
     loadPricePlans();
   }, [quote, selectedCategory]);
 
+  const addonCarrier = useMemo(() => normalizeAddonCarrier(quote.carrier), [quote.carrier]);
+  const addonOptions = useMemo(() => {
+    // 옵션 데이터는 추후 채워 넣더라도, "선택 안 함"은 항상 제공
+    if (!addonCarrier) return [ADDON_NONE_OPTION];
+    const options = ADDON_OPTIONS_BY_CARRIER[addonCarrier] ?? [ADDON_NONE_OPTION];
+    return options.length > 0 ? options : [ADDON_NONE_OPTION];
+  }, [addonCarrier]);
+
   const handleAddonPrimaryChange = (value: string) => {
-    const opt = ADDON_SERVICE_OPTIONS.find((o) => o.value === value);
+    const opt = addonOptions.find((o) => o.value === value);
     if (!opt || !value) {
       updateField("additionalServices", [] as AdditionalServiceRequest[]);
       return;
@@ -162,6 +188,16 @@ export function BidCreateFormContent({ quote, bidForm }: BidCreateFormContentPro
 
   const addonPrimaryValue =
     formData.additionalServices[0]?.serviceName ?? "";
+
+  // 통신사가 바뀌거나 옵션이 바뀌었을 때, 현재 선택된 부가서비스가 지원되지 않으면 정리합니다.
+  useEffect(() => {
+    if (!addonPrimaryValue) return;
+    const isSupported = addonOptions.some((o) => o.value === addonPrimaryValue);
+    if (!isSupported) {
+      updateField("additionalServices", [] as AdditionalServiceRequest[]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addonCarrier, addonOptions, addonPrimaryValue]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-6 items-start">
@@ -366,36 +402,36 @@ export function BidCreateFormContent({ quote, bidForm }: BidCreateFormContentPro
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
             <div>
               <label className={SUB_FIELD_LABEL}>서비스</label>
-            <select
-              value={addonPrimaryValue}
-              onChange={(e) => handleAddonPrimaryChange(e.target.value)}
-              className="w-full rounded-lg border border-input bg-background h-11 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/30"
-            >
-              {ADDON_SERVICE_OPTIONS.map((o) => (
-                <option key={o.label} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+              <select
+                value={addonPrimaryValue}
+                onChange={(e) => handleAddonPrimaryChange(e.target.value)}
+                className="w-full rounded-lg border border-input bg-background h-11 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/30"
+              >
+                {addonOptions.map((o) => (
+                  <option key={o.label} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className={SUB_FIELD_LABEL}>유지기간</label>
-            <select
-              value={formData.additionalServicesMaintenanceMonths}
-              onChange={(e) =>
-                updateField(
-                  "additionalServicesMaintenanceMonths",
-                  parseInt(e.target.value) || 0
-                )
-              }
-              className="w-full rounded-lg border border-input bg-background h-11 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/30"
-            >
-              <option value={0}>유지기간 선택</option>
-              <option value={3}>3개월 이상</option>
-              <option value={12}>12개월 이상</option>
-              <option value={24}>24개월 이상</option>
-              <option value={36}>36개월 이상</option>
-            </select>
+              <select
+                value={formData.additionalServicesMaintenanceMonths}
+                onChange={(e) =>
+                  updateField(
+                    "additionalServicesMaintenanceMonths",
+                    parseInt(e.target.value) || 0
+                  )
+                }
+                className="w-full rounded-lg border border-input bg-background h-11 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/30"
+              >
+                <option value={0}>유지기간 선택</option>
+                <option value={3}>3개월 이상</option>
+                <option value={12}>12개월 이상</option>
+                <option value={24}>24개월 이상</option>
+                <option value={36}>36개월 이상</option>
+              </select>
             </div>
           </div>
         </section>
