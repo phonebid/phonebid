@@ -72,46 +72,59 @@ function PencilIcon() {
 function RadioActivationCard({
   selected,
   onSelect,
+  name,
+  value,
   title,
   description,
 }: {
   selected: boolean;
   onSelect: () => void;
+  name: string;
+  value: string;
   title: string;
   description?: string;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={cn(
-        "w-full rounded-xl border-2 p-3 text-left transition-colors",
-        selected
-          ? "border-blue-600 bg-blue-50/50 ring-1 ring-blue-600/20"
-          : "border-border bg-card hover:bg-muted/40"
-      )}
-    >
-      <div className="flex items-start gap-3">
-        <span
-          className={cn(
-            "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2",
-            selected ? "border-blue-600" : "border-muted-foreground/40"
-          )}
-        >
-          {selected ? (
-            <span className="h-2.5 w-2.5 rounded-full bg-blue-600" />
-          ) : null}
-        </span>
-        <div>
-          <div className="font-semibold text-foreground">{title}</div>
-          {description ? (
-            <div className="text-xs text-muted-foreground mt-0.5">
-              {description}
-            </div>
-          ) : null}
+    <label className="block">
+      <input
+        type="radio"
+        name={name}
+        value={value}
+        checked={selected}
+        onChange={onSelect}
+        className="sr-only peer"
+      />
+      <div
+        className={cn(
+          "w-full rounded-xl border-2 p-3 text-left transition-colors cursor-pointer",
+          "peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-blue-600/30 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background",
+          selected
+            ? "border-blue-600 bg-blue-50/50 ring-1 ring-blue-600/20"
+            : "border-border bg-card hover:bg-muted/40"
+        )}
+      >
+        <div className="flex items-start gap-3">
+          <span
+            className={cn(
+              "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2",
+              selected ? "border-blue-600" : "border-muted-foreground/40"
+            )}
+          >
+            {selected ? (
+              <span className="h-2.5 w-2.5 rounded-full bg-blue-600" />
+            ) : null}
+          </span>
+          <div>
+            <div className="font-semibold text-foreground">{title}</div>
+            {description ? (
+              <div className="text-xs text-muted-foreground mt-0.5">
+                {description}
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
-    </button>
+    </label>
   );
 }
 
@@ -215,8 +228,14 @@ export function BidCreateFormContent({ quote, bidForm }: BidCreateFormContentPro
 
         <section className={cn("space-y-2", SECTION_BOX)}>
           <p className={SECTION_LABEL}>할인 방식 선택</p>
-          <div className="space-y-2">
+          <div
+            className="space-y-2"
+            role="radiogroup"
+            aria-label="할인 방식 선택"
+          >
             <RadioActivationCard
+              name="activationMethod"
+              value="COMMON_SUBSIDY"
               selected={formData.activationMethod === "COMMON_SUBSIDY"}
               onSelect={() =>
                 updateField("activationMethod", "COMMON_SUBSIDY")
@@ -224,6 +243,8 @@ export function BidCreateFormContent({ quote, bidForm }: BidCreateFormContentPro
               title="공시지원금 (단말할인)"
             />
             <RadioActivationCard
+              name="activationMethod"
+              value="SELECTIVE_SUBSIDY"
               selected={formData.activationMethod === "SELECTIVE_SUBSIDY"}
               onSelect={() =>
                 updateField("activationMethod", "SELECTIVE_SUBSIDY")
