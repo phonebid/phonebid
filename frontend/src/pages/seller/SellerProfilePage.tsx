@@ -209,7 +209,7 @@ export default function SellerProfilePage() {
                 {profileImageUrl && (
                   <button
                     type="button"
-                    className="absolute top-0 right-0 w-8 h-8 bg-gray-700/80 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-800/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="absolute top-0 right-0 w-8 h-8 bg-gray-700/80 backdrop-blur-sm rounded-full flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity hover:bg-gray-800/90 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={handleImageDelete}
                     disabled={isUploadingImage || isLoadingUserProfile}
                     aria-label="프로필 이미지 삭제"
