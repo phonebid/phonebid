@@ -123,8 +123,9 @@ export function BidCreateModal({
         toast.error("견적 정보를 불러오는데 실패했습니다.");
         onClose();
       } finally {
-        if (ignore || requestId !== loadQuoteRequestIdRef.current) return;
-        setIsLoading(false);
+        if (!ignore && requestId === loadQuoteRequestIdRef.current) {
+          setIsLoading(false);
+        }
       }
     };
 
