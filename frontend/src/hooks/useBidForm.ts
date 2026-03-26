@@ -185,7 +185,7 @@ export const useBidForm = (quote: QuoteDetail | null) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const applyServerErrors = (serverErrors: Record<string, unknown>) => {
+  const applyServerErrors = (serverErrors: Record<string, unknown>): boolean => {
     const allowedKeys: (keyof BidFormErrors)[] = [
       "devicePrice",
       "publicSubsidy",
@@ -196,6 +196,7 @@ export const useBidForm = (quote: QuoteDetail | null) => {
     ];
 
     const next: BidFormErrors = {};
+    let appliedAny = false;
 
     for (const key of allowedKeys) {
       const raw =
@@ -209,10 +210,16 @@ export const useBidForm = (quote: QuoteDetail | null) => {
       }
 
       const trimmed = raw.trim();
-      next[key] = trimmed.length > 0 ? trimmed : undefined;
+      if (trimmed.length > 0) {
+        next[key] = trimmed;
+        appliedAny = true;
+      } else {
+        next[key] = undefined;
+      }
     }
 
     setErrors(next);
+    return appliedAny;
   };
 
   const toBidCreateRequest = (): BidCreateRequest | null => {

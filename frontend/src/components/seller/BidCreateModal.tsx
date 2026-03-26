@@ -97,8 +97,14 @@ export function BidCreateModal({
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const loadQuoteRequestIdRef = useRef(0);
+  const submitRequestIdRef = useRef(0);
 
   const bidForm = useBidForm(quote);
+
+  const handleClose = () => {
+    if (isSubmitting) return;
+    onClose();
+  };
 
   useEffect(() => {
     if (!isOpen || !quoteId) {
@@ -137,16 +143,16 @@ export function BidCreateModal({
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && !isSubmitting) onClose();
     };
     if (isOpen) {
       document.addEventListener("keydown", handleEscape);
     }
     return () => document.removeEventListener("keydown", handleEscape);
-  }, [isOpen, onClose]);
+  }, [isOpen, isSubmitting, onClose]);
 
   const handleBack = () => {
-    onClose();
+    handleClose();
   };
 
   const handleSubmit = async () => {
@@ -161,19 +167,28 @@ export function BidCreateModal({
       return;
     }
 
+    const requestId = ++submitRequestIdRef.current;
     try {
       setIsSubmitting(true);
       await sellerService.createBid(bidRequest);
+      if (requestId !== submitRequestIdRef.current) return;
       toast.success("견적이 성공적으로 전송되었습니다.");
       onClose();
       onSuccess?.();
     } catch (error) {
+      if (requestId !== submitRequestIdRef.current) return;
       logError("견적 전송 실패:", error);
       if (error instanceof ApiErrorClass && error.code === 400) {
         const details = error.details;
         if (details && typeof details === "object") {
-          bidForm.applyServerErrors(details as Record<string, unknown>);
+          const hasAppliedServerErrors = bidForm.applyServerErrors(
+            details as Record<string, unknown>
+          );
+          if (hasAppliedServerErrors) {
+            return;
+          }
         }
+        toast.error("입력값을 다시 확인해 주세요.");
         return;
       }
 
@@ -181,7 +196,9 @@ export function BidCreateModal({
         error instanceof Error && error.message ? ` (${error.message})` : "";
       toast.error(`견적 전송에 실패했습니다${reason}`);
     } finally {
-      setIsSubmitting(false);
+      if (requestId === submitRequestIdRef.current) {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -190,7 +207,7 @@ export function BidCreateModal({
   return (
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-      onClick={onClose}
+      onClick={handleClose}
     >
       <div
         className="bg-white rounded-xl shadow-xl w-full max-w-6xl max-h-[92vh] flex flex-col"
@@ -202,15 +219,17 @@ export function BidCreateModal({
             onClick={handleBack}
             className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors rounded-md"
             aria-label="뒤로가기"
+            disabled={isSubmitting}
           >
             <ArrowLeftIcon />
           </button>
           <h2 className="text-base font-semibold">견적서 작성</h2>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="p-2 -mr-2 text-muted-foreground hover:text-foreground transition-colors rounded-md"
             aria-label="닫기"
+            disabled={isSubmitting}
           >
             <XIcon />
           </button>
