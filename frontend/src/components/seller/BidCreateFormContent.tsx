@@ -173,6 +173,10 @@ export function BidCreateFormContent({ quote, bidForm }: BidCreateFormContentPro
         if (requestId !== pricePlansRequestIdRef.current) {
           return;
         }
+        // 최신 요청이 실패한 경우, 이전 요금제 목록/선택값이 남아 제출되는 것을 방지
+        setPricePlans([]);
+        bidFormRef.current.updateField("pricePlanId", "");
+        bidFormRef.current.updateField("selectedPricePlan", null);
         logError("요금제 목록 조회 실패:", error);
       }
     };
