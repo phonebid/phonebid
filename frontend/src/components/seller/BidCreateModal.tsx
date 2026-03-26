@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useBidForm } from "hooks/useBidForm";
 import { BidCreateFormContent } from "components/seller/BidCreateFormContent";
 import { getQuoteDetail } from "services/quoteService";
@@ -96,6 +96,7 @@ export function BidCreateModal({
   const [quote, setQuote] = useState<QuoteDetail | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const loadQuoteRequestIdRef = useRef(0);
 
   const bidForm = useBidForm(quote);
 
@@ -105,22 +106,32 @@ export function BidCreateModal({
       return;
     }
 
+    const requestId = ++loadQuoteRequestIdRef.current;
+    let ignore = false;
+
     const loadQuote = async () => {
       try {
+        if (ignore || requestId !== loadQuoteRequestIdRef.current) return;
         setIsLoading(true);
         setQuote(null);
         const quoteData = await getQuoteDetail(quoteId);
+        if (ignore || requestId !== loadQuoteRequestIdRef.current) return;
         setQuote(quoteData);
       } catch (error) {
+        if (ignore || requestId !== loadQuoteRequestIdRef.current) return;
         logError("견적 조회 실패:", error);
         toast.error("견적 정보를 불러오는데 실패했습니다.");
         onClose();
       } finally {
+        if (ignore || requestId !== loadQuoteRequestIdRef.current) return;
         setIsLoading(false);
       }
     };
 
     loadQuote();
+    return () => {
+      ignore = true;
+    };
   }, [isOpen, quoteId, onClose]);
 
   useEffect(() => {
