@@ -190,6 +190,7 @@ const ChatListPage: React.FC = () => {
                   room={room}
                   unreadCount={unreadCounts[room.id] || 0}
                   sellerAvatar={otherUserProfileImageUrl}
+                  fromPath={fromPath}
                 />
               );
             })}
