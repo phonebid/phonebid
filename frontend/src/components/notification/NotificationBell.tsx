@@ -21,7 +21,6 @@ export function NotificationBell({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  // selector에서 새 객체를 반환하면 React(useSyncExternalStore)에서 스냅샷이 불안정해져
   // 무한 렌더링이 날 수 있어 필요한 값만 각각 구독합니다.
   const notifications = useNotificationStore((state) => state.notifications);
   const unreadCount = useNotificationStore((state) => state.unreadCount);
