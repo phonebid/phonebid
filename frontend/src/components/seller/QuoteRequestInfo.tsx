@@ -66,16 +66,12 @@ export const QuoteRequestInfo: React.FC<QuoteRequestInfoProps> = ({
 }) => {
   const specs = [quote.storage, quote.color].filter(Boolean).join(" / ");
   const discountLabel =
-    quote.activationMethod === "ANY"
-      ? `${getActivationMethodDisplayName("COMMON_SUBSIDY")} (단말할인)`
-      : quote.activationMethod === "COMMON_SUBSIDY"
-        ? `${getActivationMethodDisplayName("COMMON_SUBSIDY")} (단말할인)`
-        : quote.activationMethod === "SELECTIVE_SUBSIDY"
-          ? `${getActivationMethodDisplayName("SELECTIVE_SUBSIDY")} (요금할인 25%)`
-          : getActivationMethodDisplayName(quote.activationMethod);
-  const memo =
-    quote.buyerMemo?.trim() ||
-    "최대한 빠른 배송 부탁드립니다. 요금제는 5GX 프라임 이상으로 원합니다.";
+    quote.activationMethod === "COMMON_SUBSIDY"
+      ? `${getActivationMethodDisplayName(quote.activationMethod)} (단말할인)`
+      : quote.activationMethod === "SELECTIVE_SUBSIDY"
+        ? `${getActivationMethodDisplayName(quote.activationMethod)} (요금할인 25%)`
+        : getActivationMethodDisplayName(quote.activationMethod);
+  const memo = quote.buyerMemo?.trim() || "구매자 메모가 없습니다.";
   const region = quote.preferredRegion?.trim() || "—";
 
   return (
@@ -150,7 +146,9 @@ export const QuoteRequestInfo: React.FC<QuoteRequestInfoProps> = ({
             구매자 메모
           </span>
         </div>
-        <p className="text-sm text-amber-950/90 leading-relaxed">{memo}</p>
+        <p className="text-sm text-amber-950/90 leading-relaxed">
+          {memo || "—"}
+        </p>
       </div>
 
       <div className="flex items-center justify-between rounded-xl border border-sky-200 bg-sky-50/90 px-4 py-3">
