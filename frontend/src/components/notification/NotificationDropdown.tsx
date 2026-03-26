@@ -5,6 +5,7 @@ import { NotificationItem } from "components/notification/NotificationItem";
 import { NotificationStatusBanner } from "components/notification/NotificationStatusBanner";
 import { Button } from "components/ui/button";
 import type { NotificationType } from "types/NotificationTypes";
+import { useMemo } from "react";
 
 interface NotificationDropdownProps {
   onClose?: () => void;
@@ -17,8 +18,8 @@ export function NotificationDropdown({
   typesFilter,
   viewAllPath = "/notifications",
 }: NotificationDropdownProps) {
-  const { notifications, unreadCount } = useNotificationStore();
-  const { markAllAsRead } = useNotifications();
+  const notifications = useNotificationStore((state) => state.notifications);
+  const { markAllAsRead, markAsRead } = useNotifications();
 
   const filteredNotifications =
     typesFilter && typesFilter.length > 0
@@ -27,13 +28,34 @@ export function NotificationDropdown({
         )
       : notifications;
 
+  const filteredUnreadCount = useMemo(
+    () =>
+      filteredNotifications.reduce(
+        (count, n) => (n.isRead ? count : count + 1),
+        0
+      ),
+    [filteredNotifications]
+  );
+
   // 최근 알림 5개만 표시
   const recentNotifications = filteredNotifications.slice(0, 5);
   const hasNotifications = recentNotifications.length > 0;
 
   const handleMarkAllAsRead = async () => {
-    if (unreadCount === 0) return;
     try {
+      if (filteredUnreadCount === 0) return;
+
+      // 필터가 걸린 드롭다운에서는 서버의 read-all을 호출하면 필터 밖 타입까지 읽음 처리될 수 있어,
+      // 현재 필터에 해당하는 미읽음만 개별 읽음 처리합니다.
+      if (typesFilter && typesFilter.length > 0) {
+        const unreadIds = filteredNotifications
+          .filter((n) => !n.isRead)
+          .map((n) => n.id);
+
+        await Promise.all(unreadIds.map((id) => markAsRead(id)));
+        return;
+      }
+
       await markAllAsRead();
     } catch (error) {
       console.error("모든 알림 읽음 처리 실패:", error);
@@ -46,13 +68,13 @@ export function NotificationDropdown({
       <div className="px-3 py-2.5 sm:px-4 sm:py-3 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-200 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-gray-900">알림</h3>
-          {unreadCount > 0 && (
+          {filteredUnreadCount > 0 && (
             <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">
-              {unreadCount}
+              {filteredUnreadCount}
             </span>
           )}
         </div>
-        {unreadCount > 0 && (
+        {filteredUnreadCount > 0 && (
           <Button
             variant="ghost"
             size="sm"
