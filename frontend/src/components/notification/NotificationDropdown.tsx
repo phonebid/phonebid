@@ -19,12 +19,14 @@ export function NotificationDropdown({
   viewAllPath = "/notifications",
 }: NotificationDropdownProps) {
   const notifications = useNotificationStore((state) => state.notifications);
-  const { markAllAsRead, markAsRead } = useNotifications();
+  const { markAllAsRead } = useNotifications();
 
+  const isFilteredView = Boolean(typesFilter && typesFilter.length > 0);
+  const safeTypesFilter = typesFilter ?? [];
   const filteredNotifications =
-    typesFilter && typesFilter.length > 0
+    isFilteredView
       ? notifications.filter((notification) =>
-          typesFilter.includes(notification.type)
+          safeTypesFilter.includes(notification.type)
         )
       : notifications;
 
@@ -45,16 +47,9 @@ export function NotificationDropdown({
     try {
       if (filteredUnreadCount === 0) return;
 
-      // 필터가 걸린 드롭다운에서는 서버의 read-all을 호출하면 필터 밖 타입까지 읽음 처리될 수 있어,
-      // 현재 필터에 해당하는 미읽음만 개별 읽음 처리합니다.
-      if (typesFilter && typesFilter.length > 0) {
-        const unreadIds = filteredNotifications
-          .filter((n) => !n.isRead)
-          .map((n) => n.id);
-
-        await Promise.all(unreadIds.map((id) => markAsRead(id)));
-        return;
-      }
+      // 필터 뷰에서는 id별 markAsRead를 N번 호출하게 되어 요청 폭주가 날 수 있어
+      // "모두 읽음" 버튼 자체를 숨깁니다. (여기서는 방어적으로 no-op)
+      if (isFilteredView) return;
 
       await markAllAsRead();
     } catch (error) {
@@ -74,7 +69,7 @@ export function NotificationDropdown({
             </span>
           )}
         </div>
-        {filteredUnreadCount > 0 && (
+        {filteredUnreadCount > 0 && !isFilteredView && (
           <Button
             variant="ghost"
             size="sm"
