@@ -1,15 +1,41 @@
 import { Link } from "react-router-dom";
 import { useAuthStore } from "store/authStore";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { sellerService } from "services/sellerService";
 import type { SellerProfileResponseDto } from "types/SellerTypes";
+import { NotificationBell } from "components/notification/NotificationBell";
+import { mypageService } from "services/mypageService";
+
+const SELLER_NOTIFICATION_TYPES = [
+  "QUOTE_CREATED",
+  "BID_SELECTED",
+  "LOWEST_PRICE_UPDATED",
+  "CONTRACT_SIGNED",
+  "PAYMENT_COMPLETED",
+  "SELLER_APPROVED",
+  "SELLER_REJECTED",
+  "CHAT_MESSAGE_RECEIVED",
+] as const;
 
 export const SellerHeader: React.FC = () => {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, logout } = useAuthStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [sellerProfile, setSellerProfile] = useState<SellerProfileResponseDto | null>(null);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+  const profileButtonRef = useRef<HTMLButtonElement>(null);
 
   const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
+  const toggleProfileMenu = () => setIsProfileMenuOpen((prev) => !prev);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("로그아웃 실패:", error);
+    }
+  };
 
   useEffect(() => {
     if (isAuthenticated && user?.role === "SELLER") {
@@ -20,15 +46,82 @@ export const SellerHeader: React.FC = () => {
         .catch((error) => {
           console.error("판매자 프로필 조회 실패:", error);
         });
+
+      mypageService
+        .getProfile()
+        .then((profile) => {
+          setProfileImageUrl(profile.profileImageUrl || null);
+        })
+        .catch((error) => {
+          console.error("유저 프로필 조회 실패:", error);
+        });
     }
   }, [isAuthenticated, user]);
+
+  useEffect(() => {
+    function handleProfileImageUpdated() {
+      if (!isAuthenticated) return;
+      mypageService
+        .getProfile()
+        .then((profile) => {
+          setProfileImageUrl(profile.profileImageUrl || null);
+        })
+        .catch((error) => {
+          console.error("유저 프로필 조회 실패:", error);
+        });
+    }
+
+    window.addEventListener("profile-image-updated", handleProfileImageUpdated);
+    return () => {
+      window.removeEventListener("profile-image-updated", handleProfileImageUpdated);
+    };
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        profileMenuRef.current &&
+        profileButtonRef.current &&
+        !profileMenuRef.current.contains(event.target as Node) &&
+        !profileButtonRef.current.contains(event.target as Node)
+      ) {
+        setIsProfileMenuOpen(false);
+      }
+    }
+
+    if (isProfileMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [isProfileMenuOpen]);
+
+  useEffect(() => {
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsProfileMenuOpen(false);
+      }
+    }
+
+    if (isProfileMenuOpen) {
+      document.addEventListener("keydown", handleEscape);
+      return () => {
+        document.removeEventListener("keydown", handleEscape);
+      };
+    }
+  }, [isProfileMenuOpen]);
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* 로고 */}
-          <div className="flex items-center gap-3">
+          <Link
+            to="/seller-center"
+            className="flex items-center gap-3 hover:opacity-90 transition-opacity"
+            aria-label="판매자센터 홈으로 이동"
+          >
             <div className="w-10 h-10 bg-primary-600 rounded flex items-center justify-center">
               <svg
                 className="w-6 h-6 text-white"
@@ -47,7 +140,7 @@ export const SellerHeader: React.FC = () => {
             <span className="text-lg font-semibold text-gray-900">
               폰비드 판매자센터
             </span>
-          </div>
+          </Link>
 
           {/* 네비게이션 */}
           <nav className="hidden md:flex items-center space-x-6">
@@ -75,46 +168,91 @@ export const SellerHeader: React.FC = () => {
           <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated && user ? (
               <div className="flex items-center space-x-3">
+                <Link
+                  to="/chat"
+                  state={{ from: "/seller-center" }}
+                  className="relative p-2 text-gray-700 hover:text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-full transition-all duration-200"
+                  aria-label="채팅"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.5}
+                      d="M7 4h10a5 5 0 015 5v4a5 5 0 01-5 5h-1v4l-4-4H7a5 5 0 01-5-5V9a5 5 0 015-5z"
+                    />
+                  </svg>
+                </Link>
+                <NotificationBell
+                  typesFilter={[...SELLER_NOTIFICATION_TYPES]}
+                  viewAllPath="/seller-center/notifications"
+                />
                 <div className="relative">
-                  <svg
-                    className="w-6 h-6 text-gray-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                  <button
+                    ref={profileButtonRef}
+                    type="button"
+                    onClick={toggleProfileMenu}
+                    className="flex items-center space-x-2 rounded-md px-2 py-1 hover:bg-gray-100 transition-colors"
+                    aria-label="프로필 메뉴"
+                    aria-expanded={isProfileMenuOpen}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                    />
-                  </svg>
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                    <span className="text-xs text-white font-bold">3</span>
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                    <span className="text-xs text-gray-600">
-                      {sellerProfile?.storeName?.[0] || user?.nickname?.[0] || "?"}
+                    <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden">
+                      {profileImageUrl ? (
+                        <img
+                          src={profileImageUrl}
+                          alt="프로필 이미지"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-xs text-gray-600">
+                          {sellerProfile?.storeName?.[0] || user?.nickname?.[0] || "?"}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-sm text-gray-900 font-medium">
+                      {sellerProfile?.storeName || user?.nickname || "판매자"}
                     </span>
-                  </div>
-                  <span className="text-sm text-gray-900 font-medium">
-                    {sellerProfile?.storeName || user?.nickname || "판매자"}
-                  </span>
-                  <svg
-                    className="w-4 h-4 text-gray-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
+                    <svg
+                      className="w-4 h-4 text-gray-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
+
+                  {isProfileMenuOpen && (
+                    <div
+                      ref={profileMenuRef}
+                      className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-md shadow-lg z-50 overflow-hidden"
+                    >
+                      <Link
+                        to="/seller-center/profile"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        onClick={() => setIsProfileMenuOpen(false)}
+                      >
+                        내 프로필
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                      >
+                        로그아웃
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
@@ -129,8 +267,37 @@ export const SellerHeader: React.FC = () => {
             )}
           </div>
 
-          {/* 모바일 메뉴 버튼 */}
-          <div className="md:hidden">
+          {/* 모바일 액션 + 메뉴 버튼 */}
+          <div className="md:hidden flex items-center gap-1.5">
+            {isAuthenticated && user && (
+              <>
+                <Link
+                  to="/chat"
+                  state={{ from: "/seller-center" }}
+                  className="relative p-2 text-gray-700 hover:text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-full transition-all duration-200"
+                  aria-label="채팅"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.5}
+                      d="M7 4h10a5 5 0 015 5v4a5 5 0 01-5 5h-1v4l-4-4H7a5 5 0 01-5-5V9a5 5 0 015-5z"
+                    />
+                  </svg>
+                </Link>
+                <NotificationBell
+                  typesFilter={[...SELLER_NOTIFICATION_TYPES]}
+                  viewAllPath="/seller-center/notifications"
+                  className="scale-95"
+                />
+              </>
+            )}
             <button
               type="button"
               onClick={toggleMobileMenu}
@@ -196,6 +363,27 @@ export const SellerHeader: React.FC = () => {
             >
               고객센터
             </Link>
+            {isAuthenticated && user && (
+              <>
+                <Link
+                  to="/seller-center/profile"
+                  className="block px-2 py-2 rounded-md text-gray-700 hover:bg-gray-100"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  내 프로필
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void handleLogout();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full text-left px-2 py-2 rounded-md text-red-600 hover:bg-red-50"
+                >
+                  로그아웃
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}

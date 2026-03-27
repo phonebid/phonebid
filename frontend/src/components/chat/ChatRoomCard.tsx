@@ -12,6 +12,7 @@ interface ChatRoomCardProps {
   room: ChatRoom;
   unreadCount?: number;
   sellerAvatar?: string;
+  fromPath?: string;
   onLeave?: () => void;
 }
 
@@ -23,6 +24,7 @@ export function ChatRoomCard({
   room,
   unreadCount = 0,
   sellerAvatar,
+  fromPath,
   onLeave,
 }: ChatRoomCardProps) {
   const navigate = useNavigate();
@@ -36,7 +38,9 @@ export function ChatRoomCard({
 
   const handleClick = () => {
     if (swipeOffset === 0) {
-      navigate(`/chat/${room.id}`);
+      navigate(`/chat/${room.id}`, {
+        state: { from: fromPath },
+      });
     }
   };
 

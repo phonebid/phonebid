@@ -1,30 +1,56 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useNotificationStore } from "store/notificationStore";
 import { Badge } from "components/ui/badge";
 import { NotificationDropdown } from "components/notification/NotificationDropdown";
 import { cn } from "utils/cn";
+import type { NotificationType } from "types/NotificationTypes";
 
 interface NotificationBellProps {
   className?: string;
+  typesFilter?: NotificationType[];
+  viewAllPath?: string;
 }
 
-export function NotificationBell({ className }: NotificationBellProps) {
+export function NotificationBell({
+  className,
+  typesFilter,
+  viewAllPath,
+}: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [shouldRing, setShouldRing] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const { unreadCount } = useNotificationStore();
-  const prevUnreadCountRef = useRef(unreadCount);
+  // 무한 렌더링이 날 수 있어 필요한 값만 각각 구독합니다.
+  const notifications = useNotificationStore((state) => state.notifications);
+  const unreadCount = useNotificationStore((state) => state.unreadCount);
+
+  const typesFilterKey = typesFilter?.join("|") ?? "";
+  const effectiveUnreadCount = useMemo(() => {
+    if (!typesFilter?.length) return unreadCount;
+
+    const typeSet = new Set(typesFilter);
+    return notifications.reduce(
+      (count, n) => (n.isRead || !typeSet.has(n.type) ? count : count + 1),
+      0
+    );
+  }, [notifications, unreadCount, typesFilterKey]);
+
+  const prevUnreadCountRef = useRef(effectiveUnreadCount);
+
+  // 필터가 바뀌면 카운트 기준점을 리셋 (필터 변경으로 인한 링 애니메이션 방지)
+  useEffect(() => {
+    prevUnreadCountRef.current = effectiveUnreadCount;
+  }, [typesFilterKey, effectiveUnreadCount]);
 
   // 새 알림이 도착하면 벨 애니메이션 실행
   useEffect(() => {
-    if (unreadCount > prevUnreadCountRef.current) {
+    if (effectiveUnreadCount > prevUnreadCountRef.current) {
       setShouldRing(true);
       setTimeout(() => setShouldRing(false), 1000);
     }
-    prevUnreadCountRef.current = unreadCount;
-  }, [unreadCount]);
+    prevUnreadCountRef.current = effectiveUnreadCount;
+  }, [effectiveUnreadCount]);
 
   // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
@@ -83,7 +109,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
         <svg
           className={cn(
             "w-6 h-6 transition-transform",
-            unreadCount > 0 && "text-indigo-600"
+            effectiveUnreadCount > 0 && "text-indigo-600"
           )}
           fill="none"
           viewBox="0 0 24 24"
@@ -98,7 +124,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
         </svg>
 
         {/* 미읽음 배지 */}
-        {unreadCount > 0 && (
+        {effectiveUnreadCount > 0 && (
           <Badge
             variant="destructive"
             className={cn(
@@ -106,7 +132,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
               "animate-badge-pulse shadow-lg"
             )}
           >
-            {unreadCount > 99 ? "99+" : unreadCount}
+            {effectiveUnreadCount > 99 ? "99+" : effectiveUnreadCount}
           </Badge>
         )}
       </button>
@@ -117,7 +143,11 @@ export function NotificationBell({ className }: NotificationBellProps) {
           ref={dropdownRef}
           className="absolute right-0 mt-2 z-50 animate-fade-in-down"
         >
-          <NotificationDropdown onClose={() => setIsOpen(false)} />
+          <NotificationDropdown
+            onClose={() => setIsOpen(false)}
+            typesFilter={typesFilter}
+            viewAllPath={viewAllPath}
+          />
         </div>
       )}
     </div>

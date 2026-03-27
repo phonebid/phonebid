@@ -25,6 +25,8 @@ interface QuoteResponseDto {
   currentCarrier?: QuoteDetail["currentCarrier"];
   bidCount?: number | null;
   lowestPrice?: number | null;
+  buyerMemo?: string | null;
+  preferredRegion?: string | null;
 }
 
 interface BidListResponseDto {
@@ -64,6 +66,8 @@ export const getQuoteDetail = async (quoteId: string): Promise<QuoteDetail> => {
     currentCarrier: response.currentCarrier,
     bidCount: response.bidCount ?? 0,
     lowestPrice: response.lowestPrice ?? null,
+    buyerMemo: response.buyerMemo ?? null,
+    preferredRegion: response.preferredRegion ?? null,
   };
 };
 

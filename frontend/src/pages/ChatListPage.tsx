@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import useSWR from "swr";
 import { getChatRooms } from "services/chatService";
 import { realtimeDataConfig } from "services/swrConfig";
@@ -9,7 +9,13 @@ import { useAuthStore } from "store/authStore";
 
 const ChatListPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuthStore();
+
+  const fromPath = (location.state as { from?: string } | null)?.from;
+  const handleBackToFrom = () => {
+    navigate(fromPath || "/");
+  };
 
   useEffect(() => {
     document.title = "채팅 목록 | PhoneBid";
@@ -52,7 +58,7 @@ const ChatListPage: React.FC = () => {
           <div className="max-w-2xl mx-auto px-4 py-3">
             <div className="flex items-center relative">
               <button
-                onClick={() => navigate("/")}
+                onClick={handleBackToFrom}
                 className="text-gray-600 hover:text-gray-900 p-1 absolute left-0"
                 aria-label="홈으로"
               >
@@ -92,7 +98,7 @@ const ChatListPage: React.FC = () => {
           <div className="max-w-2xl mx-auto px-4 py-3">
             <div className="flex items-center relative">
               <button
-                onClick={() => navigate("/")}
+                onClick={handleBackToFrom}
                 className="text-gray-600 hover:text-gray-900 p-1 absolute left-0"
                 aria-label="홈으로"
               >
@@ -132,7 +138,7 @@ const ChatListPage: React.FC = () => {
         <div className="max-w-2xl mx-auto px-4 py-3">
           <div className="flex items-center relative">
             <button
-              onClick={() => navigate("/")}
+              onClick={handleBackToFrom}
               className="text-gray-600 hover:text-gray-900 p-1 absolute left-0"
               aria-label="홈으로"
             >
@@ -184,6 +190,7 @@ const ChatListPage: React.FC = () => {
                   room={room}
                   unreadCount={unreadCounts[room.id] || 0}
                   sellerAvatar={otherUserProfileImageUrl}
+                  fromPath={fromPath}
                 />
               );
             })}

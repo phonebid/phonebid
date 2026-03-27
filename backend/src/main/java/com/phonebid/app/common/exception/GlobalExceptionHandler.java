@@ -11,6 +11,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -108,6 +109,16 @@ public class GlobalExceptionHandler {
         log.warn("권한 거부: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ApiResponse.error(HttpStatus.FORBIDDEN, message, null));
+    }
+
+    /**
+     * 매핑된 컨트롤러/정적 파일이 없을 때 (404)
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNoResourceFoundException(NoResourceFoundException e) {
+        log.warn("요청 리소스 없음: {}", e.getResourcePath());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(HttpStatus.NOT_FOUND, "요청한 리소스를 찾을 수 없습니다.", null));
     }
 
     /**

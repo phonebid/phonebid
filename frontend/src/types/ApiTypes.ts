@@ -12,11 +12,13 @@ export interface ApiError {
 export class ApiErrorClass extends Error {
   public readonly code: number;
   public readonly message: string;
+  public readonly details?: unknown;
 
-  constructor(code: number, message: string) {
+  constructor(code: number, message: string, details?: unknown) {
     super(message);
     this.code = code;
     this.message = message;
+    this.details = details;
     this.name = "ApiError";
   }
 }

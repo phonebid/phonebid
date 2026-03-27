@@ -246,7 +246,8 @@ export function getNotificationDisplayName(type: NotificationType): string {
  */
 export function getNotificationRoute(
   type: NotificationType,
-  referenceId?: string
+  referenceId?: string,
+  role?: string
 ): string {
   if (!referenceId) {
     return "/notifications";
@@ -254,19 +255,28 @@ export function getNotificationRoute(
 
   switch (type) {
     case "QUOTE_CREATED":
-      return `/mypage/quotes/${referenceId}`;
+      return `/seller-center/quotes/${referenceId}/bid`;
     
     case "BID_ARRIVED":
       return `/mypage/quotes/${referenceId}`;
     
     case "BID_SELECTED":
       return `/seller-center`;
+
+    case "LOWEST_PRICE_UPDATED":
+      return role === "SELLER"
+        ? "/seller-center/notifications"
+        : `/mypage/quotes/${referenceId}`;
     
     case "CONTRACT_SIGNED":
-      return `/mypage/purchases/${referenceId}`;
+      return role === "SELLER"
+        ? "/seller-center"
+        : `/mypage/purchases/${referenceId}`;
     
     case "PAYMENT_COMPLETED":
-      return `/mypage/purchases/${referenceId}`;
+      return role === "SELLER"
+        ? "/seller-center"
+        : `/mypage/purchases/${referenceId}`;
     
     case "DELIVERY_STARTED":
     case "DELIVERY_COMPLETED":

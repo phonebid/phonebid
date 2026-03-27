@@ -2,6 +2,7 @@ import { apiClient } from "./apiClient";
 import { toast } from "react-toastify";
 import type { SellerRegisterRequestDto, SellerDashboardStats, BidCreateRequest, SellerProfileResponseDto } from "types/SellerTypes";
 import type { QuoteListItem } from "types/QuoteTypes";
+import { ApiErrorClass } from "types/ApiTypes";
 import { logError } from "utils/errorUtils";
 
 export const sellerService = {
@@ -70,7 +71,23 @@ export const sellerService = {
       toast.success("견적이 성공적으로 전송되었습니다.");
     } catch (error: unknown) {
       logError("견적 생성 실패:", error);
-      toast.error("견적 전송에 실패했습니다.");
+      if (error instanceof ApiErrorClass && error.code === 400) {
+        const details = error.details;
+        if (details && typeof details === "object") {
+          const messages = Object.values(details as Record<string, unknown>)
+            .filter((v): v is string => typeof v === "string" && v.trim().length > 0);
+          if (messages.length > 0) {
+            const uniqueMessage = Array.from(new Set(messages)).join(" / ");
+            toast.error(uniqueMessage);
+          } else {
+            toast.error(error.message);
+          }
+        } else {
+          toast.error(error.message);
+        }
+      } else {
+        toast.error("견적 전송에 실패했습니다.");
+      }
       throw error;
     }
   },

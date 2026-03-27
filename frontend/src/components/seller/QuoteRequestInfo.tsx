@@ -1,6 +1,9 @@
 import { QuoteDetail } from "types/QuoteTypes";
-import { Card, CardContent, CardHeader, CardTitle } from "components/ui/card";
-import { getCarrierDisplayName, getPurchaseMethodDisplayName } from "utils/quoteUtils";
+import {
+  getCarrierDisplayName,
+  getPurchaseMethodDisplayName,
+  getActivationMethodDisplayName,
+} from "utils/quoteUtils";
 import { cn } from "@/utils/cn";
 
 interface QuoteRequestInfoProps {
@@ -8,173 +11,169 @@ interface QuoteRequestInfoProps {
   className?: string;
 }
 
-const InfoItem: React.FC<{ icon: React.ReactNode; label: string; value: string }> = ({
-  icon,
-  label,
-  value,
-}) => {
+function formatRequestDateTime(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const h = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
+  return `${y}-${m}-${day} ${h}:${min}`;
+}
+
+function DocumentIcon() {
   return (
-    <div className="flex items-center gap-3 py-2">
-      <div className="flex-shrink-0">{icon}</div>
-      <div className="flex-1">
-        <div className="text-sm font-medium text-foreground">{label}</div>
-        <div className="text-sm font-bold text-foreground mt-1">{value}</div>
-      </div>
+    <svg
+      className="w-5 h-5 text-blue-600"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+      />
+    </svg>
+  );
+}
+
+function PhonePlaceholderIcon() {
+  return (
+    <div className="w-14 h-14 rounded-lg bg-muted flex items-center justify-center shrink-0">
+      <svg
+        className="w-8 h-8 text-muted-foreground"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.5}
+          d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
+        />
+      </svg>
     </div>
   );
-};
+}
 
 export const QuoteRequestInfo: React.FC<QuoteRequestInfoProps> = ({
   quote,
   className,
 }) => {
-  return (
-    <div className={cn("space-y-4", className)}>
-      <Card className="gap-0">
-        <CardHeader className="pb-1">
-          <CardTitle className="text-base">요청 정보</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 pt-0">
-          <InfoItem
-            icon={
-              <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                <svg
-                  className="w-5 h-5 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
-                  />
-                </svg>
-              </div>
-            }
-            label="기기"
-            value={quote.model}
-          />
-          <InfoItem
-            icon={
-              <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                <svg
-                  className="w-5 h-5 text-purple-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                  />
-                  <circle cx="7.5" cy="12" r="1.5" fill="currentColor" />
-                  <circle cx="16.5" cy="12" r="1.5" fill="currentColor" />
-                  <circle cx="12" cy="8" r="1.5" fill="currentColor" />
-                  <circle cx="12" cy="16" r="1.5" fill="currentColor" />
-                </svg>
-              </div>
-            }
-            label="색상"
-            value={quote.color || "상관없음"}
-          />
-          <InfoItem
-            icon={
-              <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-                <svg
-                  className="w-5 h-5 text-green-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"
-                  />
-                </svg>
-              </div>
-            }
-            label="용량"
-            value={quote.storage || "상관없음"}
-          />
-          <InfoItem
-            icon={
-              <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
-                <svg
-                  className="w-5 h-5 text-orange-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
-                  />
-                </svg>
-              </div>
-            }
-            label="통신사"
-            value={getCarrierDisplayName(quote.carrier)}
-          />
-          <InfoItem
-            icon={
-              <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
-                <svg
-                  className="w-5 h-5 text-red-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                </svg>
-              </div>
-            }
-            label="개통 조건"
-            value={getPurchaseMethodDisplayName(quote.purchaseMethod)}
-          />
-        </CardContent>
-      </Card>
+  const specs = [quote.storage, quote.color].filter(Boolean).join(" / ");
+  const discountLabel =
+    quote.activationMethod === "COMMON_SUBSIDY"
+      ? `${getActivationMethodDisplayName(quote.activationMethod)} (단말할인)`
+      : quote.activationMethod === "SELECTIVE_SUBSIDY"
+        ? `${getActivationMethodDisplayName(quote.activationMethod)} (요금할인 25%)`
+        : getActivationMethodDisplayName(quote.activationMethod);
+  const memo = quote.buyerMemo?.trim() || "구매자 메모가 없습니다.";
+  const region = quote.preferredRegion?.trim() || "—";
 
-      <Card className="bg-blue-50 border-blue-200 gap-0">
-        <CardHeader className="pb-1">
-          <CardTitle className="text-base flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-              <svg
-                className="w-5 h-5 text-blue-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+  return (
+    <div className={cn("space-y-3", className)}>
+      <div className="flex items-center gap-2">
+        <DocumentIcon />
+        <h3 className="text-base font-semibold text-foreground">
+          구매자 요청 정보
+        </h3>
+      </div>
+
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        <div className="flex gap-3">
+          <PhonePlaceholderIcon />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="font-bold text-foreground leading-tight">
+                  {quote.model}
+                </p>
+                {specs ? (
+                  <p className="text-sm text-muted-foreground mt-1">{specs}</p>
+                ) : null}
+              </div>
+              <span className="shrink-0 rounded-md bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+                {getCarrierDisplayName(quote.carrier)}
+              </span>
             </div>
-            구매자 요청사항
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <p className="text-sm text-muted-foreground">
-            최대한 저렴하게 구매하고 싶습니다. 요금제는 5만원대 이하로 희망하며, 할부 24개월 원합니다.
-          </p>
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+
+        <dl className="mt-3 space-y-2 border-t border-border pt-3">
+          <div className="flex justify-between gap-4 text-sm">
+            <dt className="text-muted-foreground shrink-0">할인 방식</dt>
+            <dd className="font-bold text-foreground text-right">{discountLabel}</dd>
+          </div>
+          <div className="flex justify-between gap-4 text-sm">
+            <dt className="text-muted-foreground shrink-0">개통 유형</dt>
+            <dd className="font-bold text-foreground text-right">
+              {getPurchaseMethodDisplayName(quote.purchaseMethod)}
+            </dd>
+          </div>
+          <div className="flex justify-between gap-4 text-sm">
+            <dt className="text-muted-foreground shrink-0">희망 지역</dt>
+            <dd className="font-bold text-foreground text-right">{region}</dd>
+          </div>
+          <div className="flex justify-between gap-4 text-sm">
+            <dt className="text-muted-foreground shrink-0">요청 일시</dt>
+            <dd className="font-bold text-foreground text-right tabular-nums">
+              {formatRequestDateTime(quote.createdAt)}
+            </dd>
+          </div>
+        </dl>
+      </div>
+
+      <div className="rounded-xl border border-amber-200/80 bg-amber-50/90 p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <svg
+            className="w-5 h-5 text-amber-700"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+            />
+          </svg>
+          <span className="text-sm font-semibold text-amber-900">
+            구매자 메모
+          </span>
+        </div>
+        <p className="text-sm text-amber-950/90 leading-relaxed">
+          {memo || "—"}
+        </p>
+      </div>
+
+      <div className="flex items-center justify-between rounded-xl border border-sky-200 bg-sky-50/90 px-4 py-3">
+        <div className="flex items-center gap-2">
+          <svg
+            className="w-5 h-5 text-sky-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+            />
+          </svg>
+          <span className="text-sm font-medium text-sky-900">
+            현재 입찰 현황
+          </span>
+        </div>
+        <span className="text-lg font-bold text-sky-900 tabular-nums">
+          {quote.bidCount}명
+        </span>
+      </div>
     </div>
   );
 };
-

@@ -4,22 +4,53 @@ import { useNotifications } from "hooks/useNotifications";
 import { NotificationItem } from "components/notification/NotificationItem";
 import { NotificationStatusBanner } from "components/notification/NotificationStatusBanner";
 import { Button } from "components/ui/button";
+import type { NotificationType } from "types/NotificationTypes";
+import { useMemo } from "react";
 
 interface NotificationDropdownProps {
   onClose?: () => void;
+  typesFilter?: NotificationType[];
+  viewAllPath?: string;
 }
 
-export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
-  const { notifications, unreadCount } = useNotificationStore();
+export function NotificationDropdown({
+  onClose,
+  typesFilter,
+  viewAllPath = "/notifications",
+}: NotificationDropdownProps) {
+  const notifications = useNotificationStore((state) => state.notifications);
   const { markAllAsRead } = useNotifications();
 
+  const isFilteredView = Boolean(typesFilter && typesFilter.length > 0);
+  const safeTypesFilter = typesFilter ?? [];
+  const filteredNotifications =
+    isFilteredView
+      ? notifications.filter((notification) =>
+          safeTypesFilter.includes(notification.type)
+        )
+      : notifications;
+
+  const filteredUnreadCount = useMemo(
+    () =>
+      filteredNotifications.reduce(
+        (count, n) => (n.isRead ? count : count + 1),
+        0
+      ),
+    [filteredNotifications]
+  );
+
   // 최근 알림 5개만 표시
-  const recentNotifications = notifications.slice(0, 5);
+  const recentNotifications = filteredNotifications.slice(0, 5);
   const hasNotifications = recentNotifications.length > 0;
 
   const handleMarkAllAsRead = async () => {
-    if (unreadCount === 0) return;
     try {
+      if (filteredUnreadCount === 0) return;
+
+      // 필터 뷰에서는 id별 markAsRead를 N번 호출하게 되어 요청 폭주가 날 수 있어
+      // "모두 읽음" 버튼 자체를 숨깁니다. (여기서는 방어적으로 no-op)
+      if (isFilteredView) return;
+
       await markAllAsRead();
     } catch (error) {
       console.error("모든 알림 읽음 처리 실패:", error);
@@ -32,13 +63,13 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
       <div className="px-3 py-2.5 sm:px-4 sm:py-3 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-200 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-gray-900">알림</h3>
-          {unreadCount > 0 && (
+          {filteredUnreadCount > 0 && (
             <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">
-              {unreadCount}
+              {filteredUnreadCount}
             </span>
           )}
         </div>
-        {unreadCount > 0 && (
+        {filteredUnreadCount > 0 && !isFilteredView && (
           <Button
             variant="ghost"
             size="sm"
@@ -96,7 +127,7 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
       {hasNotifications && (
         <div className="px-3 py-2.5 sm:px-4 sm:py-3 bg-gradient-to-r from-indigo-50 to-purple-50 border-t border-gray-200">
           <Link
-            to="/notifications"
+            to={viewAllPath}
             onClick={onClose}
             className="block text-center text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors hover:underline"
           >

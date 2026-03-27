@@ -5,10 +5,18 @@ import { NotificationItem } from "components/notification/NotificationItem";
 import { ConfirmModal } from "components/ui/ConfirmModal";
 import { NotificationStatusBanner } from "components/notification/NotificationStatusBanner";
 import { Button } from "components/ui/button";
-import type { NotificationFilter } from "types/NotificationTypes";
+import type { NotificationFilter, NotificationType } from "types/NotificationTypes";
 import { cn } from "utils/cn";
 
-export function NotificationsPage() {
+interface NotificationsPageProps {
+  title?: string;
+  typesFilter?: NotificationType[];
+}
+
+export function NotificationsPage({
+  title = "알림",
+  typesFilter,
+}: NotificationsPageProps) {
   const { notifications, unreadCount, setNotifications } = useNotificationStore();
   const {
     fetchNotifications,
@@ -62,7 +70,7 @@ export function NotificationsPage() {
   };
 
   const handleDeleteAllClick = () => {
-    if (notifications.length === 0) return;
+    if (visibleNotifications.length === 0) return;
     setShowDeleteAllModal(true);
   };
 
@@ -79,7 +87,12 @@ export function NotificationsPage() {
     setShowDeleteAllModal(false);
   };
 
-  const filteredNotifications = notifications.filter((n) => {
+  const visibleNotifications =
+    typesFilter && typesFilter.length > 0
+      ? notifications.filter((n) => typesFilter.includes(n.type))
+      : notifications;
+
+  const filteredNotifications = visibleNotifications.filter((n) => {
     if (filter === "unread") return !n.isRead;
     if (filter === "read") return n.isRead;
     return true;
@@ -118,7 +131,7 @@ export function NotificationsPage() {
               </svg>
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">알림</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{title}</h1>
               {unreadCount > 0 && (
                 <p className="mt-1 text-sm text-gray-500">
                   <span className="ml-0 px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">
@@ -215,7 +228,7 @@ export function NotificationsPage() {
                   모두 읽음
                 </Button>
               )}
-              {notifications.length > 0 && (
+              {visibleNotifications.length > 0 && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -329,7 +342,7 @@ export function NotificationsPage() {
         onClose={handleDeleteAllCancel}
         onConfirm={handleDeleteAllConfirm}
         title="모든 알림 삭제"
-        message={`총 ${notifications.length}개의 알림을 모두 삭제하시겠습니까?\n삭제된 알림은 복구할 수 없습니다.`}
+        message={`총 ${visibleNotifications.length}개의 알림을 모두 삭제하시겠습니까?\n삭제된 알림은 복구할 수 없습니다.`}
         confirmText="모두 삭제"
         cancelText="취소"
         variant="danger"

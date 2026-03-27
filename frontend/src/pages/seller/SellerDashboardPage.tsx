@@ -1,14 +1,19 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { mutate } from "swr";
+import { Handshake } from "lucide-react";
 import { SellerHeader } from "components/seller/SellerHeader";
 import { StatCard } from "components/seller/StatCard";
 import { QuoteFilterBar } from "components/seller/QuoteFilterBar";
 import { QuoteRequestCard } from "components/seller/QuoteRequestCard";
 import { useSellerDashboard } from "hooks/useSellerDashboard";
+import { BidCreateModal } from "components/seller/BidCreateModal";
 import { Card, CardContent, CardHeader, CardTitle } from "components/ui/card";
 
 const SellerDashboardPage: React.FC = () => {
+  const location = useLocation();
   const navigate = useNavigate();
+  const [bidModalQuoteId, setBidModalQuoteId] = useState<string | null>(null);
   const {
     quotes,
     isLoading,
@@ -28,8 +33,24 @@ const SellerDashboardPage: React.FC = () => {
     document.title = "판매자 대시보드 | PhoneBid";
   }, []);
 
+  useEffect(() => {
+    const state = location.state as { openBidModal?: string } | null;
+    if (state?.openBidModal) {
+      setBidModalQuoteId(state.openBidModal);
+      navigate("/seller-center", { replace: true, state: {} });
+    }
+  }, [location.state, navigate]);
+
   const handleQuoteClick = (quoteId: string) => {
-    navigate(`/seller-center/quotes/${quoteId}/bid`);
+    setBidModalQuoteId(quoteId);
+  };
+
+  const handleBidModalClose = () => {
+    setBidModalQuoteId(null);
+  };
+
+  const handleBidSuccess = () => {
+    void mutate("/auction/quotes");
   };
 
   // 최근 24시간 내에 생성된 요청을 "새로운 요청"으로 카운트
@@ -75,21 +96,7 @@ const SellerDashboardPage: React.FC = () => {
             value={34}
             description="진행 중인 거래"
             iconBgColor="bg-orange-500"
-            icon={
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16.5V19m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"
-                />
-              </svg>
-            }
+            icon={<Handshake className="w-6 h-6" />}
           />
           <StatCard
             title="거래완료"
@@ -268,6 +275,13 @@ const SellerDashboardPage: React.FC = () => {
         </Card>
         </div>
       </div>
+
+      <BidCreateModal
+        isOpen={!!bidModalQuoteId}
+        quoteId={bidModalQuoteId ?? ""}
+        onClose={handleBidModalClose}
+        onSuccess={handleBidSuccess}
+      />
 
       {/* Footer */}
       <footer className="border-t border-gray-200 bg-white">
