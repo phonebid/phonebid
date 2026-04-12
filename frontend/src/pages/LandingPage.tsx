@@ -183,6 +183,7 @@ const LandingPage: React.FC = () => {
   return (
     <div className="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 antialiased overflow-x-hidden transition-colors duration-300">
       <LandingHeader />
+      <div className="h-14 sm:h-16 shrink-0" aria-hidden />
       {/* Hero Section */}
       <header className="relative min-h-[85vh] overflow-hidden">
         <AuroraBackground
