@@ -13,6 +13,10 @@ RUN chmod +x /workspace/gradlew \
 
 FROM eclipse-temurin:17-jre-alpine
 
+RUN apk add --no-cache tzdata \
+    && cp /usr/share/zoneinfo/Asia/Seoul /etc/localtime \
+    && apk del tzdata
+
 WORKDIR /app
 
 COPY --from=builder /workspace/build/libs/*.jar /app/app.jar
