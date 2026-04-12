@@ -4,8 +4,17 @@ services:
     restart: unless-stopped
     env_file:
       - /opt/phonebid/.env
+    ports:
+      - "8080:8080"
     expose:
       - "8080"
+    volumes:
+      - spring_boot_tmp:/tmp
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   nginx:
     image: jooc0311/phonebid-nginx:latest
@@ -17,4 +26,12 @@ services:
       - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - backend
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  spring_boot_tmp:
 
