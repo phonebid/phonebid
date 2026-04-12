@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { AuroraBackground } from "components/ui/aurora-background";
+import { LandingHeader } from "components/landing-header";
 
 const TICKER_ITEMS = [
   "[부산-이OO님] 아이폰 16 Pro ₩145,000 구매",
@@ -181,6 +182,8 @@ const LandingPage: React.FC = () => {
 
   return (
     <div className="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 antialiased overflow-x-hidden transition-colors duration-300">
+      <LandingHeader />
+      <div className="h-14 sm:h-16 shrink-0" aria-hidden />
       {/* Hero Section */}
       <header className="relative min-h-[85vh] overflow-hidden">
         <AuroraBackground
