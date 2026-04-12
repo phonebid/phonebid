@@ -227,24 +227,24 @@ INSERT INTO phone_options (id, model_id, option_type, option_value, display_labe
 -- ========================================================================
 
 -- Users
-INSERT INTO users (id, username, password, email, name, nickname, phone, role, provider, provider_id, profile_image_url, carrier, is_identity_verified, verified_at, created_at, updated_at, is_delete)
-VALUES ('f0f0a111-1111-4111-8111-111111111111', 'seed_user_20260308', '$2a$10$7eqJtq98hPqEX7fNZaFWoO.HVQ5fD4QnQeNf5f7dI4A4A4A4A4A4O', 'seed.user.20260308@phonebid.local', '홍소비', '소비자샘플', '01012345678', 'CONSUMER', NULL, NULL, NULL, 'KT', TRUE, '2026-03-08 10:00:00', '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
+INSERT INTO users (id, username, password, email, name, nickname, phone, role, provider, provider_id, profile_image_url, created_at, updated_at, is_delete)
+VALUES ('f0f0a111-1111-4111-8111-111111111111', 'seed_user_20260308', '$2a$10$7eqJtq98hPqEX7fNZaFWoO.HVQ5fD4QnQeNf5f7dI4A4A4A4A4A4O', 'seed.user.20260308@phonebid.local', '홍소비', '소비자샘플', '01012345678', 'CONSUMER', NULL, NULL, NULL, '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO users (id, username, password, email, name, nickname, phone, role, provider, provider_id, profile_image_url, carrier, is_identity_verified, verified_at, created_at, updated_at, is_delete)
-VALUES ('f0f0a222-2222-4222-8222-222222222222', 'seed_admin_20260308', '$2a$10$7eqJtq98hPqEX7fNZaFWoO.HVQ5fD4QnQeNf5f7dI4A4A4A4A4A4O', 'seed.admin.20260308@phonebid.local', '김관리', '관리자샘플', '01023456789', 'ADMIN', NULL, NULL, NULL, 'SKT', TRUE, '2026-03-08 10:00:00', '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
+INSERT INTO users (id, username, password, email, name, nickname, phone, role, provider, provider_id, profile_image_url, created_at, updated_at, is_delete)
+VALUES ('f0f0a222-2222-4222-8222-222222222222', 'seed_admin_20260308', '$2a$10$7eqJtq98hPqEX7fNZaFWoO.HVQ5fD4QnQeNf5f7dI4A4A4A4A4A4O', 'seed.admin.20260308@phonebid.local', '김관리', '관리자샘플', '01023456789', 'ADMIN', NULL, NULL, NULL, '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO users (id, username, password, email, name, nickname, phone, role, provider, provider_id, profile_image_url, carrier, is_identity_verified, verified_at, created_at, updated_at, is_delete)
-VALUES ('f0f0a333-3333-4333-8333-333333333333', 'seed_seller_a_20260308', '$2a$10$7eqJtq98hPqEX7fNZaFWoO.HVQ5fD4QnQeNf5f7dI4A4A4A4A4A4O', 'seed.seller.a.20260308@phonebid.local', '박판매', '판매자A', '01034567890', 'SELLER', NULL, NULL, NULL, 'SKT', TRUE, '2026-03-08 10:00:00', '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
+INSERT INTO users (id, username, password, email, name, nickname, phone, role, provider, provider_id, profile_image_url, created_at, updated_at, is_delete)
+VALUES ('f0f0a333-3333-4333-8333-333333333333', 'seed_seller_a_20260308', '$2a$10$7eqJtq98hPqEX7fNZaFWoO.HVQ5fD4QnQeNf5f7dI4A4A4A4A4A4O', 'seed.seller.a.20260308@phonebid.local', '박판매', '판매자A', '01034567890', 'SELLER', NULL, NULL, NULL, '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO users (id, username, password, email, name, nickname, phone, role, provider, provider_id, profile_image_url, carrier, is_identity_verified, verified_at, created_at, updated_at, is_delete)
-VALUES ('f0f0a444-4444-4444-8444-444444444444', 'seed_seller_b_20260308', '$2a$10$7eqJtq98hPqEX7fNZaFWoO.HVQ5fD4QnQeNf5f7dI4A4A4A4A4A4O', 'seed.seller.b.20260308@phonebid.local', '이판매', '판매자B', '01045678901', 'SELLER', NULL, NULL, NULL, 'LGU', TRUE, '2026-03-08 10:00:00', '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
+INSERT INTO users (id, username, password, email, name, nickname, phone, role, provider, provider_id, profile_image_url, created_at, updated_at, is_delete)
+VALUES ('f0f0a444-4444-4444-8444-444444444444', 'seed_seller_b_20260308', '$2a$10$7eqJtq98hPqEX7fNZaFWoO.HVQ5fD4QnQeNf5f7dI4A4A4A4A4A4O', 'seed.seller.b.20260308@phonebid.local', '이판매', '판매자B', '01045678901', 'SELLER', NULL, NULL, NULL, '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO users (id, username, password, email, name, nickname, phone, role, provider, provider_id, profile_image_url, carrier, is_identity_verified, verified_at, created_at, updated_at, is_delete)
-VALUES ('f0f0a555-5555-4555-8555-555555555555', 'seller1', '$2b$10$.Jm8hl1MzLyeKg0R7LbscOBgvRxR7t310WSR0NQSTX40den2J5L.S', 'seller1@phonebid.local', '테스트판매자', '판매자1', '01055555555', 'SELLER', NULL, NULL, NULL, 'SKT', TRUE, '2026-03-08 10:00:00', '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
+INSERT INTO users (id, username, password, email, name, nickname, phone, role, provider, provider_id, profile_image_url, created_at, updated_at, is_delete)
+VALUES ('f0f0a555-5555-4555-8555-555555555555', 'seller1', '$2b$10$.Jm8hl1MzLyeKg0R7LbscOBgvRxR7t310WSR0NQSTX40den2J5L.S', 'seller1@phonebid.local', '테스트판매자', '판매자1', '01055555555', 'SELLER', NULL, NULL, NULL, '2026-03-08 10:00:00', '2026-03-08 10:00:00', FALSE)
 ON CONFLICT (id) DO UPDATE SET password = '$2b$10$.Jm8hl1MzLyeKg0R7LbscOBgvRxR7t310WSR0NQSTX40den2J5L.S';
 
 -- Sellers
